@@ -90,6 +90,9 @@ class ChapterResult:
     cycles: int
     draft_path: Optional[Path]
     verdicts: List[Verdict] = field(default_factory=list)
+    #: Continuity findings the repair pass could not resolve. An accepted chapter
+    #: may carry them; they belong in the report rather than in silence.
+    unresolved_continuity: List[dict] = field(default_factory=list)
 
 
 def approve(project: Path, slug: str) -> Path:
@@ -235,6 +238,9 @@ def run_chapter(
 
     best, best_verdict, best_draft_path, best_verdict_path = draft, verdict, draft_path, verdict_path
     accepted = _accepted(verdict)
+    #: Source-backed continuity findings the repair pass could not resolve. They
+    #: travel to the report so an accepted chapter never hides a known problem.
+    unresolved_continuity: List[dict] = []
     cycles = 0
     while cycles < profile.max_revision_cycles and (not accepted or (revise_on_flags and best_verdict.flags)):
         cycles += 1
@@ -287,11 +293,34 @@ def run_chapter(
             _write(check_path, check.raw)
             verdicts.append(check)
             remaining = verify_candidate(project, chapter, candidate, facts, memory_adapter, models.get("continuity", ""))
-            accepted = _accepted(check) and not remaining
-            if accepted:
+            if _accepted(check) and not remaining:
                 best, best_verdict, best_draft_path, best_verdict_path = candidate, check, path, check_path
             else:
-                say(f"chapter {chapter}: continuity repair did not pass both checks; previous canonical text is preserved")
+                # A failed repair means one of two different things, and they
+                # deserve opposite answers.
+                #
+                # If canonical prose already exists, the new draft is a rewrite
+                # that contradicts the book and could not be reconciled: keep the
+                # canonical text and block, which is what "never publish an
+                # unchecked repair" is for.
+                #
+                # If nothing is canonical yet, blocking preserves nothing. That is
+                # what happened to chapter 3 on 2026-09-07: the blind reader said
+                # `turn_page: yes`, the repair failed, and a reader-approved
+                # chapter left no text at all — the run scored 8.0 instead of 10.0
+                # entirely because of it. Here the accepted draft becomes
+                # canonical and carries its unresolved findings into the report.
+                # Chapters 1 and 2 of that same run shipped with a recorded
+                # `continuity` flag; a visible finding beats a missing chapter.
+                canonical = project / "manuscript" / "chapters" / f"chapter-{chapter:02d}.md"
+                if canonical.is_file():
+                    accepted = False
+                    say(f"chapter {chapter}: continuity repair did not pass both checks; "
+                        "previous canonical text is preserved")
+                else:
+                    unresolved_continuity = conflicts
+                    say(f"chapter {chapter}: continuity repair did not pass both checks; "
+                        f"keeping the accepted draft with {len(conflicts)} unresolved continuity finding(s)")
 
     label = getattr(judge, "label", "judge")
     if accepted:
@@ -306,7 +335,10 @@ def run_chapter(
             update_state_value(state, "status", "in_progress")
             say("The manuscript changed; the whole-book review and delivery must run again.")
         _write(final, best)
-        result = ChapterResult(chapter, True, "accepted", cycles, final, verdicts)
+        # `status` stays exactly "accepted": score.py, acceptance.py and review.py
+        # compare it by equality, and widening the string here would quietly break
+        # three call sites. The findings ride alongside it instead.
+        result = ChapterResult(chapter, True, "accepted", cycles, final, verdicts, unresolved_continuity)
     else:
         result = ChapterResult(chapter, False, "blocked", cycles, best_draft_path, verdicts)
     _record_attempt(project, chapter, attempt_id, attempt_sequence, result, best_draft_path, best_verdict_path)
@@ -605,9 +637,12 @@ def _append_run_report(project: Path, result: ChapterResult, judge_label: str) -
             f"turn_page={'yes' if last.turn_page else 'no'}, flags=[{', '.join(last.flags)}], "
             f"stopped_at={last.stopped_at}"
         )
+    unresolved = ""
+    if result.unresolved_continuity:
+        unresolved = f"; unresolved continuity findings: {len(result.unresolved_continuity)}"
     line = (
         f"- chapter {result.chapter}: {result.status} after {result.cycles} revision cycle(s); "
-        f"judge: {judge_label}; last verdict: {verdict_text}; file: {result.draft_path}"
+        f"judge: {judge_label}; last verdict: {verdict_text}{unresolved}; file: {result.draft_path}"
     )
     if not path.exists():
         path.write_text("# Run Report\n\n## Chapter log\n\n", encoding="utf-8")

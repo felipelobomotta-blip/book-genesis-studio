@@ -1,0 +1,207 @@
+{
+  "draft_sha256": "1198edf4ef10723c3c1e842c420cfac5e593da335dd6b33daa1e944931335bc4",
+  "record": {
+    "facts": [
+      {
+        "kind": "timeline",
+        "statement": "Chapter 3 follows Mrs. Halloway developing respiratory distress in Room Fourteen after Mara's pager goes quiet.",
+        "source_id": "s2",
+        "quote": "The monitor is the last thing in the room to learn that Mrs. Halloway is in trouble."
+      },
+      {
+        "kind": "identity",
+        "statement": "Mrs. Halloway is in Room Fourteen during the respiratory episode.",
+        "source_id": "s6",
+        "quote": "“Fourteen.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mrs. Halloway's oxygen tubing is initially in place and the monitor reads ninety-five despite her clinical signs of distress.",
+        "source_id": "s10",
+        "quote": "Her oxygen tubing is in place."
+      },
+      {
+        "kind": "rule",
+        "statement": "Mara identifies the problem as positional: Mrs. Halloway's chin has drifted toward her chest and the cannula has shifted inward on the right.",
+        "source_id": "s29",
+        "quote": "The bed is raised only a little. Her chin has drifted toward her chest. The oxygen cannula has slipped inward on the right, pressing against the fold beside her nostril instead of resting inside it. The monitor reads the finger. The finger is warm. The lungs are not a finger."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mrs. Halloway refuses repositioning because she believes the man on the ceiling will fall.",
+        "source_id": "s35",
+        "quote": "“The man will fall.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mrs. Halloway's actual respiratory rate is thirty-two while the monitor reports twenty-two.",
+        "source_id": "s45",
+        "quote": "“Thirty-two,” I say."
+      },
+      {
+        "kind": "rule",
+        "statement": "Mara determines the monitor is counting movement rather than accurately reflecting Mrs. Halloway's condition.",
+        "source_id": "s47",
+        "quote": "“The monitor is counting movement.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Turning off the examination lamp changes Mrs. Halloway's breathing, allowing the next breath to come fully down.",
+        "source_id": "s56",
+        "quote": "Mrs. Halloway’s breathing changes at once. Not better. Different. The small catch after each inhale disappears, and the next breath comes all the way down."
+      },
+      {
+        "kind": "identity",
+        "statement": "Mrs. Halloway identifies herself as Eleanor, says she is at St. Brigid's, recognizes October, and describes her condition as her heart holding water.",
+        "source_id": "s70",
+        "quote": "“Eleanor.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "The examination lamp turns back on by itself, after which Mrs. Halloway jerks and her saturation drops to ninety-two.",
+        "source_id": "s83",
+        "quote": "The lamp clicks on again by itself."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mara orders oxygen increased to four liters and tells Nia to call Dr. Bell for respiratory change and falling saturation.",
+        "source_id": "s87",
+        "quote": "“Call Dr. Bell,” I say. “Tell him respiratory change, likely positional, saturation falling.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mrs. Halloway says pain is behind her and that there is water behind the wall.",
+        "source_id": "s102",
+        "quote": "“Behind me.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mara flashes back to ankle-deep water, a stretcher wheel caught at a threshold, a blue ship-printed sheet, three knocks, and Elias Venn pointing toward the stairwell.",
+        "source_id": "s106",
+        "quote": "I am back there for half a second, standing in ankle-deep water with a stretcher wheel caught against the threshold. The sheet has blue ships printed across it. Three knocks come from the other side of the door. I hear myself say, We have to go. I see the pale crescent scar across Elias Venn’s thumb as he points toward the stairwell."
+      },
+      {
+        "kind": "quantity",
+        "statement": "The portable probe confirms Mrs. Halloway's oxygen saturation at eighty-nine.",
+        "source_id": "s114",
+        "quote": "The portable probe reads eighty-nine."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Nia tells Dr. Bell that Mrs. Halloway is at eighty-nine on four liters.",
+        "source_id": "s121",
+        "quote": "Nia picks up the phone. “Dr. Bell, she’s at eighty-nine on four liters. Yes. I know. I’m telling you again because the first time didn’t work.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mara finds a wet gray thumbprint-like smear on Mrs. Halloway's oxygen tubing.",
+        "source_id": "s130",
+        "quote": "A wet thumbprint has dragged along the clear plastic, shining under the lamp."
+      },
+      {
+        "kind": "identity",
+        "statement": "Dr. Bell arrives, examines Mrs. Halloway, and orders a chest film.",
+        "source_id": "s138",
+        "quote": "Dr. Bell pushes through the curtain, buttoning her coat. Her hair is flattened on one side. “What happened?”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Dr. Bell is told Mrs. Halloway's saturation is eighty-nine on four liters, that the monitor lagged behind assessment, and that the lamp came back on by itself.",
+        "source_id": "s139",
+        "quote": "“Mrs. Halloway developed increased work of breathing. Monitor lagged behind assessment. Saturation eighty-nine on four liters. She improved when the examination lamp was switched off, then dropped again when it came back on.”"
+      },
+      {
+        "kind": "quantity",
+        "statement": "Mrs. Halloway has had four hundred milliliters of output since furosemide was given.",
+        "source_id": "s153",
+        "quote": "“Four hundred milliliters since then.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Dr. Bell raises the bed another ten degrees and orders oxygen increased to six liters, with respiratory to be called if saturation drops below ninety-two.",
+        "source_id": "s156",
+        "quote": "Dr. Bell raises the bed another ten degrees. “Increase to six liters for now. If she drops below ninety-two, call respiratory.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "The pager vibrates three times during Mrs. Halloway's crisis, but when Mara checks it the screen is black with no message.",
+        "source_id": "s158",
+        "quote": "The pager vibrates a third time."
+      },
+      {
+        "kind": "resolution",
+        "statement": "After Mara unplugs the examination lamp, Mrs. Halloway's saturation rises to ninety-three and then ninety-four, and her breathing slows by two counts.",
+        "source_id": "s174",
+        "quote": "The room settles into the ordinary blue-white glow from the ceiling panels. Mrs. Halloway’s saturation rises to ninety-three, then ninety-four. Her breathing slows by two counts."
+      },
+      {
+        "kind": "rule",
+        "statement": "Dr. Bell attributes the episode to fatigue, upright positioning, and increased oxygen rather than the unplugged lamp.",
+        "source_id": "s190",
+        "quote": "“I’m saying that fatigue can create patterns where none exist.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "A respiratory therapist arrives without being called and says the examination lamp had been tagged for disposal since last winter.",
+        "source_id": "s229",
+        "quote": "At the desk, Nia is speaking to the respiratory therapist, who has arrived without anyone calling her."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Bed management asks whether Room Fourteen is available for transfer, but Mara refuses because the room is occupied by a patient who just desaturated.",
+        "source_id": "s242",
+        "quote": "“Hi, this is bed management. Can you confirm whether room fourteen is available for a transfer?”"
+      },
+      {
+        "kind": "quantity",
+        "statement": "Ward C still has twenty-one patients in eighteen beds during Chapter 3.",
+        "source_id": "s251",
+        "quote": "“We have twenty-one patients in eighteen beds.”"
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mara logs the Room 0 incident, Mr. Pritchard's transfer, and Mrs. Halloway's 02:41 respiratory episode, including gray particulate residue on oxygen tubing at approximately 02:43.",
+        "source_id": "s264",
+        "quote": "I open the incident log beneath the desk, where the cover is still tacky from someone’s spilled soda. My handwriting from earlier fills the previous page: date, time, Room 0, live location node, wall, patient call, Mr. Pritchard’s transfer."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mara tears the incident log page out and keeps it in her scrub top as a record she can carry.",
+        "source_id": "s276",
+        "quote": "I tear the page out."
+      },
+      {
+        "kind": "timeline",
+        "statement": "Mrs. Halloway's oxygen tubing later disconnects from the wall supply without Mara or Nia doing it, and an emergency cylinder is found empty.",
+        "source_id": "s293",
+        "quote": "Mrs. Halloway is sitting exactly as we left her, but the oxygen tubing has slipped off the wall connection. The clear line hangs in a loose curve, its end resting against the mattress."
+      },
+      {
+        "kind": "timeline",
+        "statement": "During the second desaturation, three soft knocks come from inside the wall behind Mrs. Halloway's bed.",
+        "source_id": "s338",
+        "quote": "The wall behind the bed gives three soft knocks."
+      },
+      {
+        "kind": "resolution",
+        "statement": "Nia returns with another cylinder and a respiratory therapist, air moves through the mask, Mrs. Halloway inhales, and her saturation climbs to ninety.",
+        "source_id": "s342",
+        "quote": "The door bursts open. Nia comes in with a cylinder and a respiratory therapist behind her. The therapist takes the mask from me, connects the tubing, and turns the valve."
+      },
+      {
+        "kind": "timeline",
+        "statement": "A printer produces a page from source 0 to Mara Vale at 02:47 with status acknowledged and the message “ONE BREATH TAKEN.”",
+        "source_id": "s417",
+        "quote": "SOURCE: 0  "
+      }
+    ],
+    "conflicts": [
+      {
+        "previous_id": "a52d61f7a6fb82f1cd5f",
+        "source_id": "s87",
+        "reason": "Previous continuity identifies Dr. Bell with she/her pronouns, but SOURCE says: “Call Dr. Bell,” I say. “Tell him respiratory change, likely positional, saturation falling.”",
+        "quote": "“Call Dr. Bell,” I say. “Tell him respiratory change, likely positional, saturation falling.”"
+      }
+    ]
+  }
+}

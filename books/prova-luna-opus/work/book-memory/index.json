@@ -1,0 +1,1447 @@
+{
+  "schema": 5,
+  "before_chapter": 3,
+  "facts": [
+    {
+      "kind": "identity",
+      "statement": "Mara Vale is a night-shift nurse at St. Brigid’s Coastal Hospital.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "f8712ff5a9caf7123ff1",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Room 0 was removed from the hospital floor plan after a demolition two years earlier.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "bbcf5c30343bf90c22fc",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara begins receiving pages addressed to Room 0.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "6de827255343ed7305ac",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The first Room 0 page appears to be a routine request for help.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "ecce4a4e2e5af20852e9",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The second Room 0 page includes a patient name missing from hospital records.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "19718c3dbe2cdd2a5099",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The third Room 0 page predicts a medical emergency on Mara’s ward before it happens.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens.",
+      "id": "2038cf9951ece60c328e",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "Room 0 was sealed after a storm-related evacuation involving several undocumented patients, rather than simply demolished.",
+      "source_id": "s4",
+      "quote": "At first, Mara assumes the pages are caused by a misconfigured legacy system, a cruel prank, or an unauthorized access point. Her investigation reveals that Room 0 was not simply demolished. It was sealed after a storm-related evacuation involving several undocumented patients, and the official account of the incident contains impossible gaps.",
+      "id": "1d3f901ec907bcea6125",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The official account of the Room 0 incident contains impossible gaps.",
+      "source_id": "s4",
+      "quote": "At first, Mara assumes the pages are caused by a misconfigured legacy system, a cruel prank, or an unauthorized access point. Her investigation reveals that Room 0 was not simply demolished. It was sealed after a storm-related evacuation involving several undocumented patients, and the official account of the incident contains impossible gaps.",
+      "id": "2babe7f345d367522b34",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The pages function like a delayed call system, identifying people in danger while also forming fragments of a larger testimony.",
+      "source_id": "s5",
+      "quote": "The pages begin to resemble a delayed call system: each message identifies someone in danger, but the warnings are also fragments of a larger testimony. As Mara follows them through old charts, maintenance corridors, archived handover notes, and the memories of former staff, she discovers that the hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation.",
+      "id": "af37c54ef21711a220a1",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation.",
+      "source_id": "s5",
+      "quote": "The pages begin to resemble a delayed call system: each message identifies someone in danger, but the warnings are also fragments of a larger testimony. As Mara follows them through old charts, maintenance corridors, archived handover notes, and the memories of former staff, she discovers that the hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation.",
+      "id": "32431e8d0c78653c3f7c",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "During a disastrous night two years earlier, Mara followed an order that contributed to a patient’s death.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster.",
+      "id": "720e944c5c4f862e3949",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara has believed the patient’s death two years earlier was solely her own failure.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster.",
+      "id": "e23c05bbda161b22bb8c",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The pages suggest the same institutional decision-making and evidence suppression caused both Mara’s past fatal shift and the earlier Room 0 disaster.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster.",
+      "id": "bd7c5257cdfe992b4f28",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara must determine who or what is paging her from Room 0 while protecting current patients from a repeating threat.",
+      "source_id": "s8",
+      "quote": "Mara must determine who or what is paging her from Room 0 while protecting current patients from a threat that appears to be repeating the past.",
+      "id": "d04600128e0a5ad3fda8",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The story’s conflict includes external danger from impossible pages during overcrowding, an aging hospital, and severe coastal storms.",
+      "source_id": "s10",
+      "quote": "1. **External:** Impossible pages identify imminent danger inside an overcrowded, aging hospital during a period of severe coastal storms.",
+      "id": "6dfdfcb1c58d7fcc357b",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The investigative conflict requires Mara to uncover what happened in Room 0 before leadership destroys evidence or turns the investigation against her.",
+      "source_id": "s11",
+      "quote": "2. **Investigative:** Mara must uncover what happened in Room 0 before hospital leadership destroys the remaining evidence or turns the investigation against her.",
+      "id": "b738f27bd87df43e63c2",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The internal conflict requires Mara to decide whether responsibility means protecting the institution, exposing her own mistake, or naming the system that made it inevitable.",
+      "source_id": "s12",
+      "quote": "3. **Internal:** Mara must decide whether accepting responsibility means protecting the institution’s reputation, exposing her own mistake, or naming the system that made the mistake inevitable.",
+      "id": "ecc8484fb33518a7d01e",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "identity",
+      "statement": "The antagonist may be a senior administrator or clinical leader actively preserving the cover-up.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call.",
+      "id": "7a672f3fd0471810c714",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The human antagonist should remain plausible and bureaucratic rather than melodramatically evil.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call.",
+      "id": "2581120f841f343e2418",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The supernatural presence may seek truth, revenge, rescue, or completion of an unfinished call.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call.",
+      "id": "1b5fc437e6ddfdb041c9",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "rule",
+      "statement": "The escalation should progress from technical anomaly to personal threat to institutional collapse.",
+      "source_id": "s15",
+      "quote": "The escalation should move from technical anomaly to personal threat to institutional collapse.",
+      "id": "e9c2e2cfbf108e0f206f",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara’s access to archived records is revoked during the hospital pushback stage.",
+      "source_id": "s27",
+      "quote": "- Mara’s access to archived records is revoked.",
+      "id": "2a24999baa15040a0775",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara’s supervisor questions her fitness for duty during the hospital pushback stage.",
+      "source_id": "s28",
+      "quote": "- Her supervisor questions her fitness for duty.",
+      "id": "71e449f379caa441521d",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Pages eventually arrive on Mara’s personal device, making the threat impossible to contain at work.",
+      "source_id": "s30",
+      "quote": "- Pages begin arriving on Mara’s personal device, making the threat impossible to contain at work.",
+      "id": "04fc6ee8f84a6f283a6c",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "A current patient is endangered by a decision resembling the one made two years earlier.",
+      "source_id": "s32",
+      "quote": "- A current patient is placed in danger through a decision resembling the one made two years earlier.",
+      "id": "616599e7069150965bfb",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "During a storm, the hospital enters emergency mode that limits exits and communications.",
+      "source_id": "s34",
+      "quote": "- The hospital enters emergency mode during a storm, limiting exits and communications.",
+      "id": "fb1d39c15de98f6bd522",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The concealed room or its surviving infrastructure becomes physically accessible.",
+      "source_id": "s35",
+      "quote": "- The concealed room or its surviving infrastructure becomes physically accessible.",
+      "id": "3169c525b1f13823a30b",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara will identify the suppressed event and the people responsible for falsifying its record.",
+      "source_id": "s37",
+      "quote": "- Mara identifies the suppressed event and the people responsible for falsifying its record.",
+      "id": "9336bcc63528758f20a0",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "promise",
+      "statement": "The human antagonist will attempt to destroy final evidence or redirect blame onto Mara.",
+      "source_id": "s38",
+      "quote": "- The human antagonist attempts to destroy the final evidence or redirect blame onto Mara.",
+      "id": "3a08243726e5a2e77639",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara will use her nursing expertise and hospital knowledge to protect the patient and expose the truth.",
+      "source_id": "s40",
+      "quote": "- Mara uses her nursing expertise and knowledge of the hospital to protect the patient and expose the truth.",
+      "id": "8446e055549be32eafbe",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "resolution",
+      "statement": "The institutional cover-up becomes public or impossible to suppress by the resolution.",
+      "source_id": "s42",
+      "quote": "- The institutional cover-up becomes public or impossible to suppress.",
+      "id": "7ee4ebe8bb7077474d04",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "resolution",
+      "statement": "By the end, Mara acknowledges her own role without accepting blame for decisions made above her authority.",
+      "source_id": "s43",
+      "quote": "- Mara acknowledges her own role without accepting blame for decisions made above her authority.",
+      "id": "eb2c52aedd4ddd563597",
+      "source": "artifacts/02-story-engine.md",
+      "source_sha256": "278a0d473474cffd7f30ff83d492163135f54091b482114a86b47aea16d6c6e4"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara Vale is the protagonist and an experienced night-shift registered nurse at St. Brigid’s Coastal Hospital.",
+      "source_id": "s3",
+      "quote": "**Role:** Protagonist; experienced night-shift registered nurse at St. Brigid’s Coastal Hospital.",
+      "id": "6a898adf7229c81f8047",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Two years earlier, Mara followed a senior clinician’s evacuation order during a storm emergency, after which a patient died when moved away from needed equipment and monitoring.",
+      "source_id": "s4",
+      "quote": "**Core wound:** Two years earlier, Mara followed a senior clinician’s evacuation order during a storm emergency. A patient died after being moved away from the equipment and monitoring they needed. Mara has carried the death as proof that her judgment cannot be trusted.",
+      "id": "dd80e931262621cacff6",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara seeks to identify who is sending pages from Room 0, protect current patients, and prove she is not losing competence or sanity.",
+      "source_id": "s5",
+      "quote": "**Conscious desire:** Identify who is sending the pages from Room 0, protect her current patients, and prove that she is not losing her competence or her mind.",
+      "id": "5dd9b7fd0637cfc29a16",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara must learn that responsibility is not solitary blame, trust her clinical judgment, share burdens, and make the truth visible even when it implicates her.",
+      "source_id": "s6",
+      "quote": "**Unconscious need:** Accept that responsibility is not the same as solitary blame. She must trust her own clinical judgment, allow others to share the burden, and make the truth visible even when it implicates her.",
+      "id": "ab252feb1dc911730ea1",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn gave the evacuation order two years earlier and is now chief medical officer at St. Brigid’s.",
+      "source_id": "s16",
+      "quote": "- **Dr. Elias Venn:** The physician who gave the evacuation order two years earlier. He is now the hospital’s chief medical officer. He presents himself as Mara’s protector while subtly making her doubt her memory.",
+      "id": "3c466402fd672f73aaf0",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is a younger nurse, Mara’s closest colleague, and trusts Mara’s instincts while fearing the investigation could cost them their licenses and livelihoods.",
+      "source_id": "s17",
+      "quote": "- **Nia Okafor:** A younger nurse and Mara’s closest colleague. Nia trusts Mara’s instincts but fears that involvement in the investigation will cost them both their licenses and livelihoods.",
+      "id": "0bdf46a954743e92c534",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Ruth Calder is the former charge nurse who worked the final night of Room 0 and knows the official account is false but has refused to speak.",
+      "source_id": "s18",
+      "quote": "- **Ruth Calder:** Former charge nurse who worked the final night of Room 0. Ruth knows the official account is false but has survived by refusing to speak.",
+      "id": "d60d4cb32ab99c057f30",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Jonah Vale is Mara’s estranged younger brother and a harbor electrician who understands the hospital’s storm-damaged infrastructure.",
+      "source_id": "s19",
+      "quote": "- **Jonah Vale:** Mara’s estranged younger brother, a harbor electrician. He understands the hospital’s storm-damaged infrastructure and resents Mara for disappearing into work after their mother’s death.",
+      "id": "665e95f649dd3aafc217",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara’s narration is first person and present tense, grounded in clinical precision.",
+      "source_id": "s21",
+      "quote": "- First-person, present-tense observations grounded in clinical precision.",
+      "id": "f73ce8831b097cc8547c",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara’s repeated private phrase is “Check again,” beginning as a nursing habit and becoming a moral command.",
+      "source_id": "s26",
+      "quote": "- Repeated private phrase: “Check again.” It begins as a nursing habit and becomes a moral command.",
+      "id": "41af205f4360f51bc547",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn is chief medical officer, a former emergency physician, and Mara’s supervisor during the Room 0 incident.",
+      "source_id": "s28",
+      "quote": "**Role:** Chief medical officer; former emergency physician and Mara’s supervisor during the Room 0 incident.",
+      "id": "f9647bdeb57d21f07982",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Elias wants to keep St. Brigid’s open through storm season, prevent scandal, and contain the Room 0 investigation.",
+      "source_id": "s30",
+      "quote": "**Conscious desire:** Keep St. Brigid’s open through the storm season, prevent scandal, and contain the Room 0 investigation.",
+      "id": "558fbfd994d53f6501b4",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias believes a controlled lie that keeps a hospital functioning is more ethical than truth that causes panic, lawsuits, or closure.",
+      "source_id": "s32",
+      "quote": "**Lie he believes:** A controlled lie that keeps a hospital functioning is more ethical than a truth that causes public panic, lawsuits, or closure.",
+      "id": "e9e60094901ba9cc96ef",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias protects Mara from public blame while privately preparing to make her the scapegoat.",
+      "source_id": "s35",
+      "quote": "- Protects Mara from public blame while privately preparing to make her the scapegoat.",
+      "id": "6e714b10fad02f8477e1",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias uses authority over Nia’s scheduling and Mara’s credentials to isolate them.",
+      "source_id": "s40",
+      "quote": "- Uses his authority over Nia’s scheduling and Mara’s credentials to isolate them.",
+      "id": "fe8b75940de67503a8c0",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is a staff nurse on Mara’s night team and a practical ally.",
+      "source_id": "s49",
+      "quote": "**Role:** Staff nurse on Mara’s night team; practical ally.",
+      "id": "48b421361f461ece11a4",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "During an earlier staffing crisis, Nia raised a safety concern that was ignored, and the hospital reframed the resulting patient deterioration as her failure.",
+      "source_id": "s50",
+      "quote": "**Core wound:** During an earlier staffing crisis, Nia raised a safety concern that was ignored, and a patient deteriorated. The hospital quietly reframed the incident as her failure.",
+      "id": "98a37f73614c65d1df70",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Nia wants to keep patients safe, finish her probationary period, and avoid becoming another nurse the institution can discard.",
+      "source_id": "s51",
+      "quote": "**Conscious desire:** Keep her patients safe, finish her probationary period, and avoid becoming another nurse the institution can discard.",
+      "id": "7c76e102af5b12384250",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Nia appears skeptical of the supernatural while secretly keeping records of every impossible page.",
+      "source_id": "s57",
+      "quote": "- Appears skeptical of the supernatural while secretly keeping records of every impossible page.",
+      "id": "335999d44a67bfeddb28",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Elias offers Nia a promotion in exchange for a statement discrediting Mara.",
+      "source_id": "s62",
+      "quote": "- Elias offers Nia a promotion in exchange for a statement discrediting Mara.",
+      "id": "5b164e5ef0d964c86a19",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Ruth Calder is a retired former charge nurse and keeper of the original Room 0 testimony.",
+      "source_id": "s69",
+      "quote": "**Role:** Retired former charge nurse; keeper of the original Room 0 testimony.",
+      "id": "d5274a6cedaf5847f4c8",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ruth obeyed an order to alter the final handover report and has lived knowing her silence helped erase several patients.",
+      "source_id": "s70",
+      "quote": "**Core wound:** She obeyed an order to alter the final handover report and has lived with the knowledge that her silence helped erase several patients.",
+      "id": "75a346131d999c6693ec",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Ruth wants to remain invisible and die without reopening the event.",
+      "source_id": "s71",
+      "quote": "**Conscious desire:** Remain invisible and die without reopening the event.",
+      "id": "fe55a35bc26467fb69a3",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Ruth’s testimony is incomplete unless Mara finds the missing paper chart.",
+      "source_id": "s82",
+      "quote": "- Her testimony is incomplete unless Mara finds the missing paper chart.",
+      "id": "7f1bdd6ec7f77b67cc53",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "The Room 0 Presence is a supernatural or technologically mediated intelligence connected to erased patients and abandoned paging infrastructure.",
+      "source_id": "s89",
+      "quote": "**Role:** Supernatural or technologically mediated intelligence connected to the erased patients and the hospital’s abandoned paging infrastructure.",
+      "id": "ab85f049f529fb91774a",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The Room 0 Presence’s final call for help was received, documented incorrectly, and erased.",
+      "source_id": "s90",
+      "quote": "**Core wound:** Its final call for help was received, documented incorrectly, and then erased.",
+      "id": "6f5ea16a28402a5e81e2",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "promise",
+      "statement": "The Room 0 Presence wants to complete the missing account and prevent repeated abandonment by the hospital.",
+      "source_id": "s91",
+      "quote": "**Conscious desire:** Make the missing account complete and prevent the hospital from repeating the same abandonment.",
+      "id": "9d4a13cf35517971b0bd",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The Room 0 Presence may be a ghost, damaged system, collective memory, or some combination.",
+      "source_id": "s98",
+      "quote": "- May be a ghost, a damaged system, a collective memory, or some combination.",
+      "id": "a398e5ec2b0033b3f1ad",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The final choice must determine whether the Room 0 Presence is asking for revenge, testimony, or release.",
+      "source_id": "s103",
+      "quote": "- The final choice must determine whether it is asking for revenge, testimony, or release.",
+      "id": "204725eccfaa69d8cbe1",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Jonah Vale is a harbor electrician and Mara’s estranged brother.",
+      "source_id": "s111",
+      "quote": "**Role:** Harbor electrician and Mara’s estranged brother.",
+      "id": "278b729f89fa78dc2b0c",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara and Jonah’s mother died during a coastal flood while Mara was working at St. Brigid’s, and Jonah believes Mara chose the hospital over family.",
+      "source_id": "s112",
+      "quote": "**Core wound:** Their mother died during a coastal flood while Mara was working at St. Brigid’s, and Jonah believes Mara chose the hospital over the family.",
+      "id": "d8f302c9569967621672",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Jonah’s knowledge of the hospital electrical and paging systems makes him essential to Mara’s investigation.",
+      "source_id": "s122",
+      "quote": "- His knowledge of the hospital’s electrical and paging systems makes him essential to Mara’s investigation.",
+      "id": "4c1ddbf8c5cce837899c",
+      "source": "artifacts/03-characters.md",
+      "source_sha256": "78a65ad5ab5a24119a676ed43d364ff37eeb6468760a7673e65cc2a55acc67a9"
+    },
+    {
+      "kind": "quantity",
+      "statement": "The story is planned as a 34-chapter supernatural medical thriller in seven escalating blocks.",
+      "source_id": "s3",
+      "quote": "A 34-chapter supernatural medical thriller in seven escalating blocks. The story begins as a technical anomaly during an ordinary night shift, develops into an investigation of an erased patient population, and culminates in a storm-bound rescue and public exposure of the hospital’s cover-up.",
+      "id": "4e92c890bc8722f8ea87",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "The protagonist is Mara Vale, who investigates pages from Room 0 while protecting current patients from a concealed hospital disaster recurring.",
+      "source_id": "s14",
+      "quote": "Mara Vale must determine who or what is paging her from Room 0 while protecting current patients from a repetition of the hospital’s concealed disaster.",
+      "id": "730b06594b3ec20b69c3",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn is the human antagonist, presenting preservation of continuity and patient safety while protecting the hospital's reputation.",
+      "source_id": "s16",
+      "quote": "The human antagonist is Dr. Elias Venn, whose language of continuity and patient safety disguises his campaign to preserve the hospital’s reputation. The Room 0 presence remains partly ambiguous, but its purpose becomes clear: to complete a suppressed account and prevent another abandonment.",
+      "id": "bc09a11b3409b8bb06c4",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "rule",
+      "statement": "Room 0's presence remains partly ambiguous, but its purpose is to complete a suppressed account and prevent another abandonment.",
+      "source_id": "s16",
+      "quote": "The human antagonist is Dr. Elias Venn, whose language of continuity and patient safety disguises his campaign to preserve the hospital’s reputation. The Room 0 presence remains partly ambiguous, but its purpose becomes clear: to complete a suppressed account and prevent another abandonment.",
+      "id": "4eed9365f0c13de3934f",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "The pages stop after the erased record is restored.",
+      "source_id": "s20",
+      "quote": "| The pages | A strange request from a nonexistent room | Names erased patients and predicts events | Directs Mara toward a trapped living patient | Stops after the record is restored |",
+      "id": "f03762f7f4653bbe360f",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia is introduced as Mara's skeptical ally.",
+      "source_id": "s36",
+      "quote": "**Narrative function:** Establish the impossible physical fact and introduce Nia as Mara’s skeptical ally.",
+      "id": "7cf96575aa2da3b1fa06",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "No one has used Room 0 in two years when Mara receives the first page.",
+      "source_id": "s33",
+      "quote": "She assumes the page is a routing error. The current ward begins at Room 1, and no one has used Room 0 in two years.",
+      "id": "22b8a2e5d4795d546dba",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The first page is logged from a live location labeled 0 despite Room 0 not existing on the current ward.",
+      "source_id": "s34",
+      "quote": "**Ending turn:** When Mara checks the electronic board, the page is logged as having come from a live location labeled `0`.",
+      "id": "456e6a7fc6bc37b36462",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara discovers that the west service wing once contained a room numbered zero used during storm overflow and undocumented transfers.",
+      "source_id": "s47",
+      "quote": "Mara researches the hospital’s current floor plan and finds no Room 0. She searches older terminology and discovers that the west service wing once contained a room numbered zero, used during storm overflow and undocumented transfers.",
+      "id": "f39d5d85567af3cc9e9b",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Room 0's demolition date matches the storm evacuation when Leda Shaw died after being moved away from monitoring equipment.",
+      "source_id": "s56",
+      "quote": "The demolition date matches the night Mara remembers most clearly: the storm evacuation during which a patient named Leda Shaw died after being moved away from her monitoring equipment.",
+      "id": "268b300e10f5eba24ac8",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Eli Mercer is an erased patient whose name appears in a page and has no current hospital record.",
+      "source_id": "s60",
+      "quote": "The next page names `ELI MERCER` and gives a medication time. Mara searches the hospital record system and finds no patient by that name. A partial match appears in an old pharmacy index, then disappears when she tries to open it.",
+      "id": "6a96f3d650d699d948a1",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Ruth Calder is a retired charge nurse who recognizes the significance of Eli Mercer and leaves Mara an old master key.",
+      "source_id": "s61",
+      "quote": "Ruth Calder, a retired charge nurse, visits the hospital to collect personal effects. Mara asks about Eli Mercer. Ruth’s exact reaction confirms that the name matters.",
+      "id": "0ed6f4f7c7e960128b4b",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "promise",
+      "statement": "After Mara intervenes for Tomas Bell, the pager says one person has been saved and five remain.",
+      "source_id": "s67",
+      "quote": "**Ending turn:** After Tomas leaves, the pager displays: `ONE SAVED. FIVE REMAIN.`",
+      "id": "4712fd99b3bedfe39ee0",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ruth admits Room 0 was used during a storm evacuation for patients who could not be placed on regular wards, including people without complete registration paperwork.",
+      "source_id": "s70",
+      "quote": "Mara and Nia interview Ruth at her home near the seawall. Ruth admits Room 0 was used during a storm evacuation for patients who could not be placed on the regular wards, including people without complete registration paperwork.",
+      "id": "3bf2f3dfb736085ed380",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "Ruth tells Mara she did not move Leda Shaw, but carried the order.",
+      "source_id": "s72",
+      "quote": "**Ending turn:** Ruth looks at Mara’s old shift badge and says, “You did not move Leda Shaw. You carried the order.”",
+      "id": "908178cbba0c8b58eeb9",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara's access to archived records is revoked after she questions Elias about Room 0.",
+      "source_id": "s79",
+      "quote": "**Ending turn:** When Mara returns to the ward, her access to archived records has been revoked.",
+      "id": "207c77453f8e6a721d48",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia finds that the final night's handover report was edited after submission, removing several patient names and altering the staffing roster.",
+      "source_id": "s92",
+      "quote": "Nia searches old handover files through a scheduling archive and finds that the final night’s report was edited after submission. Several patient names were removed, and the staffing roster was altered to make the ward appear fully covered.",
+      "id": "1e176837288c4390709a",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "quantity",
+      "statement": "The original backup file listed six patients in Room 0 before the system began deleting itself.",
+      "source_id": "s94",
+      "quote": "**Ending turn:** The original file briefly appears on a backup terminal, listing six patients in Room 0—then the system begins deleting itself.",
+      "id": "33ac2d176394d93e917f",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Jonah identifies Mara's phone image as a frame from an old maintenance camera and explains Room 0 may still connect to the paging network through flood-damaged conduits.",
+      "source_id": "s97",
+      "quote": "Jonah examines Mara’s phone and identifies the image as a frame pulled from an old maintenance camera. He explains that Room 0’s electrical route may still connect to the paging network through flood-damaged conduits.",
+      "id": "43697d6224ba271d2242",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "Amira Sol is a ventilated patient whose unsafe transfer recreates the original moral dilemma.",
+      "source_id": "s109",
+      "quote": "A ventilated patient, Amira Sol, needs continuous monitoring. Elias orders her moved from the high-dependency bay to a lower ward so the bay can receive storm casualties. Mara recognizes the same logic used during Leda Shaw’s evacuation.",
+      "id": "8765ccbc17af993df6a0",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara moves Amira back to the monitored bay without authorization, and Amira survives the crisis.",
+      "source_id": "s129",
+      "quote": "Mara moves Amira back to the monitored bay without authorization. Nia stabilizes the patient while Mara documents the order, the equipment failure, and the clinical reason for disobedience.",
+      "id": "8bad50a9368ec3884167",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "identity",
+      "statement": "The six names provided by the pages correspond to missing charts, altered transfer records, and one unclaimed body listed under an incorrect identifier.",
+      "source_id": "s137",
+      "quote": "Mara sees that the names correspond to missing charts, altered transfer records, and one unclaimed body listed under an incorrect identifier.",
+      "id": "a6488c1aa4454c1bab6e",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ruth admits she altered the handover report under Elias's direction because he said recording undocumented patients would trigger an investigation and close the hospital.",
+      "source_id": "s141",
+      "quote": "Ruth gives Mara the old master key and admits she altered the handover report under Elias’s direction. He told her that recording the undocumented patients would trigger an investigation and close the hospital.",
+      "id": "f048989a13901a1a4c1c",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ruth says Elias knew at least one patient was still alive when Room 0 was sealed.",
+      "source_id": "s143",
+      "quote": "**Ending turn:** Ruth adds that Elias knew at least one patient was still alive when Room 0 was sealed.",
+      "id": "d0773c7ebf69d3192229",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Room 0 was not fully demolished; its rear wall and call system remain behind newer construction.",
+      "source_id": "s147",
+      "quote": "The architecture reveals that Room 0 was not fully demolished. Its rear wall and call system remain behind newer construction.",
+      "id": "3952d81847fd5e37cc6d",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "The paper chart lists six patients, their conditions, and the times staff requested transfer and monitoring.",
+      "source_id": "s151",
+      "quote": "The team reaches the emergency power room and finds the paper chart sealed in a rusted cabinet. It lists six patients, their conditions, and the times staff requested transfer and monitoring.",
+      "id": "db3ce58762201b6c1ae7",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "The chart shows Leda Shaw remained alive after Mara left to follow the evacuation order and records Elias's instruction to classify the patients as unverified storm arrivals.",
+      "source_id": "s152",
+      "quote": "The chart shows that Leda Shaw remained alive after Mara left to follow the evacuation order. It also records Elias’s instruction to classify the patients as “unverified storm arrivals.”",
+      "id": "0c1b59b5c469f1f4967e",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "Mara remembers returning to Room 0, hearing someone inside, reporting it, and being told by Elias that the space had been cleared.",
+      "source_id": "s156",
+      "quote": "Mara remembers returning to Room 0 after the evacuation. She heard someone inside and reported it, but Elias told her the space had been cleared. He ordered her to assist elsewhere while the storm damaged the corridor.",
+      "id": "4d516c527955e51a3f51",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "Nia photographs the chart and sends the images externally before Elias can confiscate her phone.",
+      "source_id": "s178",
+      "quote": "Nia photographs the chart and sends the images through an external connection before Elias can confiscate her phone. Jonah uses the temporary circuit to route emergency communications through the harbor network.",
+      "id": "c609729d793e1e01a0de",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "Amira reaches functioning equipment and stabilizes after Mara uses clinical expertise and the old infrastructure to rescue her.",
+      "source_id": "s190",
+      "quote": "Amira reaches functioning equipment and stabilizes.",
+      "id": "725ce2289555a73085db",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "An external inquiry begins, the hospital remains open under emergency oversight, and Elias is removed from clinical authority.",
+      "source_id": "s196",
+      "quote": "An external inquiry begins. The hospital remains open under emergency oversight, but its records, staffing practices, and storm procedures are investigated.",
+      "id": "9b4fb9f605b683d21461",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "resolution",
+      "statement": "St. Brigid's installs a formal memorial, updates emergency procedures, and Mara returns to supervised patient care.",
+      "source_id": "s211",
+      "quote": "St. Brigid’s installs a formal memorial and updates its emergency procedures. Mara returns to patient care under supervision, no longer pretending that competence means never being afraid or never needing help.",
+      "id": "e9f873a144e176306a1a",
+      "source": "artifacts/05-outline.md",
+      "source_sha256": "3bd6c86952caef133216972032ad6599b4fc9df2140bbb8b8e548aa60aa8c987"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Chapter 1 begins at 2:13 a.m. during an October night shift at St. Brigid's.",
+      "source_id": "s2",
+      "quote": "At 2:13 a.m., Mrs. Halloway decides the ceiling is lying to her.",
+      "id": "cb24ab7064b857bae003",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mrs. Halloway is an eighty-six-year-old patient on Ward C receiving oxygen at two liters.",
+      "source_id": "s8",
+      "quote": "She studies me, deciding whether this is humor or a symptom. At eighty-six, she has learned not to waste either. Her oxygen tubing loops beneath her nostrils, the skin around them pink and rubbed. Saturation ninety-four percent on two liters. Heart rate eighty-eight. Respirations twenty, shallow but even.",
+      "id": "195766b0363154e7c68f",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway reports seeing a wet man on the ceiling before the first Room 0 page arrives.",
+      "source_id": "s10",
+      "quote": "“Wet.”",
+      "id": "228575554f67887df203",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "rule",
+      "statement": "The sea and storm are active outside Ward C during the chapter.",
+      "source_id": "s11",
+      "quote": "Outside, the sea throws itself at the windows.",
+      "id": "2fd4bf39699ed68e88bd",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mrs. Halloway's full name is Eleanor Halloway.",
+      "source_id": "s138",
+      "quote": "“Eleanor Halloway.”",
+      "id": "6430d0cd6d61aa3d8b72",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway is admitted for fluid overload and has furosemide due at 2:30 a.m.",
+      "source_id": "s108",
+      "quote": "The saturation reaches ninety-one. I listen to her lungs. Fine crackles at the bases, more on the right. She has been admitted for fluid overload, and her furosemide is due at two-thirty. I check the medication administration record. The order is active. The dose is in the cart.",
+      "id": "a38dc6539f127934b643",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "quantity",
+      "statement": "Ward C has eighteen beds but is holding twenty-one patients tonight.",
+      "source_id": "s43",
+      "quote": "The ward has eighteen beds. Tonight we have twenty-one patients, one bed in the day room, and an empty isolation room occupied by a man waiting for transport because the transport company has no driver willing to cross the causeway in this weather. The electronic board displays the names in green and amber. Green means stable. Amber means someone has offended the machine by requiring attention.",
+      "id": "0f3b268f0c03d69fb1f8",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "quantity",
+      "statement": "Three amber-status patient names belong to Mara during the shift.",
+      "source_id": "s44",
+      "quote": "Three amber names belong to me.",
+      "id": "b0c73b3e24a61d526a91",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mr. Pritchard is in room six and has a delayed antibiotic and rising blood pressure.",
+      "source_id": "s46",
+      "quote": "The second is Mr. Pritchard, room six, whose blood pressure has been climbing since midnight. His antibiotic is due at one-thirty. Pharmacy sent the dose to the wrong tower. The replacement is somewhere between the pneumatic tube station and the basement, where all lost things eventually become administrative concerns.",
+      "id": "2d33f7b24770e78151c1",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "quantity",
+      "statement": "Mr. Pritchard's manually retaken blood pressure is 184 over 96.",
+      "source_id": "s71",
+      "quote": "He is asleep on his left side, mouth open, one hand outside the blanket. His blood pressure cuff has loosened and is hanging around his arm like a collapsed belt. I retake it manually: 184 over 96.",
+      "id": "4616b8712e0c3867045e",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Len Torres is in room twelve and has repeatedly pulled off his telemetry leads.",
+      "source_id": "s47",
+      "quote": "The third is Len Torres, room twelve, who has pulled off his telemetry leads twice and is now convinced the wires are listening to him.",
+      "id": "35692a54f186492f103a",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is working with Mara at the nurses' station and is handling a pharmacy call.",
+      "source_id": "s37",
+      "quote": "The corridor is empty except for the medication cart, two linen bags, and Nia Okafor standing at the nurses’ station with her phone held against one ear. She is younger than me by enough years to still believe sleep can be recovered later. Her left thumbnail is painted green, the polish chipped down the middle.",
+      "id": "37b1b8f420ecc3f52618",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia learns during the shift that her sister's school is closed while Nia is at work.",
+      "source_id": "s68",
+      "quote": "“My sister’s school is closed?” she says. “No, I’m at work. I can’t just—”",
+      "id": "b4adc029ae051afc806e",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "rule",
+      "statement": "The phrase “Check again” is used as a recurring nursing command that affects Mara personally.",
+      "source_id": "s56",
+      "quote": "She says it lightly, but the phrase lands where it always does.",
+      "id": "fc5c7194ffaf9747f351",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The corridor lights flicker and all six east-side panels briefly go dark before emergency floor strips activate.",
+      "source_id": "s93",
+      "quote": "Then all six panels on the east side go dark.",
+      "id": "47ae10558eb2796016e0",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway's oxygen saturation drops to eighty-seven before climbing after oxygen is reconnected.",
+      "source_id": "s102",
+      "quote": "Her respirations are twenty-eight now. I reconnect the oxygen and place the pulse oximeter on her finger. Saturation eighty-seven, climbing slowly.",
+      "id": "4433e8fde472860b42da",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara's scanner initially rejects Mrs. Halloway's furosemide despite correct patient, drug, dose, and time checks.",
+      "source_id": "s115",
+      "quote": "The scanner rejects it again. I check the patient band. Correct name, correct date of birth. I check the medication label. Correct drug, correct dose, correct time.",
+      "id": "b074e059390c718f8068",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Bell is the resident called for Mrs. Halloway.",
+      "source_id": "s162",
+      "quote": "“Dr. Bell.”",
+      "id": "f644c19e74615597d94c",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Dr. Bell replaces the furosemide order, after which the scanner accepts it.",
+      "source_id": "s259",
+      "quote": "The resident arrives carrying a tablet and no pen. Dr. Bell is young enough to apologize before she has made a mistake. She examines Mrs. Halloway, reviews the chart, and places the furosemide order again.",
+      "id": "a52d61f7a6fb82f1cd5f",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "resolution",
+      "statement": "After furosemide is administered, Mrs. Halloway's saturation improves to ninety-five and her breathing slows.",
+      "source_id": "s263",
+      "quote": "The medication goes in. Mrs. Halloway’s saturation improves to ninety-five. Her breathing slows.",
+      "id": "e85b59feed25b9573e41",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara receives a pager message from Room 0 saying, “Need water. Please check breathing.”",
+      "source_id": "s168",
+      "quote": "`ROOM 0: NEED WATER. PLEASE CHECK BREATHING.`",
+      "id": "40071bfc78b6f69274a6",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "rule",
+      "statement": "The paging system sends pages from beds, not rooms, and Room 0 is not assigned to anything.",
+      "source_id": "s173",
+      "quote": "The message is a patient call: location, request, instruction. The system sends pages from beds, not rooms. A nurse enters a room number when she assigns a handset. Room 0 is not assigned to anything.",
+      "id": "11316c199ccf09f73b44",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara has worked at St. Brigid's for nearly a decade.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago.",
+      "id": "11bcfcd6fd65f306102c",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The east ward begins at Room 1, and the old west service wing had a room marked 0 on a maintenance plan.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago.",
+      "id": "0ae48e69116b17c5ddd3",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The old west service wing was sealed and rebuilt around Room 0 two years ago.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago.",
+      "id": "98c45980c3fb313c38c7",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara knows about the sealed and rebuilt west service wing because she signed the transfer inventory.",
+      "source_id": "s176",
+      "quote": "I know this because I signed the transfer inventory.",
+      "id": "e9553e80f6ecbf8bafd3",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn has a pale crescent scar across his right thumb.",
+      "source_id": "s210",
+      "quote": "Dr. Elias Venn stands in the corridor in shirtsleeves, his white coat folded over one arm. He has a pale crescent scar across his right thumb, visible when he holds a chart. He looks first at the monitor, then at the oxygen tubing, then at me. He never begins with the person.",
+      "id": "32d424fbef39c405de7d",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias begins clinical assessment with the monitor, oxygen tubing, and Mara rather than the patient.",
+      "source_id": "s210",
+      "quote": "Dr. Elias Venn stands in the corridor in shirtsleeves, his white coat folded over one arm. He has a pale crescent scar across his right thumb, visible when he holds a chart. He looks first at the monitor, then at the oxygen tubing, then at me. He never begins with the person.",
+      "id": "43ffb8cc777305aa8216",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Storm protocol is scheduled to begin at three, stopping nonessential movement and conserving staff for the emergency department.",
+      "source_id": "s265",
+      "quote": "“Storm protocol begins at three,” he says. “All nonessential movement stops after that. We’re conserving staff for the emergency department.”",
+      "id": "3dd30f06a6204226d2c5",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias says Room 0 was removed from the directory two years ago and should not be able to send pages.",
+      "source_id": "s278",
+      "quote": "“Room 0 was removed from the directory,” he says.",
+      "id": "74835b768e2a98cad330",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The paging log records the Room 0 message at 02:26 with source listed as a live location and location 0.",
+      "source_id": "s321",
+      "quote": "02:26 — Room 0 — *Need water. Please check breathing.*",
+      "id": "7d87710491ed53fcec50",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "At the end of the chapter, Room 0 sends a different message addressed to Mara: “Mara, please check again.”",
+      "source_id": "s339",
+      "quote": "`ROOM 0: MARA, PLEASE CHECK AGAIN.`",
+      "id": "033f4bde8e9769a75550",
+      "source": "manuscript/chapters/chapter-01.md",
+      "source_sha256": "d083ae9279e99443552f2ff26680c76f6fbddac6d1bcd9f2e5948dbdf647f798"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Chapter 2 opens immediately after the Room 0 message addressed to Mara asking her to check again.",
+      "source_id": "s9",
+      "quote": "`ROOM 0: MARA, PLEASE CHECK AGAIN.`",
+      "id": "e09e8ffb14adbfe63e2a",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia initially examines Mara's pager and helps investigate the Room 0 message.",
+      "source_id": "s7",
+      "quote": "I hand her the pager. Nia holds it by the edges, as if something could travel through the plastic and into her skin. The gray casing looks older in her hand. There is a crack near the side button and a peeling label on the back.",
+      "id": "31b5aea632e80dc6f93a",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ward C's central station sits between two wings and emergency baseboard lighting remains active after the earlier outage.",
+      "source_id": "s20",
+      "quote": "The central station sits between the two wings of Ward C, surrounded by medication cabinets, charging monitors, and a clean-linen cart someone has left across the corridor. The emergency lighting still glows in low strips along the baseboards. The ceiling lights are back, but they flicker now and then, as if the building is trying to remember.",
+      "id": "18dc5edc8fc65a6a3d15",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia takes Mara to a small communications room behind the supervision desk.",
+      "source_id": "s21",
+      "quote": "Nia leads me to the small communications room behind the supervision desk. The door sticks in the frame. She hits it with her hip once, then again.",
+      "id": "33a010711d991eed3fcf",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The communications room contains an old terminal Mara remembers from when she began working at St. Brigid's.",
+      "source_id": "s25",
+      "quote": "Inside, an old terminal sits on a metal shelf. The monitor is square and thick, with a yellow stain in the lower corner. I remember it from when I started working at St. Brigid’s. Even then, it looked as though it had survived a shipwreck.",
+      "id": "ec98409e3007715be249",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The old terminal can access call system maintenance mode.",
+      "source_id": "s37",
+      "quote": "`CALL SYSTEM — MAINTENANCE MODE`",
+      "id": "640bc870e75aa418e9e8",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The call system department list marks the west wing as removed.",
+      "source_id": "s47",
+      "quote": "She types in the ward name. The keyboard sinks beneath her fingers with a typewriter clatter. The list of departments appears: emergency, surgical, ICU, obstetrics, east and north wings. West is marked inactive.",
+      "id": "6a73632728fa4f3d38b4",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The west wing is marked removed in the call system.",
+      "source_id": "s49",
+      "quote": "`WING WEST — REMOVED`",
+      "id": "2fc088977716ab9f2eb3",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The destination menu starts at 1 and does not normally show 0.",
+      "source_id": "s55",
+      "quote": "She opens the destination menu. The numbers begin at 1.",
+      "id": "db2e812f629207f39aad",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The destination menu skips room twelve even though Room Twelve physically exists on the ward.",
+      "source_id": "s59",
+      "quote": "“It’s skipping twelve.”",
+      "id": "5229c9e777b4076d404e",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Nia can access deleted records that someone forgot to protect.",
+      "source_id": "s66",
+      "quote": "“Deleted-record filter.”",
+      "id": "4e3f19e05b4c871b9bd5",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Destination 0 briefly appears on the old terminal, then disappears.",
+      "source_id": "s73",
+      "quote": "`DESTINATION: 0`",
+      "id": "a0541f8d790e19ebdba2",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The terminal records the Room 0 source as a live physical location without displaying a map.",
+      "source_id": "s87",
+      "quote": "“It’s coming from a maintenance door,” she says.",
+      "id": "3507cd35557a35a0063e",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The Room 0 source is recorded as live location node 0.",
+      "source_id": "s91",
+      "quote": "`SOURCE: LIVE LOCATION`",
+      "id": "75600b41cf81d6de15d8",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "Seawater intrusion reaches St. Brigid's through places omitted from official reports.",
+      "source_id": "s96",
+      "quote": "The air conditioner pushes a cold current through the floor grate. It smells of rust, disinfectant, and something salty. Seawater should not be getting into the building, but it comes into St. Brigid’s through every place that doesn’t appear in the reports.",
+      "id": "c4b3fc23fe44b731afcc",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Engineering archives are in the west, which was rebuilt and has a blocked passage.",
+      "source_id": "s100",
+      "quote": "“Engineering archives are in the west.”",
+      "id": "8bf93694dbaa846a3998",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara decides to inspect the wall near the west passage, and Nia insists on accompanying her.",
+      "source_id": "s110",
+      "quote": "“I’m going to look at the wall.”",
+      "id": "89cbf304782a2371526f",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The west fire door bears a restricted construction sign, has torn tape, and is unlocked.",
+      "source_id": "s127",
+      "quote": "The west fire door is past the service elevators. A red sign reads: `RESTRICTED ACCESS — CONSTRUCTION`. The plastic tape has been torn at shoulder height. The lock is not engaged.",
+      "id": "1377e237e5c2db702a36",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia says the west fire door had been closed twenty minutes earlier.",
+      "source_id": "s131",
+      "quote": "“I came through here twenty minutes ago. It was closed.”",
+      "id": "44dbe08a438381664438",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara signed the west corridor transfer inventory during reconstruction but does not remember seeing a room there.",
+      "source_id": "s139",
+      "quote": "The west corridor was closed during reconstruction. I signed the transfer inventory: a few stretchers, several cabinets, a dressing cart, a wheelchair with a sticking right wheel. I remember the smell of wet plaster. I remember pencil marks on the walls showing where the cables would be cut.",
+      "id": "dde292f14d7188496cd2",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "rule",
+      "statement": "The old plan placed Room 0 behind the service wing against the outer wall as an improvised space for storm surges and overcrowding.",
+      "source_id": "s141",
+      "quote": "The old plan showed Room 0 behind the service wing, against the outer wall. An improvised space for storm surges and overcrowding. The numbering began there, not in the main corridor. Room 0 came before Room 1, as if the building had taken one step backward before starting.",
+      "id": "a3d577c061caf1e1518e",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara distrusts Elias to frame events conveniently rather than truthfully.",
+      "source_id": "s146",
+      "quote": "“Because Elias will say it’s a technical fault.”",
+      "id": "566b19db9a499604ab10",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "At the end of the west corridor, Mara and Nia find a freshly painted wall with no door, frame, or sign.",
+      "source_id": "s165",
+      "quote": "At the end of the corridor is a smooth wall, freshly painted white. There is no door, frame, or sign. The paint is the same color as the new partitions in the east wing, but the surface beneath it is uneven, with a darker horizontal band at chest height.",
+      "id": "b6038a33240ad3625ff0",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara identifies a dark band on the wall as a flood mark.",
+      "source_id": "s168",
+      "quote": "“That’s a flood mark,” I say.",
+      "id": "7eeee831541f94dce361",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Demolition dust remains between the baseboard and floor two years after the demolition.",
+      "source_id": "s170",
+      "quote": "Between the baseboard and the floor is a pale powder gathered in the corners. Demolition dust. Plaster, mortar, maybe cement. I press the tip of my glove into it. The powder sticks to the blue rubber.",
+      "id": "52fb2d5c16ce905e2438",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara remembers a closed door, ankle-deep water, a stretcher, a ship-printed sheet, and three knocks.",
+      "source_id": "s188",
+      "quote": "The question slips beneath my ribs. I see a corridor filled with water to the ankles. A stretcher against the wall. A sheet printed with blue and white ships, caught beneath the mattress. Someone’s hand striking a door three times.",
+      "id": "d1ef447cc79fa4e03199",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara has a younger brother named Jonah connected to a childhood memory involving their mother.",
+      "source_id": "s190",
+      "quote": "My mother used to put orange peels on the radiator when I was a child. The whole house smelled of burnt sugar. Jonah hated it. He said the smell got into his clothes. Once he threw the peels into the sink and the water carried everything down the drain, slowly, in circles.",
+      "id": "159e8c1f0d4bc3028f55",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara's pager displays node 0 as live while she stands by the sealed wall.",
+      "source_id": "s203",
+      "quote": "`NODE: 0 — LIVE`",
+      "id": "e4b4c06f5c9a3c0ac5d7",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia finds a transparent label fragment with a blue stripe and part of a printed zero near scratches on the baseboard.",
+      "source_id": "s221",
+      "quote": "She nudges the object with the tip of her pen. The plastic comes loose and drops to the floor. It is a transparent piece of label, with a blue stripe and half of a printed number.",
+      "id": "9b8be79a1dc810473e00",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Something knocks or presses from the other side of the sealed wall.",
+      "source_id": "s230",
+      "quote": "Something strikes the other side of the wall.",
+      "id": "618609005479eaa71382",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "timeline",
+      "statement": "A new Room 0 page saying to check again coincides with Mr. Pritchard's Room Six call bell.",
+      "source_id": "s257",
+      "quote": "`ROOM 0: CHECK AGAIN.`",
+      "id": "f9783aa4f30620a92653",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    },
+    {
+      "kind": "resolution",
+      "statement": "Mr. Pritchard's Room Six call is answered after the Room 0 warning, and he is transferred to monitored care with improved saturation.",
+      "source_id": "s519",
+      "quote": "I reread the screen. The first message remains. The second has disappeared. The old terminal is off in the room behind us. The west corridor is closed. Mr. Pritchard is being monitored. His saturation has reached ninety-five.",
+      "id": "0546b4edf31a3d4ff188",
+      "source": "manuscript/chapters/chapter-02.md",
+      "source_sha256": "e870de05c26a06fed426d563245be77b7a70671c2adeb7e0c6c302af00a9a2f9"
+    }
+  ],
+  "notice": "Model-extracted evidence, not externally verified facts or literary approval."
+}

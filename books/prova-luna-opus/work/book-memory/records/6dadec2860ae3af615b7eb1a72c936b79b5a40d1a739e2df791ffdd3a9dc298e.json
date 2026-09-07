@@ -1,0 +1,197 @@
+{
+  "facts": [
+    {
+      "kind": "identity",
+      "statement": "Mara Vale is a night-shift nurse at St. Brigid’s Coastal Hospital.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Room 0 was removed from the hospital floor plan after a demolition two years earlier.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara begins receiving pages addressed to Room 0.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The first Room 0 page appears to be a routine request for help.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The second Room 0 page includes a patient name missing from hospital records.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The third Room 0 page predicts a medical emergency on Mara’s ward before it happens.",
+      "source_id": "s3",
+      "quote": "Mara Vale, a night-shift nurse at St. Brigid’s Coastal Hospital, begins receiving pages addressed to Room 0—a room removed from the hospital’s floor plan after a demolition two years earlier. The first message appears to be a routine request for help. The second includes a patient name missing from the hospital’s records. The third predicts a medical emergency on Mara’s ward before it happens."
+    },
+    {
+      "kind": "rule",
+      "statement": "Room 0 was sealed after a storm-related evacuation involving several undocumented patients, rather than simply demolished.",
+      "source_id": "s4",
+      "quote": "At first, Mara assumes the pages are caused by a misconfigured legacy system, a cruel prank, or an unauthorized access point. Her investigation reveals that Room 0 was not simply demolished. It was sealed after a storm-related evacuation involving several undocumented patients, and the official account of the incident contains impossible gaps."
+    },
+    {
+      "kind": "rule",
+      "statement": "The official account of the Room 0 incident contains impossible gaps.",
+      "source_id": "s4",
+      "quote": "At first, Mara assumes the pages are caused by a misconfigured legacy system, a cruel prank, or an unauthorized access point. Her investigation reveals that Room 0 was not simply demolished. It was sealed after a storm-related evacuation involving several undocumented patients, and the official account of the incident contains impossible gaps."
+    },
+    {
+      "kind": "rule",
+      "statement": "The pages function like a delayed call system, identifying people in danger while also forming fragments of a larger testimony.",
+      "source_id": "s5",
+      "quote": "The pages begin to resemble a delayed call system: each message identifies someone in danger, but the warnings are also fragments of a larger testimony. As Mara follows them through old charts, maintenance corridors, archived handover notes, and the memories of former staff, she discovers that the hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation."
+    },
+    {
+      "kind": "rule",
+      "statement": "The hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation.",
+      "source_id": "s5",
+      "quote": "The pages begin to resemble a delayed call system: each message identifies someone in danger, but the warnings are also fragments of a larger testimony. As Mara follows them through old charts, maintenance corridors, archived handover notes, and the memories of former staff, she discovers that the hospital used Room 0 to hide patients whose deaths or injuries threatened its reputation."
+    },
+    {
+      "kind": "timeline",
+      "statement": "During a disastrous night two years earlier, Mara followed an order that contributed to a patient’s death.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster."
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara has believed the patient’s death two years earlier was solely her own failure.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster."
+    },
+    {
+      "kind": "rule",
+      "statement": "The pages suggest the same institutional decision-making and evidence suppression caused both Mara’s past fatal shift and the earlier Room 0 disaster.",
+      "source_id": "s6",
+      "quote": "The central buried event is connected to Mara’s own past. During a disastrous night two years earlier, she followed an order that contributed to a patient’s death. She has believed that failure was hers alone. The pages suggest that the same institutional decision-making—and the same effort to suppress evidence—caused the earlier disaster."
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara must determine who or what is paging her from Room 0 while protecting current patients from a repeating threat.",
+      "source_id": "s8",
+      "quote": "Mara must determine who or what is paging her from Room 0 while protecting current patients from a threat that appears to be repeating the past."
+    },
+    {
+      "kind": "rule",
+      "statement": "The story’s conflict includes external danger from impossible pages during overcrowding, an aging hospital, and severe coastal storms.",
+      "source_id": "s10",
+      "quote": "1. **External:** Impossible pages identify imminent danger inside an overcrowded, aging hospital during a period of severe coastal storms."
+    },
+    {
+      "kind": "rule",
+      "statement": "The investigative conflict requires Mara to uncover what happened in Room 0 before leadership destroys evidence or turns the investigation against her.",
+      "source_id": "s11",
+      "quote": "2. **Investigative:** Mara must uncover what happened in Room 0 before hospital leadership destroys the remaining evidence or turns the investigation against her."
+    },
+    {
+      "kind": "rule",
+      "statement": "The internal conflict requires Mara to decide whether responsibility means protecting the institution, exposing her own mistake, or naming the system that made it inevitable.",
+      "source_id": "s12",
+      "quote": "3. **Internal:** Mara must decide whether accepting responsibility means protecting the institution’s reputation, exposing her own mistake, or naming the system that made the mistake inevitable."
+    },
+    {
+      "kind": "identity",
+      "statement": "The antagonist may be a senior administrator or clinical leader actively preserving the cover-up.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call."
+    },
+    {
+      "kind": "rule",
+      "statement": "The human antagonist should remain plausible and bureaucratic rather than melodramatically evil.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call."
+    },
+    {
+      "kind": "rule",
+      "statement": "The supernatural presence may seek truth, revenge, rescue, or completion of an unfinished call.",
+      "source_id": "s13",
+      "quote": "The antagonist can be represented by a senior administrator or clinical leader who is actively preserving the cover-up. This human opposition should remain plausible and bureaucratic rather than melodramatically evil. The supernatural presence may be seeking truth, revenge, rescue, or completion of an unfinished call."
+    },
+    {
+      "kind": "rule",
+      "statement": "The escalation should progress from technical anomaly to personal threat to institutional collapse.",
+      "source_id": "s15",
+      "quote": "The escalation should move from technical anomaly to personal threat to institutional collapse."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara’s access to archived records is revoked during the hospital pushback stage.",
+      "source_id": "s27",
+      "quote": "- Mara’s access to archived records is revoked."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara’s supervisor questions her fitness for duty during the hospital pushback stage.",
+      "source_id": "s28",
+      "quote": "- Her supervisor questions her fitness for duty."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Pages eventually arrive on Mara’s personal device, making the threat impossible to contain at work.",
+      "source_id": "s30",
+      "quote": "- Pages begin arriving on Mara’s personal device, making the threat impossible to contain at work."
+    },
+    {
+      "kind": "timeline",
+      "statement": "A current patient is endangered by a decision resembling the one made two years earlier.",
+      "source_id": "s32",
+      "quote": "- A current patient is placed in danger through a decision resembling the one made two years earlier."
+    },
+    {
+      "kind": "timeline",
+      "statement": "During a storm, the hospital enters emergency mode that limits exits and communications.",
+      "source_id": "s34",
+      "quote": "- The hospital enters emergency mode during a storm, limiting exits and communications."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The concealed room or its surviving infrastructure becomes physically accessible.",
+      "source_id": "s35",
+      "quote": "- The concealed room or its surviving infrastructure becomes physically accessible."
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara will identify the suppressed event and the people responsible for falsifying its record.",
+      "source_id": "s37",
+      "quote": "- Mara identifies the suppressed event and the people responsible for falsifying its record."
+    },
+    {
+      "kind": "promise",
+      "statement": "The human antagonist will attempt to destroy final evidence or redirect blame onto Mara.",
+      "source_id": "s38",
+      "quote": "- The human antagonist attempts to destroy the final evidence or redirect blame onto Mara."
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara will use her nursing expertise and hospital knowledge to protect the patient and expose the truth.",
+      "source_id": "s40",
+      "quote": "- Mara uses her nursing expertise and knowledge of the hospital to protect the patient and expose the truth."
+    },
+    {
+      "kind": "resolution",
+      "statement": "The institutional cover-up becomes public or impossible to suppress by the resolution.",
+      "source_id": "s42",
+      "quote": "- The institutional cover-up becomes public or impossible to suppress."
+    },
+    {
+      "kind": "resolution",
+      "statement": "By the end, Mara acknowledges her own role without accepting blame for decisions made above her authority.",
+      "source_id": "s43",
+      "quote": "- Mara acknowledges her own role without accepting blame for decisions made above her authority."
+    }
+  ],
+  "conflicts": []
+}

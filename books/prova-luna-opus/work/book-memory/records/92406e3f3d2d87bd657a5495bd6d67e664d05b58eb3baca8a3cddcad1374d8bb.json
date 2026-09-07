@@ -1,0 +1,197 @@
+{
+  "facts": [
+    {
+      "kind": "identity",
+      "statement": "Mara Vale is the protagonist and an experienced night-shift registered nurse at St. Brigid’s Coastal Hospital.",
+      "source_id": "s3",
+      "quote": "**Role:** Protagonist; experienced night-shift registered nurse at St. Brigid’s Coastal Hospital."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Two years earlier, Mara followed a senior clinician’s evacuation order during a storm emergency, after which a patient died when moved away from needed equipment and monitoring.",
+      "source_id": "s4",
+      "quote": "**Core wound:** Two years earlier, Mara followed a senior clinician’s evacuation order during a storm emergency. A patient died after being moved away from the equipment and monitoring they needed. Mara has carried the death as proof that her judgment cannot be trusted."
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara seeks to identify who is sending pages from Room 0, protect current patients, and prove she is not losing competence or sanity.",
+      "source_id": "s5",
+      "quote": "**Conscious desire:** Identify who is sending the pages from Room 0, protect her current patients, and prove that she is not losing her competence or her mind."
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara must learn that responsibility is not solitary blame, trust her clinical judgment, share burdens, and make the truth visible even when it implicates her.",
+      "source_id": "s6",
+      "quote": "**Unconscious need:** Accept that responsibility is not the same as solitary blame. She must trust her own clinical judgment, allow others to share the burden, and make the truth visible even when it implicates her."
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn gave the evacuation order two years earlier and is now chief medical officer at St. Brigid’s.",
+      "source_id": "s16",
+      "quote": "- **Dr. Elias Venn:** The physician who gave the evacuation order two years earlier. He is now the hospital’s chief medical officer. He presents himself as Mara’s protector while subtly making her doubt her memory."
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is a younger nurse, Mara’s closest colleague, and trusts Mara’s instincts while fearing the investigation could cost them their licenses and livelihoods.",
+      "source_id": "s17",
+      "quote": "- **Nia Okafor:** A younger nurse and Mara’s closest colleague. Nia trusts Mara’s instincts but fears that involvement in the investigation will cost them both their licenses and livelihoods."
+    },
+    {
+      "kind": "identity",
+      "statement": "Ruth Calder is the former charge nurse who worked the final night of Room 0 and knows the official account is false but has refused to speak.",
+      "source_id": "s18",
+      "quote": "- **Ruth Calder:** Former charge nurse who worked the final night of Room 0. Ruth knows the official account is false but has survived by refusing to speak."
+    },
+    {
+      "kind": "identity",
+      "statement": "Jonah Vale is Mara’s estranged younger brother and a harbor electrician who understands the hospital’s storm-damaged infrastructure.",
+      "source_id": "s19",
+      "quote": "- **Jonah Vale:** Mara’s estranged younger brother, a harbor electrician. He understands the hospital’s storm-damaged infrastructure and resents Mara for disappearing into work after their mother’s death."
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara’s narration is first person and present tense, grounded in clinical precision.",
+      "source_id": "s21",
+      "quote": "- First-person, present-tense observations grounded in clinical precision."
+    },
+    {
+      "kind": "rule",
+      "statement": "Mara’s repeated private phrase is “Check again,” beginning as a nursing habit and becoming a moral command.",
+      "source_id": "s26",
+      "quote": "- Repeated private phrase: “Check again.” It begins as a nursing habit and becomes a moral command."
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn is chief medical officer, a former emergency physician, and Mara’s supervisor during the Room 0 incident.",
+      "source_id": "s28",
+      "quote": "**Role:** Chief medical officer; former emergency physician and Mara’s supervisor during the Room 0 incident."
+    },
+    {
+      "kind": "promise",
+      "statement": "Elias wants to keep St. Brigid’s open through storm season, prevent scandal, and contain the Room 0 investigation.",
+      "source_id": "s30",
+      "quote": "**Conscious desire:** Keep St. Brigid’s open through the storm season, prevent scandal, and contain the Room 0 investigation."
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias believes a controlled lie that keeps a hospital functioning is more ethical than truth that causes panic, lawsuits, or closure.",
+      "source_id": "s32",
+      "quote": "**Lie he believes:** A controlled lie that keeps a hospital functioning is more ethical than a truth that causes public panic, lawsuits, or closure."
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias protects Mara from public blame while privately preparing to make her the scapegoat.",
+      "source_id": "s35",
+      "quote": "- Protects Mara from public blame while privately preparing to make her the scapegoat."
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias uses authority over Nia’s scheduling and Mara’s credentials to isolate them.",
+      "source_id": "s40",
+      "quote": "- Uses his authority over Nia’s scheduling and Mara’s credentials to isolate them."
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is a staff nurse on Mara’s night team and a practical ally.",
+      "source_id": "s49",
+      "quote": "**Role:** Staff nurse on Mara’s night team; practical ally."
+    },
+    {
+      "kind": "timeline",
+      "statement": "During an earlier staffing crisis, Nia raised a safety concern that was ignored, and the hospital reframed the resulting patient deterioration as her failure.",
+      "source_id": "s50",
+      "quote": "**Core wound:** During an earlier staffing crisis, Nia raised a safety concern that was ignored, and a patient deteriorated. The hospital quietly reframed the incident as her failure."
+    },
+    {
+      "kind": "promise",
+      "statement": "Nia wants to keep patients safe, finish her probationary period, and avoid becoming another nurse the institution can discard.",
+      "source_id": "s51",
+      "quote": "**Conscious desire:** Keep her patients safe, finish her probationary period, and avoid becoming another nurse the institution can discard."
+    },
+    {
+      "kind": "rule",
+      "statement": "Nia appears skeptical of the supernatural while secretly keeping records of every impossible page.",
+      "source_id": "s57",
+      "quote": "- Appears skeptical of the supernatural while secretly keeping records of every impossible page."
+    },
+    {
+      "kind": "promise",
+      "statement": "Elias offers Nia a promotion in exchange for a statement discrediting Mara.",
+      "source_id": "s62",
+      "quote": "- Elias offers Nia a promotion in exchange for a statement discrediting Mara."
+    },
+    {
+      "kind": "identity",
+      "statement": "Ruth Calder is a retired former charge nurse and keeper of the original Room 0 testimony.",
+      "source_id": "s69",
+      "quote": "**Role:** Retired former charge nurse; keeper of the original Room 0 testimony."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Ruth obeyed an order to alter the final handover report and has lived knowing her silence helped erase several patients.",
+      "source_id": "s70",
+      "quote": "**Core wound:** She obeyed an order to alter the final handover report and has lived with the knowledge that her silence helped erase several patients."
+    },
+    {
+      "kind": "promise",
+      "statement": "Ruth wants to remain invisible and die without reopening the event.",
+      "source_id": "s71",
+      "quote": "**Conscious desire:** Remain invisible and die without reopening the event."
+    },
+    {
+      "kind": "rule",
+      "statement": "Ruth’s testimony is incomplete unless Mara finds the missing paper chart.",
+      "source_id": "s82",
+      "quote": "- Her testimony is incomplete unless Mara finds the missing paper chart."
+    },
+    {
+      "kind": "identity",
+      "statement": "The Room 0 Presence is a supernatural or technologically mediated intelligence connected to erased patients and abandoned paging infrastructure.",
+      "source_id": "s89",
+      "quote": "**Role:** Supernatural or technologically mediated intelligence connected to the erased patients and the hospital’s abandoned paging infrastructure."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The Room 0 Presence’s final call for help was received, documented incorrectly, and erased.",
+      "source_id": "s90",
+      "quote": "**Core wound:** Its final call for help was received, documented incorrectly, and then erased."
+    },
+    {
+      "kind": "promise",
+      "statement": "The Room 0 Presence wants to complete the missing account and prevent repeated abandonment by the hospital.",
+      "source_id": "s91",
+      "quote": "**Conscious desire:** Make the missing account complete and prevent the hospital from repeating the same abandonment."
+    },
+    {
+      "kind": "rule",
+      "statement": "The Room 0 Presence may be a ghost, damaged system, collective memory, or some combination.",
+      "source_id": "s98",
+      "quote": "- May be a ghost, a damaged system, a collective memory, or some combination."
+    },
+    {
+      "kind": "rule",
+      "statement": "The final choice must determine whether the Room 0 Presence is asking for revenge, testimony, or release.",
+      "source_id": "s103",
+      "quote": "- The final choice must determine whether it is asking for revenge, testimony, or release."
+    },
+    {
+      "kind": "identity",
+      "statement": "Jonah Vale is a harbor electrician and Mara’s estranged brother.",
+      "source_id": "s111",
+      "quote": "**Role:** Harbor electrician and Mara’s estranged brother."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara and Jonah’s mother died during a coastal flood while Mara was working at St. Brigid’s, and Jonah believes Mara chose the hospital over family.",
+      "source_id": "s112",
+      "quote": "**Core wound:** Their mother died during a coastal flood while Mara was working at St. Brigid’s, and Jonah believes Mara chose the hospital over the family."
+    },
+    {
+      "kind": "rule",
+      "statement": "Jonah’s knowledge of the hospital electrical and paging systems makes him essential to Mara’s investigation.",
+      "source_id": "s122",
+      "quote": "- His knowledge of the hospital’s electrical and paging systems makes him essential to Mara’s investigation."
+    }
+  ],
+  "conflicts": []
+}

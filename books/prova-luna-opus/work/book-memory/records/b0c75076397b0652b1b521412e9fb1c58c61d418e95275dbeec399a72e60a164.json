@@ -1,0 +1,204 @@
+{
+  "facts": [
+    {
+      "kind": "timeline",
+      "statement": "Chapter 2 continues after Room 0 sends Mara the message asking her to check again.",
+      "source_id": "s9",
+      "quote": "`ROOM 0: MARA, PLEASE CHECK AGAIN.`"
+    },
+    {
+      "kind": "rule",
+      "statement": "The communications room terminal opens call-system maintenance mode.",
+      "source_id": "s37",
+      "quote": "`CALL SYSTEM — MAINTENANCE MODE`"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The old call-system terminal marks the west wing as removed.",
+      "source_id": "s49",
+      "quote": "`WING WEST — REMOVED`"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The destination menu begins at 1, skips 12, and does not show 0 until Nia uses a deleted-record filter.",
+      "source_id": "s64",
+      "quote": "She scrolls to the end of the list. The number 0 does not appear. Then she goes back to the beginning and uses a combination of keys I don’t recognize."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The terminal briefly shows Destination 0 before the line disappears.",
+      "source_id": "s73",
+      "quote": "`DESTINATION: 0`"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The Room 0 source is recorded as a live physical location with node 0.",
+      "source_id": "s91",
+      "quote": "`SOURCE: LIVE LOCATION`"
+    },
+    {
+      "kind": "rule",
+      "statement": "Seawater appears to enter St. Brigid’s through places omitted from reports.",
+      "source_id": "s96",
+      "quote": "The air conditioner pushes a cold current through the floor grate. It smells of rust, disinfectant, and something salty. Seawater should not be getting into the building, but it comes into St. Brigid’s through every place that doesn’t appear in the reports."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Engineering archives are in the west, and the passage is blocked after rebuilding.",
+      "source_id": "s100",
+      "quote": "“Engineering archives are in the west.”"
+    },
+    {
+      "kind": "promise",
+      "statement": "Mara decides to inspect the west wall, and Nia goes with her.",
+      "source_id": "s110",
+      "quote": "“I’m going to look at the wall.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "The west fire door marked restricted construction access is unexpectedly unlocked after Nia says it was closed twenty minutes earlier.",
+      "source_id": "s127",
+      "quote": "The west fire door is past the service elevators. A red sign reads: `RESTRICTED ACCESS — CONSTRUCTION`. The plastic tape has been torn at shoulder height. The lock is not engaged."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara remembers signing the west corridor transfer inventory during reconstruction but does not remember seeing a room.",
+      "source_id": "s139",
+      "quote": "The west corridor was closed during reconstruction. I signed the transfer inventory: a few stretchers, several cabinets, a dressing cart, a wheelchair with a sticking right wheel. I remember the smell of wet plaster. I remember pencil marks on the walls showing where the cables would be cut."
+    },
+    {
+      "kind": "rule",
+      "statement": "The old plan placed Room 0 behind the service wing against the outer wall as an improvised space for storm surges and overcrowding.",
+      "source_id": "s141",
+      "quote": "The old plan showed Room 0 behind the service wing, against the outer wall. An improvised space for storm surges and overcrowding. The numbering began there, not in the main corridor. Room 0 came before Room 1, as if the building had taken one step backward before starting."
+    },
+    {
+      "kind": "identity",
+      "statement": "Mara distrusts Elias to characterize the Room 0 anomaly before she confirms it herself.",
+      "source_id": "s146",
+      "quote": "“Because Elias will say it’s a technical fault.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "At the end of the west corridor Mara and Nia find a freshly painted wall with no door, frame, or sign.",
+      "source_id": "s165",
+      "quote": "At the end of the corridor is a smooth wall, freshly painted white. There is no door, frame, or sign. The paint is the same color as the new partitions in the east wing, but the surface beneath it is uneven, with a darker horizontal band at chest height."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The wall has a flood mark and demolition dust despite the demolition being two years earlier.",
+      "source_id": "s168",
+      "quote": "“That’s a flood mark,” I say."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara remembers a closed door connected to ankle-deep water, a stretcher, and someone striking a door three times.",
+      "source_id": "s188",
+      "quote": "The question slips beneath my ribs. I see a corridor filled with water to the ankles. A stretcher against the wall. A sheet printed with blue and white ships, caught beneath the mattress. Someone’s hand striking a door three times."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The pager screen shows Node 0 as live while Mara stands by the wall.",
+      "source_id": "s204",
+      "quote": "`NODE: 0 — LIVE`"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia finds old stretcher-like scratches on the baseboard and a transparent label fragment showing part of a number ending in 0.",
+      "source_id": "s215",
+      "quote": "Nia steps to the side. The flashlight beam crosses the section near the floor. There is an almost invisible mark on the baseboard: four parallel scratches, old, as if a stretcher scraped there. Something red is lodged in the paint at the center of the scratches. A piece of plastic, maybe."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Something knocks or presses from the other side of the west corridor wall before Mr. Pritchard calls from Room Six.",
+      "source_id": "s231",
+      "quote": "Something strikes the other side of the wall."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Room 0 sends another page saying to check again while Mr. Pritchard’s call bell rings.",
+      "source_id": "s258",
+      "quote": "`ROOM 0: CHECK AGAIN.`"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mr. Pritchard is found in Room Six with chest pain after saying he called before and no one came.",
+      "source_id": "s268",
+      "quote": "Room Six is lit. The door is open. Mr. Pritchard sits on the bed, leaning forward, one hand gripping the sheet and the other pressed to his chest."
+    },
+    {
+      "kind": "quantity",
+      "statement": "Mr. Pritchard’s oxygen saturation reads 88, then 86 during the chest-pain event.",
+      "source_id": "s274",
+      "quote": "I reach for the oximeter. His finger is cold. The reading takes time. 88. 86."
+    },
+    {
+      "kind": "quantity",
+      "statement": "Mr. Pritchard has an irregular pulse of 124 during the chest-pain event.",
+      "source_id": "s281",
+      "quote": "“124. Irregular.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia calls Dr. Bell for Mr. Pritchard and then transmits rapid-response details.",
+      "source_id": "s286",
+      "quote": "“Dr. Bell? Nia in Six. Pritchard with chest pain, desaturation, irregular pulse. Yes. Now.”"
+    },
+    {
+      "kind": "quantity",
+      "statement": "Mr. Pritchard’s corrected blood pressure during the event is 192 over 108.",
+      "source_id": "s346",
+      "quote": "“One ninety-two over one-oh-eight,” she corrects."
+    },
+    {
+      "kind": "resolution",
+      "statement": "Dr. Bell orders nitroglycerin, a twelve-lead ECG, and transfer to the monitored bay for Mr. Pritchard.",
+      "source_id": "s347",
+      "quote": "Dr. Bell orders nitroglycerin, a twelve-lead ECG, and transfer to the monitored bay. The ward corridor is packed with extra beds. The monitored bay has one space, but the space is occupied by boxes of isolation supplies that should have been taken to storage."
+    },
+    {
+      "kind": "resolution",
+      "statement": "Mr. Pritchard’s oxygen saturation climbs to 92 during treatment.",
+      "source_id": "s382",
+      "quote": "The oximeter climbs to ninety-two."
+    },
+    {
+      "kind": "rule",
+      "statement": "Nia thinks someone is using a part of the hospital that was erased.",
+      "source_id": "s431",
+      "quote": "“Now I think someone is using a part of the hospital that was erased.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "After Room Six is marked resolved, the Room 0 line remains open with live location 0.",
+      "source_id": "s454",
+      "quote": "On the computer screen, the call from Room Six changes to `resolved`. The Room 0 line remains open."
+    },
+    {
+      "kind": "rule",
+      "statement": "Nia photographs evidence because disappearing records have previously led others to claim she remembered wrong.",
+      "source_id": "s484",
+      "quote": "“Because when things disappear, everyone says I remembered wrong.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia has photos of the pager, destination list, wall without a door, and label fragment, and keeps a copy.",
+      "source_id": "s485",
+      "quote": "She swipes across the screen. There is a sequence of images: the pager, the destination list, the wall without a door, the fragment of label on the floor. Nia keeps the phone close to her body, shielding it with her elbow."
+    },
+    {
+      "kind": "timeline",
+      "statement": "At the end of Chapter 2, Room 0 sends the message that she is not in Room 0 but under the light.",
+      "source_id": "s528",
+      "quote": "`SHE IS NOT IN ROOM 0. SHE IS UNDER THE LIGHT.`"
+    }
+  ],
+  "conflicts": [
+    {
+      "previous_id": "a52d61f7a6fb82f1cd5f",
+      "source_id": "s334",
+      "reason": "Previous prose identifies Dr. Bell as female, but Chapter 2 uses male pronouns for Dr. Bell: “Dr. Bell enters, adjusting his ID badge in his pocket, without a coat. His hair is flattened on one side.”",
+      "quote": "Dr. Bell enters, adjusting his ID badge in his pocket, without a coat. His hair is flattened on one side."
+    }
+  ]
+}

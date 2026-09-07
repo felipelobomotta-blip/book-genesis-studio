@@ -1,0 +1,197 @@
+{
+  "facts": [
+    {
+      "kind": "timeline",
+      "statement": "Chapter 1 begins at 2:13 a.m. during an October night shift at St. Brigid's.",
+      "source_id": "s2",
+      "quote": "At 2:13 a.m., Mrs. Halloway decides the ceiling is lying to her."
+    },
+    {
+      "kind": "identity",
+      "statement": "Mrs. Halloway is an eighty-six-year-old patient on Ward C receiving oxygen at two liters.",
+      "source_id": "s8",
+      "quote": "She studies me, deciding whether this is humor or a symptom. At eighty-six, she has learned not to waste either. Her oxygen tubing loops beneath her nostrils, the skin around them pink and rubbed. Saturation ninety-four percent on two liters. Heart rate eighty-eight. Respirations twenty, shallow but even."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway reports seeing a wet man on the ceiling before the first Room 0 page arrives.",
+      "source_id": "s10",
+      "quote": "“Wet.”"
+    },
+    {
+      "kind": "rule",
+      "statement": "The sea and storm are active outside Ward C during the chapter.",
+      "source_id": "s11",
+      "quote": "Outside, the sea throws itself at the windows."
+    },
+    {
+      "kind": "identity",
+      "statement": "Mrs. Halloway's full name is Eleanor Halloway.",
+      "source_id": "s138",
+      "quote": "“Eleanor Halloway.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway is admitted for fluid overload and has furosemide due at 2:30 a.m.",
+      "source_id": "s108",
+      "quote": "The saturation reaches ninety-one. I listen to her lungs. Fine crackles at the bases, more on the right. She has been admitted for fluid overload, and her furosemide is due at two-thirty. I check the medication administration record. The order is active. The dose is in the cart."
+    },
+    {
+      "kind": "quantity",
+      "statement": "Ward C has eighteen beds but is holding twenty-one patients tonight.",
+      "source_id": "s43",
+      "quote": "The ward has eighteen beds. Tonight we have twenty-one patients, one bed in the day room, and an empty isolation room occupied by a man waiting for transport because the transport company has no driver willing to cross the causeway in this weather. The electronic board displays the names in green and amber. Green means stable. Amber means someone has offended the machine by requiring attention."
+    },
+    {
+      "kind": "quantity",
+      "statement": "Three amber-status patient names belong to Mara during the shift.",
+      "source_id": "s44",
+      "quote": "Three amber names belong to me."
+    },
+    {
+      "kind": "identity",
+      "statement": "Mr. Pritchard is in room six and has a delayed antibiotic and rising blood pressure.",
+      "source_id": "s46",
+      "quote": "The second is Mr. Pritchard, room six, whose blood pressure has been climbing since midnight. His antibiotic is due at one-thirty. Pharmacy sent the dose to the wrong tower. The replacement is somewhere between the pneumatic tube station and the basement, where all lost things eventually become administrative concerns."
+    },
+    {
+      "kind": "quantity",
+      "statement": "Mr. Pritchard's manually retaken blood pressure is 184 over 96.",
+      "source_id": "s71",
+      "quote": "He is asleep on his left side, mouth open, one hand outside the blanket. His blood pressure cuff has loosened and is hanging around his arm like a collapsed belt. I retake it manually: 184 over 96."
+    },
+    {
+      "kind": "identity",
+      "statement": "Len Torres is in room twelve and has repeatedly pulled off his telemetry leads.",
+      "source_id": "s47",
+      "quote": "The third is Len Torres, room twelve, who has pulled off his telemetry leads twice and is now convinced the wires are listening to him."
+    },
+    {
+      "kind": "identity",
+      "statement": "Nia Okafor is working with Mara at the nurses' station and is handling a pharmacy call.",
+      "source_id": "s37",
+      "quote": "The corridor is empty except for the medication cart, two linen bags, and Nia Okafor standing at the nurses’ station with her phone held against one ear. She is younger than me by enough years to still believe sleep can be recovered later. Her left thumbnail is painted green, the polish chipped down the middle."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Nia learns during the shift that her sister's school is closed while Nia is at work.",
+      "source_id": "s68",
+      "quote": "“My sister’s school is closed?” she says. “No, I’m at work. I can’t just—”"
+    },
+    {
+      "kind": "rule",
+      "statement": "The phrase “Check again” is used as a recurring nursing command that affects Mara personally.",
+      "source_id": "s56",
+      "quote": "She says it lightly, but the phrase lands where it always does."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The corridor lights flicker and all six east-side panels briefly go dark before emergency floor strips activate.",
+      "source_id": "s93",
+      "quote": "Then all six panels on the east side go dark."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mrs. Halloway's oxygen saturation drops to eighty-seven before climbing after oxygen is reconnected.",
+      "source_id": "s102",
+      "quote": "Her respirations are twenty-eight now. I reconnect the oxygen and place the pulse oximeter on her finger. Saturation eighty-seven, climbing slowly."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara's scanner initially rejects Mrs. Halloway's furosemide despite correct patient, drug, dose, and time checks.",
+      "source_id": "s115",
+      "quote": "The scanner rejects it again. I check the patient band. Correct name, correct date of birth. I check the medication label. Correct drug, correct dose, correct time."
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Bell is the resident called for Mrs. Halloway.",
+      "source_id": "s162",
+      "quote": "“Dr. Bell.”"
+    },
+    {
+      "kind": "timeline",
+      "statement": "Dr. Bell replaces the furosemide order, after which the scanner accepts it.",
+      "source_id": "s259",
+      "quote": "The resident arrives carrying a tablet and no pen. Dr. Bell is young enough to apologize before she has made a mistake. She examines Mrs. Halloway, reviews the chart, and places the furosemide order again."
+    },
+    {
+      "kind": "resolution",
+      "statement": "After furosemide is administered, Mrs. Halloway's saturation improves to ninety-five and her breathing slows.",
+      "source_id": "s263",
+      "quote": "The medication goes in. Mrs. Halloway’s saturation improves to ninety-five. Her breathing slows."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara receives a pager message from Room 0 saying, “Need water. Please check breathing.”",
+      "source_id": "s168",
+      "quote": "`ROOM 0: NEED WATER. PLEASE CHECK BREATHING.`"
+    },
+    {
+      "kind": "rule",
+      "statement": "The paging system sends pages from beds, not rooms, and Room 0 is not assigned to anything.",
+      "source_id": "s173",
+      "quote": "The message is a patient call: location, request, instruction. The system sends pages from beds, not rooms. A nurse enters a room number when she assigns a handset. Room 0 is not assigned to anything."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara has worked at St. Brigid's for nearly a decade.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The east ward begins at Room 1, and the old west service wing had a room marked 0 on a maintenance plan.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The old west service wing was sealed and rebuilt around Room 0 two years ago.",
+      "source_id": "s175",
+      "quote": "I have worked at St. Brigid’s for nearly a decade. The east ward begins at Room 1. Before the renovation, the numbering began at 2 because Room 1 was used for storage. Before that, the old west service wing had a room marked 0 on a maintenance plan. The wing was sealed and rebuilt around it two years ago."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Mara knows about the sealed and rebuilt west service wing because she signed the transfer inventory.",
+      "source_id": "s176",
+      "quote": "I know this because I signed the transfer inventory."
+    },
+    {
+      "kind": "identity",
+      "statement": "Dr. Elias Venn has a pale crescent scar across his right thumb.",
+      "source_id": "s210",
+      "quote": "Dr. Elias Venn stands in the corridor in shirtsleeves, his white coat folded over one arm. He has a pale crescent scar across his right thumb, visible when he holds a chart. He looks first at the monitor, then at the oxygen tubing, then at me. He never begins with the person."
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias begins clinical assessment with the monitor, oxygen tubing, and Mara rather than the patient.",
+      "source_id": "s210",
+      "quote": "Dr. Elias Venn stands in the corridor in shirtsleeves, his white coat folded over one arm. He has a pale crescent scar across his right thumb, visible when he holds a chart. He looks first at the monitor, then at the oxygen tubing, then at me. He never begins with the person."
+    },
+    {
+      "kind": "timeline",
+      "statement": "Storm protocol is scheduled to begin at three, stopping nonessential movement and conserving staff for the emergency department.",
+      "source_id": "s265",
+      "quote": "“Storm protocol begins at three,” he says. “All nonessential movement stops after that. We’re conserving staff for the emergency department.”"
+    },
+    {
+      "kind": "rule",
+      "statement": "Elias says Room 0 was removed from the directory two years ago and should not be able to send pages.",
+      "source_id": "s278",
+      "quote": "“Room 0 was removed from the directory,” he says."
+    },
+    {
+      "kind": "timeline",
+      "statement": "The paging log records the Room 0 message at 02:26 with source listed as a live location and location 0.",
+      "source_id": "s321",
+      "quote": "02:26 — Room 0 — *Need water. Please check breathing.*"
+    },
+    {
+      "kind": "timeline",
+      "statement": "At the end of the chapter, Room 0 sends a different message addressed to Mara: “Mara, please check again.”",
+      "source_id": "s339",
+      "quote": "`ROOM 0: MARA, PLEASE CHECK AGAIN.`"
+    }
+  ],
+  "conflicts": []
+}
