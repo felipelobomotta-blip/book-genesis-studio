@@ -46,6 +46,41 @@ def normalise(sentence: str) -> str:
     return " ".join(sentence.translate(QUOTES).casefold().split()).strip("\"' ")
 
 
+OPENING_WORDS = 3
+OPENING_MIN_TIMES = 3
+OPENING_PER_CHAPTER = 2.0
+
+
+@dataclass(frozen=True)
+class Opening:
+    """A phrase the book keeps starting sentences with."""
+
+    phrase: str
+    times: int
+
+
+def repeated_openings(chapters: dict) -> list:
+    """Sentence openings the book leans on, which exact matching cannot see.
+
+    The same move appeared seven times across four characters in books/prova-2 with
+    no two wordings alike; "Nora looked at" opened twenty sentences in three chapters.
+    The bar is a rate rather than a count, so a forty-chapter book is not flooded with
+    findings a three-chapter book would never produce.
+    """
+    count = {}
+    for number in sorted(chapters):
+        for sentence in sentences(chapters[number]):
+            words = normalise(sentence).split()
+            if len(words) > OPENING_WORDS:
+                phrase = " ".join(words[:OPENING_WORDS])
+                count[phrase] = count.get(phrase, 0) + 1
+    limit = max(OPENING_MIN_TIMES, OPENING_PER_CHAPTER * max(len(chapters), 1))
+    return sorted(
+        (Opening(phrase, times) for phrase, times in count.items() if times >= limit),
+        key=lambda item: -item.times,
+    )
+
+
 def worth_reporting(words: int, times: int) -> bool:
     return words >= DISTINCT_WORDS or (words >= REFRAIN_WORDS and times >= REFRAIN_TIMES)
 

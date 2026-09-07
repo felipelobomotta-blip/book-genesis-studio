@@ -83,3 +83,48 @@ def test_real_prose_does_not_drown_the_finding_in_noise():
     for item in found:
         assert len(item.text.split()) >= 4, f"too small to act on: {item.text!r}"
         assert not item.text.rstrip(".").endswith(("Mr", "Dr", "Mrs", "St")), item.text
+
+
+def test_a_phrase_the_book_opens_sentences_with_over_and_over_is_found():
+    """Not every repeat is verbatim. On books/prova-2 the same rhetorical move appears
+    seven times across four characters — "That isn't an answer", "That wasn't my
+    question", "That isn't what I asked" — and no two are the same string.
+
+    Sentence openings catch what exact matching cannot: "Nora looked at" opens twenty
+    sentences in three chapters. A reader feels that; a chapter-blind judge cannot.
+    """
+    from runner.repetition import repeated_openings
+
+    chapters = {n: "Nora looked at him. Nora looked at the pager. The vein rolled." for n in (1, 2, 3)}
+    assert [item.phrase for item in repeated_openings(chapters)] == ["nora looked at"]
+
+
+def test_an_opening_used_once_or_twice_a_chapter_is_just_writing():
+    from runner.repetition import repeated_openings
+
+    chapters = {n: "He looked at her. The corridor was empty." for n in (1, 2, 3)}
+    assert repeated_openings(chapters) == []
+
+
+def test_the_threshold_scales_with_the_length_of_the_book():
+    """Five uses across three chapters is a tic; across forty it is nothing. A fixed
+    count would flood a long book with findings and miss them in a short one."""
+    from runner.repetition import repeated_openings
+
+    three = "Nora looked at him. Nora looked at the door. Nora looked at the clock."
+    short = {n: three for n in (1, 2, 3)}
+    long_book = dict.fromkeys(range(1, 41), "The corridor was empty.")
+    long_book[1] = three
+    assert [item.times for item in repeated_openings(short)] == [9]
+    assert repeated_openings(long_book) == []
+
+
+@pytest.mark.skipif(not CORPUS.is_dir(), reason="books/ is not committed; this guards the local corpus")
+def test_the_corpus_tic_is_caught_and_ordinary_staging_is_not():
+    from runner.repetition import repeated_openings
+
+    chapters = {n: (CORPUS / f"chapter-{n:02d}.md").read_text(encoding="utf-8") for n in (1, 2, 3)}
+    phrases = [item.phrase for item in repeated_openings(chapters)]
+    assert "nora looked at" in phrases
+    assert "the pager vibrated" in phrases
+    assert "he looked at" not in phrases

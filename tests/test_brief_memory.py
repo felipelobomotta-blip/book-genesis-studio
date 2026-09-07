@@ -75,3 +75,29 @@ def test_the_brief_still_refuses_to_hand_over_whole_earlier_chapters(project: Pa
     brief = build_chapter_brief(project, 3)
     assert "SENTINEL-1" not in brief
     assert "SENTINEL-2" not in brief
+
+
+def test_the_brief_shows_the_ground_the_book_has_already_covered(project: Path):
+    """The reader's worst structural finding on books/prova-2: chapter 3 repeats
+    chapter 1 beat for beat — page arrives, authority disbelieves, an elderly man
+    desaturates, suction fails, the number climbs back, fatigue is blamed.
+
+    The writer could not have known. The outline was read only to cut out this
+    chapter's own section, so nothing ever told it what the book had already done.
+    """
+    brief = build_chapter_brief(project, 3)
+    section = brief.split("## What the book has already covered")[1]
+    assert "Chapter 1: The Watch Room" in section
+    assert "Chapter 2: The Records Office" in section
+
+
+def test_the_ground_covered_is_headings_and_not_the_outline_body(project: Path):
+    """Whole sections would put chapters 1..39 in front of a chapter-40 writer and
+    bury the one section it must follow. test_brief.py pins this from the other side."""
+    brief = build_chapter_brief(project, 3)
+    assert "She takes the night shift" not in brief
+    assert "She is called back to the ward" in brief
+
+
+def test_the_first_chapter_has_no_ground_behind_it(project: Path):
+    assert "## What the book has already covered" not in build_chapter_brief(project, 1)

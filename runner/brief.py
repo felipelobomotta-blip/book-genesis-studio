@@ -126,6 +126,7 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
             notes.read_text(encoding="utf-8").strip(),
             "",
         ]
+    parts += ground_covered_section(outline_path.read_text(encoding="utf-8"), chapter)
     parts += already_used_section(project, chapter)
     parts += [
         "## Where the previous chapter left the reader",
@@ -142,16 +143,42 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
     return brief
 
 
+def ground_covered_section(outline: str, chapter: int) -> list:
+    """The titles of the chapters already written, so this one is not one of them again.
+
+    Chapter 3 of books/prova-2 reprised chapter 1 beat for beat and no gate could see
+    it: the outline was read only to cut out the current chapter's own section, so the
+    writer was never told what the book had already done. Titles only — whole sections
+    would put 39 chapters in front of a chapter-40 writer and bury the one it must follow.
+    """
+    lines, titles = outline.splitlines(), []
+    for index, match in chapter_markers(outline):
+        if int(match.group("number")) >= chapter:
+            continue
+        heading = _HEADING.match(lines[index])
+        titles.append((heading.group(2) if heading else lines[index]).strip("* "))
+    if not titles:
+        return []
+    return [
+        "## What the book has already covered",
+        "",
+        "These chapters are written. This one has to move past them, not repeat their",
+        "shape: the same kind of scene, the same escalation, the same ending beat.",
+        "",
+    ] + [f"- {title}" for title in titles] + [""]
+
+
 def already_used_section(project: Path, chapter: int) -> list:
     """What the book has already said more than once, for the writer about to add to it.
 
     Deliberately the repeats and not the chapters themselves: the writer must follow
     this chapter's outline, and pasting the manuscript in front of it would bury that.
     """
-    from runner.repetition import accepted_before, already_repeated
+    from runner.repetition import accepted_before, already_repeated, repeated_openings
 
-    repeats = already_repeated(accepted_before(project, chapter))
-    if not repeats:
+    written = accepted_before(project, chapter)
+    repeats, openings = already_repeated(written), repeated_openings(written)
+    if not repeats and not openings:
         return []
     lines = [
         "## Already used in this book — do not reuse",
@@ -165,6 +192,13 @@ def already_used_section(project: Path, chapter: int) -> list:
         f"- \"{item.text}\" — first in chapter {item.first_used_in}, {item.times} times so far"
         for item in repeats
     ]
+    if openings:
+        lines += [
+            "",
+            "The book also keeps starting sentences the same way. Reaching for one of these",
+            "again is the same tic wearing a different sentence:",
+            "",
+        ] + [f"- \"{item.phrase}…\" — opens {item.times} sentences so far" for item in openings]
     return lines + [""]
 
 
