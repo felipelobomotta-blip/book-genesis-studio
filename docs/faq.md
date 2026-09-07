@@ -26,7 +26,11 @@ Yes. In the guided session, `q` saves a pending checkpoint. `book-genesis resume
 
 ## What happens if an audit requests a rewrite?
 
-The run stops at Phase 4 with `status: awaiting_revision` and exit code 4. Score and Package do not continue. Read `artifacts/08-adversarial-audit.md`, revise the manuscript yourself, and resume to request a new audit. Automatic repair is not implemented.
+The run stops at Phase 4 with `status: awaiting_revision` and exit code 4. Score and Package do not continue.
+
+In an interactive session the app then asks **Revise the book for me? (yes/no)**. Answer `yes` and it revises the chapters from `artifacts/08-adversarial-audit.md`, then runs the reader checks and the whole-book audit again; previous versions stay in history. This costs more model calls and does not guarantee the next audit passes. Answer `no` to stop with your work saved. An unattended run (`--yes`, or redirected input) stops instead of starting rewrites on its own.
+
+You can also revise the manuscript yourself and `resume` to request a new audit.
 
 ## How is the Genesis Score calculated?
 

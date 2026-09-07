@@ -566,6 +566,40 @@ def update_state_value(path: Path, key: str, value: str) -> None:
     _update_state_value(path, key, value.replace('"', "'"))
 
 
+def refresh_manuscript_state(project: Path) -> None:
+    """Make the ``manuscript:`` block agree with the chapters on disk.
+
+    Written once at scaffold time and never again, it told a reader of a finished
+    three-chapter book that nothing had started. Derived rather than incremented, so
+    a project that has been wrong since it was created is right after the next write.
+    """
+    path = project / "PROJECT_STATE.yaml"
+    if not path.is_file():
+        return
+    folder = project / "manuscript" / "chapters"
+    numbers = sorted(
+        int(found.stem.split("-")[-1])
+        for found in folder.glob("chapter-*.md")
+        if found.stem.split("-")[-1].isdigit()
+    ) if folder.is_dir() else []
+
+    lines, inside = path.read_text(encoding="utf-8").splitlines(), False
+    for index, line in enumerate(lines):
+        if not line.startswith((" ", "\t")) and line.strip():
+            inside = line.strip() == "manuscript:"
+            continue
+        if not inside:
+            continue
+        stripped = line.strip()
+        if stripped.startswith("chapter_count:"):
+            lines[index] = f"  chapter_count: {len(numbers)}"
+        elif stripped.startswith("completed_chapters:"):
+            lines[index] = f"  completed_chapters: [{', '.join(str(n) for n in numbers)}]"
+        elif stripped.startswith("status:"):
+            lines[index] = f"  status: \"{'in_progress' if numbers else 'not_started'}\""
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def set_human_checkpoint_required(target: Path, required: bool) -> None:
     """Persist the optional checkpoint, adding its field to pre-v5 project state."""
     path = target / "PROJECT_STATE.yaml"

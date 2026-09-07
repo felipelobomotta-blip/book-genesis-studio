@@ -126,6 +126,7 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
             notes.read_text(encoding="utf-8").strip(),
             "",
         ]
+    parts += already_used_section(project, chapter)
     parts += [
         "## Where the previous chapter left the reader",
         "",
@@ -139,6 +140,32 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
         briefs_dir.mkdir(parents=True, exist_ok=True)
         (briefs_dir / f"chapter-{chapter:02d}.md").write_text(brief, encoding="utf-8")
     return brief
+
+
+def already_used_section(project: Path, chapter: int) -> list:
+    """What the book has already said more than once, for the writer about to add to it.
+
+    Deliberately the repeats and not the chapters themselves: the writer must follow
+    this chapter's outline, and pasting the manuscript in front of it would bury that.
+    """
+    from runner.repetition import accepted_before, already_repeated
+
+    repeats = already_repeated(accepted_before(project, chapter))
+    if not repeats:
+        return []
+    lines = [
+        "## Already used in this book — do not reuse",
+        "",
+        "The manuscript has used each of these more than once. A sentence the reader has",
+        "already met is the most visible sign of machine writing there is. Say it another",
+        "way, or cut the beat that needs it.",
+        "",
+    ]
+    lines += [
+        f"- \"{item.text}\" — first in chapter {item.first_used_in}, {item.times} times so far"
+        for item in repeats
+    ]
+    return lines + [""]
 
 
 def extract_chapter_section(outline: str, chapter: int) -> str:

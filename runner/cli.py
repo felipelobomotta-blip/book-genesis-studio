@@ -52,8 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     init_parser = subparsers.add_parser("init", help="Create a Book Genesis project tree")
     init_parser.add_argument("path")
-    init_parser.add_argument("--idea", default="")
-    init_parser.add_argument("--language", default="")
+    init_parser.add_argument("--idea", default="", help="One or two sentences. The whole book grows from this.")
+    init_parser.add_argument("--language", default="", help="Language to write the book in, e.g. en, pt. Inferred from the idea when absent.")
     init_parser.add_argument("--adapter", default="claude")
     init_parser.add_argument("--model", default="opus")
     init_parser.add_argument("--force", action="store_true")
@@ -135,8 +135,8 @@ def build_parser() -> argparse.ArgumentParser:
     setup_parser.add_argument("--path", default="", help="Config file (default: ~/.book-genesis/config.yaml)")
 
     new_parser = subparsers.add_parser("new", help="From one idea to a judged manuscript and editorial package")
-    new_parser.add_argument("--idea", default="")
-    new_parser.add_argument("--language", default="")
+    new_parser.add_argument("--idea", default="", help="One or two sentences. The whole book grows from this. Asked for if omitted.")
+    new_parser.add_argument("--language", default="", help="Language to write the book in, e.g. en, pt. Inferred from the idea when absent.")
     new_parser.add_argument("--path", default="", help="Project folder (default: ./books/<slug>)")
     new_parser.add_argument("--human", action="store_true", help="Pause after chapter 1 until you approve it")
     new_parser.add_argument("--manual", action="store_true", help="No provider: paste every reply by hand")

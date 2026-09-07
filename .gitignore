@@ -60,3 +60,8 @@ dist/
 books/
 data-run.log
 *-run.log
+
+# Local verification scratch (bundle PYZ extraction, build logs)
+_pyz*.tmp
+bundle-build.log
+studio-observer.log

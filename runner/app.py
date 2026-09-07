@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 import sys
 from typing import List, Optional
 
@@ -32,12 +33,26 @@ EXIT_CODES = {
 }
 SESSION_COMMANDS = ("new", "resume")
 HELP_FLAGS = ("-h", "--help", "help")
+VERSION_FLAGS = ("-V", "--version", "version")
+
+
+def version() -> str:
+    """The installed version, falling back to the checkout's own pyproject."""
+    try:
+        from importlib.metadata import version as installed
+
+        return installed("book-genesis")
+    except Exception:
+        text = (Path(__file__).resolve().parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+        found = re.search(r'^version\s*=\s*"([^"]+)"', text, re.M)
+        return found.group(1) if found else "unknown"
 OVERVIEW = """book-genesis - develop your idea with drafts, model feedback, and saved revisions.
 
   book-genesis setup            choose your providers and models. Once.
   book-genesis studio           open the local visual writing workspace
   book-genesis acceptance <folder>  check saved book integrity and performance evidence
-  book-genesis new              give it an idea; guide the writing and review process
+  book-genesis new --idea "a night nurse is paged from a demolished room"
+                                give it an idea; guide the writing and review process
   book-genesis resume <folder>  continue where you stopped
   book-genesis doctor           what will run where, and whether every key is set
   book-genesis review <folder>  read chapters and safe local version history in a browser
@@ -50,9 +65,14 @@ Useful flags on `new` and `resume`:
   --manual     no provider at all: paste every reply by hand
   --chapters N stop after N chapters instead of writing the whole book
 
-One step at a time: brief, chapter, book, polish, judge, panel, run-phase, approve,
+You do not need anything below this line. The commands above write a whole book.
+
+The same tool also exposes each step on its own, for running one part by hand or
+picking a run apart: brief, chapter, book, polish, judge, panel, run-phase, approve,
 init, status, validate, demo. Run `book-genesis <command> --help` for any of them.
-An audit that requests revision stops completion until the manuscript is revised.
+
+The whole-book audit at the end can ask for a revision; when it does, the book is
+not marked complete until the manuscript has been revised and the audit passes.
 """
 
 
@@ -65,6 +85,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         # open-source tool has to read like a sentence.
         cli._utf8_console()
         print(OVERVIEW, end="")
+        return cli.EXIT_OK
+    if argv[0] in VERSION_FLAGS:
+        # The first thing a newcomer types, and it used to answer with an argparse error.
+        cli._utf8_console()
+        print(f"book-genesis {version()}")
         return cli.EXIT_OK
     if argv[0] in SESSION_COMMANDS:
         cli._utf8_console()
@@ -89,8 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     new_parser = subparsers.add_parser("new", help="From one idea to a judged manuscript, with you agreeing along the way")
-    new_parser.add_argument("--idea", default="")
-    new_parser.add_argument("--language", default="")
+    new_parser.add_argument("--idea", default="", help="One or two sentences. The whole book grows from this. Asked for if omitted.")
+    new_parser.add_argument("--language", default="", help="Language to write the book in, e.g. en, pt. Inferred from the idea when absent.")
     new_parser.add_argument("--path", default="", help="Project folder (default: ./books/<slug>)")
     _shared(new_parser)
 

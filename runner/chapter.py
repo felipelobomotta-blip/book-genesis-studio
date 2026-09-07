@@ -19,9 +19,11 @@ from runner.adapters import Adapter, AdapterError
 from runner.activity import complete_with_activity
 from runner.brief import TAIL_WORDS, build_chapter_brief, tail_words, chapter_word_limits
 from runner.constants import GenreProfile, load_genre_profile
-from runner.filesystem import load_state_summary, set_human_checkpoint_required, update_state_value
+from runner.filesystem import (load_state_summary, refresh_manuscript_state,
+                               set_human_checkpoint_required, update_state_value)
 from runner.history import load_manifest, project_relative, record_draft, reserve_attempt, sha256, write_manifest
 from runner.judge import SingleJudge, Verdict
+from runner.repetition import accepted_before, reuse_against
 
 from runner.resources import resource_root
 
@@ -93,6 +95,9 @@ class ChapterResult:
     #: Continuity findings the repair pass could not resolve. An accepted chapter
     #: may carry them; they belong in the report rather than in silence.
     unresolved_continuity: List[dict] = field(default_factory=list)
+    #: Sentences this chapter shares with an earlier one that the rewrite could not
+    #: remove. No blind judge can see these — it reads one chapter at a time.
+    repeated_lines: List[dict] = field(default_factory=list)
 
 
 def approve(project: Path, slug: str) -> Path:
@@ -322,6 +327,48 @@ def run_chapter(
                     say(f"chapter {chapter}: continuity repair did not pass both checks; "
                         f"keeping the accepted draft with {len(conflicts)} unresolved continuity finding(s)")
 
+    # Nothing above this line has compared two chapters. The judge is blind on
+    # purpose and sees one chapter plus a tail; that is right for judging prose and
+    # cannot catch a book quoting itself. Repetition is a fact about strings, so it
+    # is settled here in code, for free, before the chapter becomes canonical.
+    repeated_lines: List[dict] = []
+    if accepted:
+        earlier = accepted_before(project, chapter)
+        repeats = reuse_against(best, earlier)
+        if repeats:
+            say(f"chapter {chapter}: rewriting {len(repeats)} line(s) the book has already used")
+            prompt = (RUNNER_CONTRACT + "Rewrite only the sentences listed below, which repeat earlier "
+                      "chapters word for word. Keep the beat if the scene needs it and find another way to "
+                      "say it; cut it if it does not. Preserve the heading, every other sentence, the "
+                      "requested length, and the ending. Return the complete chapter only.\n"
+                      + author_constraints + "\nALREADY USED\n"
+                      + json.dumps([item.text for item in repeats], ensure_ascii=False)
+                      + "\nCHAPTER\n" + best)
+            candidate = clean_chapter(complete_with_activity(adapters["editor"], prompt,
+                model=models.get("editor", ""), task=f"Chapter {chapter} repetition editor"))
+            candidate = _fit_requested_length(project, chapter, candidate, adapters, models, attempt_id, say)
+            draft_number += 1
+            path = _attempt_draft_path(drafts_dir, attempt_id, attempt_sequence, draft_number)
+            _write(path, candidate)
+            record_draft(project, chapter, attempt_id, path)
+            check = judge.judge(candidate, previous_tail, genre, previous_draft=best, reader=reader)
+            check_path = _attempt_verdict_path(evaluations_dir, chapter, attempt_id, attempt_sequence, draft_number)
+            _write(check_path, check.raw)
+            verdicts.append(check)
+            still = reuse_against(candidate, earlier)
+            if _accepted(check) and not still:
+                best, best_verdict, best_draft_path, best_verdict_path = candidate, check, path, check_path
+            else:
+                # Same answer the continuity repair settled on: a chapter carrying a
+                # visible finding beats no chapter, and a 40-chapter run must not
+                # stall because one sentence came back. The report says so out loud.
+                repeated_lines = [
+                    {"text": item.text, "first_used_in": item.first_used_in, "times": item.times}
+                    for item in (still or repeats)
+                ]
+                say(f"chapter {chapter}: rewrite did not clear {len(repeated_lines)} reused line(s); "
+                    "keeping the accepted draft and recording them")
+
     label = getattr(judge, "label", "judge")
     if accepted:
         final = project / "manuscript" / "chapters" / f"chapter-{chapter:02d}.md"
@@ -335,10 +382,12 @@ def run_chapter(
             update_state_value(state, "status", "in_progress")
             say("The manuscript changed; the whole-book review and delivery must run again.")
         _write(final, best)
+        refresh_manuscript_state(project)
         # `status` stays exactly "accepted": score.py, acceptance.py and review.py
         # compare it by equality, and widening the string here would quietly break
         # three call sites. The findings ride alongside it instead.
-        result = ChapterResult(chapter, True, "accepted", cycles, final, verdicts, unresolved_continuity)
+        result = ChapterResult(chapter, True, "accepted", cycles, final, verdicts,
+                               unresolved_continuity, repeated_lines)
     else:
         result = ChapterResult(chapter, False, "blocked", cycles, best_draft_path, verdicts)
     _record_attempt(project, chapter, attempt_id, attempt_sequence, result, best_draft_path, best_verdict_path)
@@ -640,6 +689,8 @@ def _append_run_report(project: Path, result: ChapterResult, judge_label: str) -
     unresolved = ""
     if result.unresolved_continuity:
         unresolved = f"; unresolved continuity findings: {len(result.unresolved_continuity)}"
+    if result.repeated_lines:
+        unresolved += f"; reused lines: {len(result.repeated_lines)}"
     line = (
         f"- chapter {result.chapter}: {result.status} after {result.cycles} revision cycle(s); "
         f"judge: {judge_label}; last verdict: {verdict_text}{unresolved}; file: {result.draft_path}"
