@@ -193,14 +193,16 @@ def build_adapter(
     manual_dir: Optional[Path] = None,
     role: str = "",
     user_config=None,
+    effort: str = "",
 ) -> Adapter:
+    """One adapter. ``effort`` only reaches the CLIs that accept a reasoning level."""
     normalized = name.strip().lower()
     if normalized == "fake":
         return FakeAdapter(fake_responses or [])
     if normalized == "claude":
-        return ClaudeCliAdapter()
+        return ClaudeCliAdapter(effort=effort)
     if normalized == "codex":
-        return CodexCliAdapter()
+        return CodexCliAdapter(effort=effort)
     if normalized == "manual":
         if manual_dir is None:
             raise AdapterError("the manual adapter needs a project: run `chapter`, `book`, `run-phase` or `panel` with --manual")
@@ -256,14 +258,18 @@ def build_role_adapters(
         return RunSetup(adapters, {role: "" for role in ROLES}, panel, [note])
 
     plan = plan_roles(available, user_config)
-    cache: Dict[str, Adapter] = {}
+    # Keyed by (adapter, effort), not by adapter alone: two roles on the same CLI
+    # at different reasoning levels are two different callers, and sharing one
+    # instance would silently give both whichever level was built first.
+    cache: Dict[tuple, Adapter] = {}
 
-    def get(name: str) -> Adapter:
-        if name not in cache:
-            cache[name] = build_adapter(name, user_config=user_config)
-        return cache[name]
+    def get(name: str, effort: str = "") -> Adapter:
+        key = (name, effort)
+        if key not in cache:
+            cache[key] = build_adapter(name, user_config=user_config, effort=effort)
+        return cache[key]
 
-    adapters = {role: get(role_model.adapter) for role, role_model in plan.roles.items()}
+    adapters = {role: get(role_model.adapter, role_model.effort) for role, role_model in plan.roles.items()}
     models = {role: role_model.model for role, role_model in plan.roles.items()}
     # New contracts use dedicated roles. Legacy sequential fake/manual fixtures
     # remain unchanged; contract-specific tests supply these roles explicitly.
@@ -271,7 +277,9 @@ def build_role_adapters(
     models["continuity"] = models.get("extractor", models.get("editor", ""))
     adapters["auditor"] = adapters["judge"]
     models["auditor"] = models.get("judge", "")
-    panel = PanelJudge([PanelMember(get(spec.adapter), spec.model, spec.persona) for spec in plan.panel])
+    panel = PanelJudge(
+        [PanelMember(get(spec.adapter, spec.effort), spec.model, spec.persona) for spec in plan.panel]
+    )
     return RunSetup(adapters, models, panel, list(plan.warnings))
 
 
@@ -302,5 +310,6 @@ def _distinct_personas(panel: List[PanelSpec]) -> List[PanelSpec]:
             persona = f"{persona} ({seen[persona]})"
         else:
             seen[persona] = 1
-        result.append(PanelSpec(spec.adapter, spec.model, persona))
+        # Renaming a duplicate persona must not silently drop the seat's effort.
+        result.append(PanelSpec(spec.adapter, spec.model, persona, spec.effort))
     return result

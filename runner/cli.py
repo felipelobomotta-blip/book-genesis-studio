@@ -651,10 +651,12 @@ def _doctor_command() -> int:
     print("roles:")
     for role in ROLES:
         role_model = plan.roles[role]
-        print(f"  {role}: {role_model.adapter}{' ' + role_model.model if role_model.model else ''}")
+        effort = f" effort={role_model.effort}" if role_model.effort else ""
+        print(f"  {role}: {role_model.adapter}{' ' + role_model.model if role_model.model else ''}{effort}")
     print("panel:")
     for spec in plan.panel:
-        print(f"  {spec.adapter}{' ' + spec.model if spec.model else ''} as {spec.persona}")
+        effort = f" effort={spec.effort}" if spec.effort else ""
+        print(f"  {spec.adapter}{' ' + spec.model if spec.model else ''}{effort} as {spec.persona}")
     if plan.warnings:
         for warning in plan.warnings:
             print(f"warning: {warning}")

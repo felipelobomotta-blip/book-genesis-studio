@@ -80,6 +80,7 @@ class UserConfig:
             for name, values in providers.items()
         }
         role_models = {role: RoleModel(adapter, model) for role, (adapter, model) in roles.items()}
+
         if panel is None:
             seat = role_models.get("judge") or role_models.get("writer")
             panel = [PanelSpec(seat.adapter, seat.model, persona) for persona in DEFAULT_PERSONAS] if seat else []
@@ -96,11 +97,13 @@ class UserConfig:
             for role in ROLES:
                 if role in self.roles:
                     model = self.roles[role]
-                    lines.append(f"  {role}: {model.adapter}{' ' + model.model if model.model else ''}")
+                    effort = f" effort={model.effort}" if model.effort else ""
+                    lines.append(f"  {role}: {model.adapter}{' ' + model.model if model.model else ''}{effort}")
         if self.panel:
             lines.append("panel:")
             for seat in self.panel:
-                lines.append(f"  {seat.adapter}{' ' + seat.model if seat.model else ''} as {seat.persona}")
+                effort = f" effort={seat.effort}" if seat.effort else ""
+                lines.append(f"  {seat.adapter}{' ' + seat.model if seat.model else ''}{effort} as {seat.persona}")
         return "\n".join(lines)
 
 
@@ -130,13 +133,18 @@ def load_user_config(path: Optional[Path] = None) -> Optional[UserConfig]:
                 api_key_env=str(values.get("api_key_env", "")).strip(),
             )
         elif key in ROLES:
-            roles[key] = RoleModel(str(values.get("adapter", "")).strip(), str(values.get("model", "")).strip())
+            roles[key] = RoleModel(
+                str(values.get("adapter", "")).strip(),
+                str(values.get("model", "")).strip(),
+                str(values.get("effort", "")).strip(),
+            )
         elif key.startswith("panel"):
             panel.append(
                 PanelSpec(
                     str(values.get("adapter", "")).strip(),
                     str(values.get("model", "")).strip(),
                     str(values.get("persona", "")).strip(),
+                    str(values.get("effort", "")).strip(),
                 )
             )
     return UserConfig(providers=providers, roles=roles, panel=panel, path=target)
@@ -157,18 +165,25 @@ def write_user_config(config: UserConfig, path: Optional[Path] = None) -> Path:
         elif provider.api_key_env:
             lines.append(f"  api_key_env: {provider.api_key_env}")
         lines.append("")
+    # `effort` is written only when set: an empty key would read back as "use the
+    # CLI default" anyway, and a file full of blanks hides the choices that matter.
     for role in ROLES:
         if role in config.roles:
             model = config.roles[role]
-            lines += [f"{role}:", f"  adapter: {model.adapter}", f"  model: {_yaml_scalar(model.model)}", ""]
+            lines += [f"{role}:", f"  adapter: {model.adapter}", f"  model: {_yaml_scalar(model.model)}"]
+            if model.effort:
+                lines.append(f"  effort: {model.effort}")
+            lines.append("")
     for index, seat in enumerate(config.panel, 1):
         lines += [
             f"panel_{index}:",
             f"  adapter: {seat.adapter}",
             f"  model: {_yaml_scalar(seat.model)}",
             f"  persona: {seat.persona}",
-            "",
         ]
+        if seat.effort:
+            lines.append(f"  effort: {seat.effort}")
+        lines.append("")
     target.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=".book-genesis-config-", dir=target.parent)
     try:

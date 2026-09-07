@@ -86,6 +86,12 @@ class GenreProfile:
 class RoleModel:
     adapter: str
     model: str
+    #: Reasoning effort for this role, when the adapter supports one. Empty means
+    #: the CLI's own default. The adapters have always accepted this; until it
+    #: became a config key there was no way to ask for it, so a run like
+    #: "writer on Luna high, judge on Opus medium" could be described and never
+    #: configured.
+    effort: str = ""
 
 
 @dataclass(frozen=True)
@@ -93,6 +99,7 @@ class PanelSpec:
     adapter: str
     model: str
     persona: str
+    effort: str = ""
 
 
 DEFAULT_PERSONAS = (
@@ -162,6 +169,7 @@ def load_model_map() -> Dict[str, RoleModel]:
         model_map[role] = RoleModel(
             adapter=str(values.get("adapter", "")).strip(),
             model=str(values.get("model", "")).strip(),
+            effort=str(values.get("effort", "")).strip(),
         )
     return model_map
 
