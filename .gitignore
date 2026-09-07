@@ -55,3 +55,8 @@ dist/
 
 # Local Studio library (books written on this machine)
 .studio-books/
+
+# Books written on this machine and run logs are artifacts, not source.
+books/
+data-run.log
+*-run.log
