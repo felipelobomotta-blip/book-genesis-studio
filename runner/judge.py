@@ -15,6 +15,7 @@ import re
 from typing import Dict, List, Optional, Union
 
 from runner.adapters import Adapter
+from runner.activity import complete_with_activity
 from runner.resources import resource_root
 
 REPO_ROOT = resource_root()
@@ -86,8 +87,21 @@ def judge_chapter(
         anchor=anchor,
         reader=reader,
     )
-    response = adapter.complete(prompt, model=model)
-    return parse_verdict(response)
+    context_only = [previous_tail, previous_draft or "", anchor or ""]
+    for attempt in range(2):
+        response = complete_with_activity(adapter, prompt, model=model,
+                                          task="Reader" + (f" ({reader[:65]})" if reader else ""))
+        verdict = parse_verdict(response)
+        quote = " ".join(verdict.stopped_at.strip(" \"'“”‘’").split()).casefold()
+        current = " ".join(prose.split()).casefold()
+        wrong_source = (len(quote) >= 20 and quote not in current and
+                        any(quote in " ".join(text.split()).casefold() for text in context_only))
+        if not wrong_source:
+            return verdict
+        prompt += ("\n\nYour previous stopped_at quotation came from context, not the current chapter. "
+                   "Read only the current chapter for the verdict. Return a fresh reader response; "
+                   "quote a sentence from the current chapter or use none.\n")
+    raise ValueError("The reader twice quoted comparison/context text instead of the current chapter; verdict not accepted")
 
 
 def build_judge_prompt(
@@ -118,6 +132,14 @@ def build_judge_prompt(
         )
     if not comparison:
         comparison = "(No earlier draft and no anchor were given: answer `vs_previous: none` and `vs_anchor: none`.)\n"
+
+    from runner.constants import load_genre_profile
+    form = load_genre_profile(genre).key
+    if form == "nonfiction":
+        template += ("\n\nFor practical nonfiction, read for useful, clear explanations and concrete progress toward understanding "
+                     "or doing something. Explanations, lists and a briefly labelled fictional example are legitimate forms, "
+                     "not automatic exposition failures. A thriller hook or cliffhanger is not required. Still report actual "
+                     "confusion, repetition, implausible claims, dull generic advice or loss of attention honestly.\n")
 
     return (
         template.replace("{{genre}}", genre.strip() or "general fiction")

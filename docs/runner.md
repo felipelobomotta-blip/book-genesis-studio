@@ -29,7 +29,7 @@ python runner/cli.py validate <project>
 python runner/cli.py demo <path>                 # deterministic file-contract demo, no model
 ```
 
-`--human` additionally requires explicit approval after chapter 1. That opt-in is saved in the project: every later `resume`, including `resume --yes`, keeps the approval requirement until `approve` records it. The guided terminal session also asks for decisions at the brief, outline and chapter 1 unless `--yes` or non-interactive input is used. `--manual` turns every model call into a prompt file under `work/manual/` for people who only have a chat window. In the guided session, Enter continues, a typed response becomes author notes, and `q` stops safely; `resume` continues from the saved state and reports remaining work.
+`--human` additionally requires explicit approval after chapter 1. That opt-in is saved in the project: every later `resume`, including `resume --yes`, keeps the approval requirement until `approve` records it. The guided terminal session also asks for decisions at the brief, outline and chapter 1 unless `--yes` or non-interactive input is used. If the blind-reader gate blocks a chapter, an interactive run asks `Try again? (yes/no)` and can start another attempt automatically; `no` keeps the best draft and stops. `--yes` remains deterministic and stops on a block. `--manual` turns every model call into a prompt file under `work/manual/` for people who only have a chat window. In the guided session, Enter continues, a typed response becomes author notes, and `q` stops safely; `resume` continues from the saved state and reports remaining work.
 
 `review` writes a self-contained reading page under `review/index.html`, with chapters, version history and comparison; `--open` opens that local file. `export` writes Markdown or EPUB under `exports/` and explicitly identifies partial work. Choose `--output PATH` for another destination. Inside the project, exports stay under `exports/` to protect inputs; `--overwrite` can replace an export, never the source manuscript. Neither command uploads the book.
 
@@ -58,9 +58,9 @@ python runner/cli.py demo <path>                 # deterministic file-contract d
 
 ## Phases
 
-`run-phase` runs the current phase of the manifest through the `architect` role: the phase prompt, the project idea, the assumptions, and every artifact already written go into one prompt; the reply is split on `=== FILE: <path> ===` markers and only the files the phase requires are written. A `=== STATE ===` block updates `title`, `genre`, `audience`, `language` and `target_length` in `PROJECT_STATE.yaml`. The phase advances only when every required output exists and is not a template.
+`run-phase` runs the current phase of the manifest through the `architect` role: the phase prompt, the project idea, the assumptions, and every artifact already written go into one prompt; the reply is split on `=== FILE: <path> ===` markers and only the files the phase requires are written. A `=== STATE ===` block updates `title`, `genre`, `audience` and `target_length` in `PROJECT_STATE.yaml`; a previously selected language cannot be replaced by the model. The phase advances only when every required output exists and is not a template. Chapter headings take precedence over bold summaries; outlines with only legacy bold chapter sections are still accepted. Duplicate actual chapter headings remain invalid.
 
-Phase 3 (drafting) is never run by `run-phase`; it is `book` / `chapter`. Post-draft phases receive all canonical chapters. Phase 4 is a semantic audit gate: only `audit_status: pass` advances; `revise` and `major_rewrite` persist the report and block the guided session at `awaiting_revision`. Read the report, revise the manuscript, then resume for a new audit. Phase 5 provides an editorial diagnostic, and Phase 6 prepares draft editorial materials. Neither supplies evidence of market success. See [ADR 0015](adr/0015-gate-semantico-do-audit.md).
+Phase 3 (drafting) is never run by `run-phase`; it is `book` / `chapter`. Post-draft phases receive all canonical chapters. Phase 4 is a semantic audit gate: only `audit_status: pass` advances; `revise` and `major_rewrite` persist the report and set `awaiting_revision`. The interactive guided session offers to revise the chapters using the report, then repeats reader checks and the whole-book audit. Answer `yes` or `ok` to approve that work, or `no` to stop with the draft saved. Unattended runs stop for revision. Phase 5 provides an editorial diagnostic, and Phase 6 prepares draft editorial materials. Neither supplies evidence of market success. See [ADR 0015](adr/0015-gate-semantico-do-audit.md).
 
 ## Configuration
 
@@ -86,7 +86,7 @@ Phase 3 (drafting) is never run by `run-phase`; it is `book` / `chapter`. Post-d
 
 CLI adapters use the session already logged in on the machine. HTTP adapters read the configured key and send it to the chosen provider. Claude is invoked in safe mode with tools disabled. Codex runs in a temporary directory with an ephemeral read-only sandbox and a text-only output contract. This does not prove that every Codex tool is disabled in every host environment.
 
-`doctor` runs the same discovery the commands run: it lists which CLIs are on PATH and prints the role plan. When a configured adapter is missing, its roles fall back to the first installed one; when writer and judge end up in the same family, the judge takes a different model and every run prints and records a `single family` warning.
+`doctor` runs the same discovery the commands run: it lists which CLIs are on PATH, checks the Codex OAuth state, and prints the role plan. When a configured adapter is missing, its roles fall back to the first installed one; when writer and judge end up in the same family, the judge takes a different model and every run prints and records a `single family` warning.
 
 ## Tests
 

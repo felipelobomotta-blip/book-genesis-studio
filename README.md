@@ -45,6 +45,8 @@ Project files are saved locally. Prompts and manuscript text are sent to the mod
 
 ## Get started
 
+The current checkout also includes a beta [visual Writing Studio](docs/studio.md): `book-genesis studio`. It uses the same saved projects and runner as the CLI. See the [release acceptance requirements](docs/release-acceptance.md) for the distinction between automated checks and a validated customer experience.
+
 ### 1. Install and connect a model
 
 You need Python 3.10+ and one way to run a model: Claude Code, Codex CLI, an API-backed provider, a local model server, a declared external CLI, or manual copy/paste mode.
@@ -87,6 +89,8 @@ For scripts and CI, add `--yes`. For a bounded test run, use `--chapters N`.
 
 ## How it works
 
+Live provider setup enables source-backed continuity memory during drafting, a separate whole-book audit route, and targeted repair plans that preserve unaffected chapters. Exact source excerpts support memory entries; supported sums are checked by code. Each repair still faces reader and continuity checks. [Implementation decisions and limits](docs/adr/0016-continuity-targeted-repair-and-studio.md).
+
 ```mermaid
 flowchart LR
   I[Your idea] --> F[Foundation]
@@ -98,13 +102,13 @@ flowchart LR
   R -->|accepted| M[Canonical manuscript]
   M --> A[Full-manuscript audit]
   A -->|pass| X[Local review + Markdown / EPUB]
-  A -->|revise / major rewrite| H[Author reviews and revises]
-  H --> A
+  A -->|revise / major rewrite| H[Ask author to approve revision]
+  H -->|yes| E
 ```
 
 Each chapter is judged from the prose itself, rather than from the writer’s plan. When you configure different model families, the writer and reader can be separated. Chapter one can go to a panel of distinct reader personas. If only one family is available, the run records that warning.
 
-The final audit reads the canonical manuscript. If it returns `revise` or `major_rewrite`, the project is blocked at audit: score and package do not continue. Read the report, change the manuscript, and resume. A later audit must return `pass`.
+The final audit reads the canonical manuscript. If it returns `revise` or `major_rewrite`, score and package do not continue. In an interactive session, the app asks **Revise the book for me? (yes/no)**. Answer `yes` or `ok` to revise using the report and repeat the reader checks and audit; answer `no` to keep the saved draft and stop. Unattended runs stop for revision. A later audit must return `pass` before final delivery.
 
 This is a safeguard, not a claim that model feedback replaces an editor or human readers.
 
@@ -138,7 +142,7 @@ The recommended configuration uses more than one model family, but it is not man
 
 ## Built to be questioned
 
-The current release is a controlled beta. The codebase has **279 local tests** from the verified September 2026 quality pass, including recovery, history integrity, audit blocking, export, packaging, and reader flows. A real one-chapter smoke test found a structural ending problem that a favorable model-reader panel had missed; that finding led to the audit gate that now blocks completion. Read the [validation record](docs/validation.md).
+The current release is a controlled beta. The codebase has **418 local tests** in the latest verified September 2026 quality pass, including recovery, history integrity, audit blocking, export, packaging, the visual Studio HTTP flow, live activity, provider preflight, and reader flows. A real one-chapter smoke test found a structural ending problem that a favorable model-reader panel had missed; that finding led to the audit gate that now blocks completion. Read the [validation record](docs/validation.md).
 
 What has not been proven yet matters too: Book Genesis has not established bestseller potential, human-reader preference, long-book consistency, or frictionless onboarding for people new to the terminal. The product should be evaluated with real writers, editors, and readers before publication claims are made.
 

@@ -1,10 +1,10 @@
 # Validation record — Imagination Edition
 
-This is an engineering evidence record for `v5.0.0-beta.1`, prepared on September 5, 2026. It distinguishes software behavior from manuscript quality. A passing test suite does not establish that the resulting books are publishable.
+This is an engineering evidence record for `v5.1.0b1`, prepared on September 6, 2026. It distinguishes software behavior from manuscript quality. A passing test suite does not establish that the resulting books are publishable.
 
 ## Automated verification
 
-The publication checkout passed **279 tests in 66.37 seconds** on Windows with Python 3.11. The suite includes interrupted phase recovery, immutable attempt history, canonical text/hash integrity, persisted author checkpoints, adapter errors and timeouts, audit rejection, local reader escaping and containment, Markdown/EPUB integrity, and package resources installed outside the source checkout.
+The publication checkout passed **418 tests in 65.33 seconds** on Windows with Python 3.11. The suite includes interrupted phase recovery, immutable attempt history, canonical text/hash integrity, persisted author checkpoints, adapter errors and timeouts, audit rejection, local reader escaping and containment, Markdown/EPUB integrity, live Studio activity, provider preflight, and package resources installed outside the source checkout.
 
 The wheel test builds the package, installs it into an isolated temporary target, changes out of the source directory, and exercises the installed resource lookup. The configured GitHub workflow runs the same suite and a wheel build on Windows and Ubuntu with Python 3.10 and 3.12. Its current remote results are visible in [GitHub Actions](https://github.com/felipelobomotta-blip/book-genesis-v4/actions/workflows/test.yml).
 
@@ -47,7 +47,7 @@ No API key or live model call is needed for the regression suite. Live provider 
 
 ## Clean-runner findings
 
-The first GitHub CI run exposed three unit tests that depended on installed Claude/Codex commands, a doctor test that depended on local provider configuration, and a Windows-only separator in a rollback fixture. The fixtures now declare their environment explicitly and use path components. Their behavioral assertions remain in place. After these corrections, the isolated local suite passed 279 tests in 26.73 seconds; remote matrix results remain inspectable in GitHub Actions.
+The first GitHub CI run exposed three unit tests that depended on installed Claude/Codex commands, a doctor test that depended on local provider configuration, and a Windows-only separator in a rollback fixture. The fixtures now declare their environment explicitly and use path components. Their behavioral assertions remain in place. The latest isolated local suite passed 418 tests; remote matrix results remain inspectable in GitHub Actions.
 
 ## Remote matrix result
 

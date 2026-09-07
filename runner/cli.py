@@ -8,7 +8,7 @@ import sys
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from runner.adapters import AdapterError, AwaitingManual  # noqa: E402
+from runner.adapters import AdapterError, AwaitingManual, codex_login_status  # noqa: E402
 from runner.book import run_book, run_polish  # noqa: E402
 from runner.brief import TAIL_WORDS, build_chapter_brief, tail_words  # noqa: E402
 from runner.chapter import AwaitingHuman, approve, clean_chapter, run_chapter  # noqa: E402
@@ -623,6 +623,14 @@ def _doctor_command() -> int:
     for name in KNOWN_CLIS:
         location = shutil.which(name)
         print(f"  {name}: {'found at ' + location if location else 'not found on PATH'}")
+        if name == "codex" and location and Path(location).exists():
+            login = codex_login_status(name)
+            if login is True:
+                print("  codex auth: logged in")
+            elif login is False:
+                print("  codex auth: not logged in (run `codex login`)")
+            else:
+                print("  codex auth: could not verify")
     for name, ok in found.items():
         if name not in KNOWN_CLIS:
             print(f"  {name} (adapters.yaml): {'found' if ok else 'not found on PATH'}")

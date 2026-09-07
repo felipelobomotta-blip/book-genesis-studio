@@ -18,7 +18,7 @@ from runner.export import export_project
 from runner.filesystem import scaffold_project
 from runner.review import build_review
 from runner.roles import available_adapters, build_role_adapters
-from runner.session import run_session
+from runner.session import run_session, resume_command
 from runner.ui import make_view
 from runner.userconfig import load_user_config
 
@@ -35,6 +35,8 @@ HELP_FLAGS = ("-h", "--help", "help")
 OVERVIEW = """book-genesis - develop your idea with drafts, model feedback, and saved revisions.
 
   book-genesis setup            choose your providers and models. Once.
+  book-genesis studio           open the local visual writing workspace
+  book-genesis acceptance <folder>  check saved book integrity and performance evidence
   book-genesis new              give it an idea; guide the writing and review process
   book-genesis resume <folder>  continue where you stopped
   book-genesis doctor           what will run where, and whether every key is set
@@ -67,6 +69,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     if argv[0] in SESSION_COMMANDS:
         cli._utf8_console()
         return session_main(argv)
+    if argv[0] == "studio":
+        from runner.studio import main as studio_main
+        return studio_main(argv[1:])
+    if argv[0] == "acceptance":
+        from runner.acceptance import main as acceptance_main
+        return acceptance_main(argv[1:])
     if argv[0] == "review":
         cli._utf8_console()
         return review_main(argv[1:])
@@ -102,27 +110,43 @@ def _shared(parser: argparse.ArgumentParser) -> None:
 
 
 def session_main(argv: List[str], view=None) -> int:
+    view = view or make_view(plain="--plain" in argv)
+    try:
+        return _session_main(argv, view)
+    except (EOFError, KeyboardInterrupt):
+        view.fail("Input closed or cancelled. Writing is paused; saved work is safe. Use book-genesis resume with your book folder to continue.")
+        return cli.EXIT_OK
+
+
+def _session_main(argv: List[str], view) -> int:
     args = build_parser().parse_args(argv)
     view = view or make_view(plain=args.plain)
     if args.chapters is not None and args.chapters <= 0:
         view.fail("--chapters must be a positive integer.")
         return cli.EXIT_USAGE
 
+    needs_scaffold = False
     if args.command == "new":
-        idea = args.idea.strip() or view.ask("What is the book about? One sentence is enough", "")
+        idea = args.idea.strip()
+        if not idea and view.interactive and not args.yes:
+            idea = view.ask("What is the book about? One sentence is enough", "")
         if not idea:
             view.fail("An idea is required (use --idea or type it when asked).")
             return cli.EXIT_USAGE
-        language = args.language.strip() or view.ask("Language", "en")
+        language = args.language.strip() or (view.ask("Language", "en") if view.interactive and not args.yes else "en")
         project = Path(args.path) if args.path else Path("books") / cli._slug(idea)
         if (project / "PROJECT_STATE.yaml").exists():
-            view.fail(f"A book already exists at {project}. Use `book-genesis resume` or choose a new --path.")
-            return cli.EXIT_USAGE
-        try:
-            scaffold_project(project, idea=idea, language=language, adapter="auto", model_name="auto")
-        except (OSError, ValueError) as exc:
-            view.fail(f"Could not create the project: {exc}")
-            return cli.EXIT_FAILURE
+            if args.yes or not view.interactive:
+                view.fail(f"A book already exists at {project}. Use `book-genesis resume` or choose a new --path.")
+                return cli.EXIT_USAGE
+            answer = view.ask("This book already exists. Continue it? (yes/no)", "yes").strip().lower()
+            while answer not in {"yes", "y", "ok", "sim", "s", "no", "n", "q", "nao", "não", ""}:
+                answer = view.ask("Please answer yes, no, or ok", "no").strip().lower()
+            if answer not in {"yes", "y", "ok", "sim", "s", ""}:
+                view.event("Stopped. Your existing book is saved.")
+                return cli.EXIT_OK
+        else:
+            needs_scaffold = True
     else:
         project = Path(args.path)
         if not (project / "PROJECT_STATE.yaml").exists():
@@ -135,13 +159,20 @@ def session_main(argv: List[str], view=None) -> int:
         view.fail(str(exc))
         return cli.EXIT_FAILURE
 
+    if needs_scaffold:
+        try:
+            scaffold_project(project, idea=idea, language=language, adapter="auto", model_name="auto")
+        except (OSError, ValueError) as exc:
+            view.fail(f"Could not create the project: {exc}")
+            return cli.EXIT_FAILURE
+
     try:
         result = run_session(project, setup, view, yes=args.yes or not view.interactive, human=args.human, chapters=args.chapters)
-    except OSError as exc:
-        view.fail(f"Could not finish the file operation: {exc}. Continue with: book-genesis resume {project}")
+    except (OSError, ValueError) as exc:
+        view.fail(f"Could not finish the file operation: {exc}. Continue with: {resume_command(project)}")
         return cli.EXIT_FAILURE
     except KeyboardInterrupt:
-        view.fail(f"\ninterrupted; continue any time with: book-genesis resume {project}")
+        view.fail(f"\ninterrupted; continue any time with: {resume_command(project)}")
         return cli.EXIT_FAILURE
     return EXIT_CODES.get(result.status, cli.EXIT_FAILURE)
 

@@ -44,14 +44,18 @@ def main() -> None:
         sys.stderr.write("bridge_hermes: empty prompt on stdin\n")
         raise SystemExit(2)
 
-    result = subprocess.run(
-        build_command(model),
-        input=prompt,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        result = subprocess.run(
+            build_command(model),
+            input=prompt,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError:
+        sys.stderr.write("Hermes is not installed or is not on PATH. Install Hermes or choose another connection in book-genesis setup.\n")
+        raise SystemExit(1)
     if result.returncode != 0:
         sys.stderr.write(result.stderr or result.stdout)
         raise SystemExit(result.returncode)

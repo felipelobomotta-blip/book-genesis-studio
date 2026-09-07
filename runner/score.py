@@ -85,7 +85,7 @@ def genesis_score(project: Path) -> ScoreCard:
     valid = {n for n in numbers if _accepted_verdict_file(project, n) is not None}
     accepted = [n for n in numbers if rows[n].status == "accepted" and n in valid]
     blocked = [n for n in numbers if rows[n].status == "blocked" or n not in valid]
-    first_pass = [n for n in accepted if rows[n].cycles == 0]
+    first_pass = [n for n in accepted if rows[n].cycles == 0 and _accepted_on_first_attempt(project, n)]
     panel_yes, panel_seats, panel_detail = _panel_votes(project, rows)
     remembered = [n for n in numbers if _remembered(project, n)]
 
@@ -111,6 +111,23 @@ def genesis_score(project: Path) -> ScoreCard:
     components = [Component(key, labels[key], values[key], details[key], weight) for key, weight in WEIGHTS]
     score = round(10 * sum(component.value * component.weight for component in components), 1)
     return ScoreCard(score, total, components, blocked)
+
+
+def _accepted_on_first_attempt(project: Path, number: int) -> bool:
+    manifest = project / "manuscript" / "chapters" / "history" / f"chapter-{number:02d}" / "manifest.json"
+    if not manifest.exists():
+        return True  # Older reports have only within-attempt revision counts.
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        accepted = data.get("accepted") or {}
+        if accepted.get("sequence") != 1:
+            return False
+        attempt_id = accepted.get("attempt_id", "")
+        drafts = project / "manuscript" / "drafts" / f"chapter-{number:02d}"
+        # A length edit before the reader is still a revision of the first draft.
+        return not any(drafts.glob(f"{attempt_id}-length-*.md"))
+    except (OSError, ValueError, AttributeError):
+        return False
 
 
 def chapter_rows(report: Path) -> Dict[int, ChapterRow]:

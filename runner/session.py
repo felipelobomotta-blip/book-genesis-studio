@@ -6,17 +6,23 @@ UI-agnostic: everything visible goes through a ``View``. The real one draws with
 chapter 1 read blind. Enter agrees; text becomes author notes and the stage runs again with
 them; ``q`` stops (``book-genesis resume`` picks it up). Without a terminal, or with
 ``--yes``, nothing is asked and the run is the autonomous one of ADR 0002.
+When an interactive chapter fails the blind-reader gate, the runner asks whether it should
+try that chapter again; a ``yes`` starts a fresh immutable attempt and a ``no`` stops safely.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import re
+import shlex
+import subprocess
 from typing import Dict, List, Optional, Protocol, Tuple
 
 from runner.adapters import AdapterError, AwaitingManual
+from runner.activity import activity_events, WorkflowPaused
 from runner.book import count_chapters, run_book
 from runner.chapter import AwaitingHuman, resolve_human_checkpoint
 from runner.filesystem import advance_phase, current_phase, load_state_summary, update_state_value
@@ -42,10 +48,18 @@ CHECKPOINT_AFTER = {
 }
 CHECKPOINT_HINT = "Enter = go on  |  type what to change  |  q = stop here (resume later)"
 CHAPTER_HINT = "Enter = write the rest  |  type notes to rewrite chapter 1 with them  |  q = stop here"
+RETRY_HINT = "Try again? (yes/no)"
 CONTINUE_WORDS = {"", "y", "yes", "ok", "go", "s", "sim", "continue"}
 STOP_WORDS = {"q", "quit", "stop", "exit", "n", "no", "nao", "não"}
+RETRY_YES_WORDS = {"y", "yes", "ok", "s", "sim"}
 MAX_RERUNS = 2
+MAX_BLOCKED_RETRIES = 3
 EXCERPT_CHARS = 1200
+
+
+def resume_command(project: Path) -> str:
+    args = ["book-genesis", "resume", str(project)]
+    return subprocess.list2cmdline(args) if os.name == "nt" else shlex.join(args)
 
 _STARTING = re.compile(r"^chapter (?P<number>\d+) of (?P<total>\d+): starting")
 _STEP = re.compile(r"^chapter (?P<number>\d+): (?P<rest>.+)$")
@@ -62,6 +76,7 @@ class View(Protocol):
     def stage_fail(self, name: str, message: str) -> None: ...
     def stage_stop(self, name: str, message: str) -> None: ...
     def event(self, line: str) -> None: ...
+    def ask(self, prompt: str, default: str = "") -> str: ...
     def checkpoint(self, title: str, body: str, hint: str) -> str: ...
     def score(self, card: ScoreCard) -> None: ...
     def finish(self, paths: Dict[str, Path]) -> None: ...
@@ -76,6 +91,118 @@ class SessionResult:
 
 
 def run_session(project: Path, setup, view: View, *, yes: bool = False, human: bool = False, chapters: Optional[int] = None) -> SessionResult:
+    from runner.workspace_lock import project_lock
+    with project_lock(project):
+        return _controlled_session(project, setup, view, yes=yes, human=human, chapters=chapters)
+
+
+def _controlled_session(project, setup, view, *, yes=False, human=False, chapters=None):
+    with activity_events(view.event, project=project, prose_listener=getattr(view, "prose", None), cancel=getattr(view, "cancel", None), budget=getattr(view, "budget", None)):
+        for attempt in range(MAX_BLOCKED_RETRIES + 1):
+            result = _run_session(project, setup, view, yes=yes, human=human, chapters=chapters)
+            audit_revision = (result.status == "blocked" and
+                              load_state_summary(project).get("status") == "awaiting_revision")
+            if result.status == "failed":
+                from runner.recovery import classify_error
+                recovery = classify_error(result.message)
+                view.event(recovery.action)
+                if not recovery.retryable:
+                    _deliver_saved_draft(project, view, result)
+                    return result
+            if (yes or not view.interactive or attempt == MAX_BLOCKED_RETRIES
+                    or (result.status != "failed" and not audit_revision)):
+                _deliver_saved_draft(project, view, result)
+                return result
+            if audit_revision:
+                view.event("The whole-book review found issues. I can revise the chapters using that report, "
+                           "keep the previous versions, and ask the readers and auditor to check again.")
+                view.event("I will plan the repair first, preserve unaffected chapters, and check the complete book again.")
+                question = "Revise the book for me? (yes/no)"
+            else:
+                view.event("Your saved work is safe. I can retry the unfinished step here.")
+                question = RETRY_HINT
+            answer = view.ask(question, "no").strip().lower()
+            while answer not in RETRY_YES_WORDS | STOP_WORDS | {""}:
+                answer = view.ask("Please answer yes, no, or ok", "no").strip().lower()
+            if answer not in RETRY_YES_WORDS:
+                _deliver_saved_draft(project, view, result)
+                return result
+            if audit_revision:
+                try:
+                    _prepare_audit_revision(project, setup, view.event)
+                except (ValueError, AdapterError, WorkflowPaused) as exc:
+                    result = SessionResult("blocked", str(exc))
+                    view.fail(str(exc))
+                    _deliver_saved_draft(project, view, result)
+                    return result
+            else:
+                phase = current_phase(project)
+                feedback = project / "work" / f"phase-feedback-{phase.key}.md"
+                feedback.parent.mkdir(parents=True, exist_ok=True)
+                feedback.write_text("The previous attempt could not complete: " + result.message +
+                                    "\nCorrect the reported output problem while preserving the author's request.\n", encoding="utf-8")
+        return result
+
+
+def _deliver_saved_draft(project: Path, view: View, result: SessionResult) -> None:
+    """A stopped editorial review must not hide the manuscript the author already has."""
+    if result.status not in {"failed", "blocked"} or not any((project / "manuscript" / "chapters").glob("chapter-*.md")):
+        return
+    from runner.export import export_project
+    from runner.review import build_review
+    try:
+        view.event("Saved chapters are available to read. This is a draft; the editorial process is unfinished.")
+        view.event(f"Read your saved draft: {build_review(project)}")
+        for fmt, extension in (("markdown", "md"), ("epub", "epub")):
+            output = project.resolve() / "exports" / f"draft.{extension}"
+            number = 2
+            while output.exists():
+                output = project.resolve() / "exports" / f"draft-{number}.{extension}"
+                number += 1
+            view.event(f"Draft {fmt.upper()}: {export_project(project, fmt, output)}")
+    except (OSError, ValueError) as exc:
+        view.event(f"The source chapters remain saved, but the draft files could not be prepared: {exc}")
+
+
+def _prepare_audit_revision(project: Path, setup=None, progress=None) -> None:
+    from runner.book import outline_chapters
+    numbers = outline_chapters(_read(project / "artifacts" / "05-outline.md"))
+    report = _read(project / "artifacts" / "08-adversarial-audit.md")
+    notes = project / "work" / "editorial-revision.md"
+    notes.parent.mkdir(parents=True, exist_ok=True)
+    notes.write_text("Revise this chapter to address the relevant findings below. Preserve the author's "
+                     "language, length, chapter count, and intended ending.\n\n" + report, encoding="utf-8")
+    if setup is not None:
+        from runner.revision import ensure_revision_plan
+        from runner.continuity import atomic_json, digest, io_path
+        connection = [setup.adapters["editor"].name, setup.models.get("editor", "")]
+        campaign = digest(json.dumps([load_state_summary(project).get("idea", ""),
+                          _read(project / "work/author-notes.md"), connection]))
+        campaign_dir = io_path(project / "work" / "repair-campaigns" / campaign)
+        passes = list(campaign_dir.glob("*.json"))
+        if len(passes) >= MAX_BLOCKED_RETRIES:
+            raise ValueError("This saved repair campaign reached its limit without completing the book. Your draft is safe. Add author guidance or change the editing connection before another pass.")
+        plan_path = ensure_revision_plan(project, setup.adapters["editor"], setup.models.get("editor", ""), progress)
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        numbers = plan.get("affected_chapters", numbers)
+        # Durable no-progress guard: resuming cannot spend another pass on the
+        # identical manuscript, report, and author instructions.
+        source = [(p.name, sha256(p)) for p in sorted((project / "manuscript/chapters").glob("chapter-*.md"))]
+        key = digest(json.dumps([source, str(plan_path), connection], sort_keys=True))
+        marker = project / "work" / "repair-passes" / f"{key}.json"
+        campaign_marker = campaign_dir / f"{key}.json"
+        if marker.exists() and campaign_marker.exists() and not any((project / "work").glob("rewrite-chapter-*.pending")):
+            raise ValueError("The last repair made no manuscript progress. Your draft is safe. Add author guidance or change the connection before another pass.")
+        atomic_json(campaign_marker, {"source": source, "targets": numbers, "plan": str(plan_path)})
+        atomic_json(marker, {"source": source, "targets": numbers, "plan": str(plan_path)})
+        if progress:
+            progress("Repairing chapters " + ", ".join(map(str, numbers)) + "; preserving all other chapter files.")
+    for number in numbers:
+        _forget_chapter(project, number)
+    _rewind(project, DRAFTING_LABEL)
+
+
+def _run_session(project: Path, setup, view: View, *, yes: bool, human: bool, chapters: Optional[int]) -> SessionResult:
     recover_pending_publication(project)
     human = resolve_human_checkpoint(project, requested=human)
     summary = load_state_summary(project)
@@ -86,6 +213,10 @@ def run_session(project: Path, setup, view: View, *, yes: bool = False, human: b
         roles=roles_of(setup),
         warnings=list(getattr(setup, "warnings", [])),
     )
+    if not yes and view.interactive and summary.get("status") == "awaiting_revision":
+        message = "The saved whole-book audit requires revision."
+        view.stage_stop("Audit", message)
+        return SessionResult("blocked", message)
     try:
         if not yes:
             outcome = _resume_pending_checkpoint(project, setup, view)
@@ -104,6 +235,9 @@ def run_session(project: Path, setup, view: View, *, yes: bool = False, human: b
     except AwaitingHuman as exc:
         view.fail(str(exc))
         return SessionResult("awaiting_human", str(exc))
+    except WorkflowPaused as exc:
+        view.stage_stop("Writing", str(exc))
+        return SessionResult("stopped", str(exc))
     except AwaitingManual as exc:
         view.fail(str(exc))
         return SessionResult("awaiting_manual", str(exc))
@@ -114,13 +248,27 @@ def run_session(project: Path, setup, view: View, *, yes: bool = False, human: b
     card = genesis_score(project)
     _append_score(project, card)
     view.score(card)
-    view.finish(
-        {
+    paths = {
             "manuscript": project / "manuscript" / "chapters",
             "editorial package": project / "artifacts" / "10-editorial-package.md",
             "report": project / "RUN_REPORT.md",
         }
-    )
+    from runner.export import export_project
+    from runner.review import build_review
+    try:
+        view.event("Preparing your reading page and ebook files")
+        paths["Read your book"] = build_review(project)
+        for fmt, extension in (("markdown", "md"), ("epub", "epub")):
+            output = project.resolve() / "exports" / f"manuscript.{extension}"
+            number = 2
+            while output.exists():
+                output = project.resolve() / "exports" / f"manuscript-{number}.{extension}"
+                number += 1
+            paths[fmt.upper()] = export_project(project, fmt, output)
+    except (OSError, ValueError) as exc:
+        view.fail(f"Manuscript saved, but delivery files could not be prepared: {exc}. Resume to retry delivery.")
+        return SessionResult("failed", str(exc), card)
+    view.finish(paths)
     return SessionResult("completed", f"{card.score:.1f} / 10", card)
 
 
@@ -180,7 +328,7 @@ def _phases(project: Path, setup, view: View, *, ask: bool, stop_at: Optional[st
             return None
         stage = PHASE_STAGE.get(phase.label, phase.label)
         view.stage_start(stage)
-        result = run_phase(project, setup.adapters, setup.models)
+        result = run_phase(project, setup.adapters, setup.models, progress=view.event)
         if not result.ok:
             if phase.label == "Phase 4: Adversarial Audit" and any(item.startswith("audit_status:") for item in result.pending):
                 report = project / "artifacts" / "08-adversarial-audit.md"
@@ -217,7 +365,7 @@ def _agree_on_phase(project: Path, setup, view: View, phase, stage: str) -> Opti
         reruns += 1
         _rewind(project, phase.label)
         view.stage_start(stage, "again, with your notes")
-        result = run_phase(project, setup.adapters, setup.models)
+        result = run_phase(project, setup.adapters, setup.models, progress=view.event)
         if not result.ok:
             message = "not advanced; still missing: " + ", ".join(result.pending)
             view.stage_fail(stage, message)
@@ -229,7 +377,12 @@ def _drafting(project: Path, setup, view: View, *, ask: bool, human: bool, cap: 
     outline = _read(project / "artifacts" / "05-outline.md")
     total = count_chapters(outline)
     last = min(cap, total) if cap else total
-    view.stage_start("Drafting", f"0 of {total} chapters")
+    saved = sum((project / "manuscript" / "chapters" / f"chapter-{i:02d}.md").is_file() for i in range(1, total + 1))
+    pending = len(list((project / "work").glob("rewrite-chapter-*.pending")))
+    detail = f"{saved} of {total} chapters saved"
+    if pending:
+        detail += f"; {pending} awaiting revision"
+    view.stage_start("Drafting", detail)
     progress = _progress_handler(view, total)
 
     def write_up_to(end: int):
@@ -243,8 +396,41 @@ def _drafting(project: Path, setup, view: View, *, ask: bool, human: bool, cap: 
             progress=progress,
         )
 
+    def write_with_simple_retry(end: int):
+        """Retry a blocked chapter after a plain yes/no question.
+
+        The blind-reader gate remains authoritative. In an interactive terminal the
+        user gets a simple choice; autonomous and non-interactive runs keep the
+        previous behavior and stop immediately when a chapter is blocked.
+        """
+        retries = 0
+        retry_chapter = None
+        while True:
+            book = write_up_to(end)
+            if book.status != "blocked" or not ask or not view.interactive:
+                return book
+            if retry_chapter != book.last_chapter:
+                retry_chapter, retries = book.last_chapter, 0
+            view.event("This chapter did not pass the reader check yet.")
+            view.event("I saved the best draft. I can try the chapter again for you.")
+            if retries >= MAX_BLOCKED_RETRIES:
+                view.event(f"I tried {MAX_BLOCKED_RETRIES} times; keeping the best draft and stopping here.")
+                return book
+            plan = _retry_plan(project, book.last_chapter)
+            view.event(plan)
+            answer = view.ask(RETRY_HINT, "no").strip().lower()
+            while answer not in RETRY_YES_WORDS | STOP_WORDS | {""}:
+                answer = view.ask("Please answer yes, no, or ok", "no").strip().lower()
+            if answer not in RETRY_YES_WORDS:
+                return book
+            target = project / "work" / f"retry-chapter-{book.last_chapter:02d}.md"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(plan + "\n", encoding="utf-8")
+            retries += 1
+            view.stage_update("Drafting", f"trying again ({retries} of {MAX_BLOCKED_RETRIES})")
+
     if ask:
-        book = write_up_to(1)
+        book = write_with_simple_retry(1)
         outcome = _book_outcome(book, view)
         if outcome is not None:
             return outcome
@@ -269,19 +455,19 @@ def _drafting(project: Path, setup, view: View, *, ask: bool, human: bool, cap: 
             reruns += 1
             _forget_chapter(project, 1)
             view.stage_update("Drafting", "chapter 1 again, with your notes")
-            book = write_up_to(1)
+            book = write_with_simple_retry(1)
             outcome = _book_outcome(book, view)
             if outcome is not None:
                 return outcome
 
     if last > 1 or not ask:
-        book = write_up_to(last)
+        book = write_with_simple_retry(last)
         outcome = _book_outcome(book, view)
         if outcome is not None:
             return outcome
 
     if cap is not None and last < total:
-        message = f"stopped after {last} of {total} chapters by request; resume the rest with: book-genesis resume {project}"
+        message = f"stopped after {last} of {total} chapters by request; resume the rest with: {resume_command(project)}"
         view.stage_stop("Drafting", message)
         return SessionResult("stopped", message)
 
@@ -292,6 +478,24 @@ def _drafting(project: Path, setup, view: View, *, ask: bool, human: bool, cap: 
         return SessionResult("failed", message)
     view.stage_done("Drafting", f"{total} chapters accepted by a blind reader")
     return None
+
+
+def _retry_plan(project: Path, number: int) -> str:
+    actions = {
+        "hook": "strengthen the opening and chapter ending",
+        "pacing": "cut repetition and move the chapter forward sooner",
+        "exposition": "replace long explanations with concrete scenes or examples",
+        "ai_pattern": "remove formulaic phrasing and repeated moral summaries",
+        "voice": "give the narrator a more specific, consistent voice",
+        "dialogue": "make each speaker sound distinct",
+        "continuity": "repair contradictions with the preceding chapter",
+    }
+    try:
+        verdict = parse_verdict(_latest_verdict_text(project, number, latest_attempt=True))
+        changes = [actions[flag] for flag in verdict.flags if flag in actions]
+    except (OSError, ValueError, KeyError):
+        changes = []
+    return "On the next attempt, I will " + ("; ".join(changes) if changes else "strengthen the opening, remove repetition, and clarify the chapter's progression") + ". The readers will check the new draft again."
 
 
 def chapter_report(project: Path, number: int) -> str:
@@ -321,13 +525,15 @@ def chapter_report(project: Path, number: int) -> str:
     return "\n".join(lines)
 
 
-def _latest_verdict_text(project: Path, number: int) -> str:
+def _latest_verdict_text(project: Path, number: int, *, latest_attempt: bool = False) -> str:
     manifest = project / "manuscript" / "chapters" / "history" / f"chapter-{number:02d}" / "manifest.json"
     canonical = project / "manuscript" / "chapters" / f"chapter-{number:02d}.md"
-    if manifest.exists() and canonical.exists():
+    if manifest.exists() and (canonical.exists() or latest_attempt):
         try:
-            accepted = json.loads(manifest.read_text(encoding="utf-8")).get("accepted")
-            if isinstance(accepted, dict) and accepted.get("status") == "accepted":
+            history = json.loads(manifest.read_text(encoding="utf-8"))
+            attempts = [item for item in history.get("attempts", []) if isinstance(item, dict) and item.get("verdict_path")]
+            accepted = attempts[-1] if latest_attempt and attempts else history.get("accepted")
+            if isinstance(accepted, dict) and (latest_attempt or accepted.get("status") == "accepted"):
                 relative = accepted.get("verdict_path")
                 candidate = (project / relative).resolve() if isinstance(relative, str) else None
                 if candidate and project.resolve() in candidate.parents and candidate.is_file():
@@ -337,7 +543,7 @@ def _latest_verdict_text(project: Path, number: int) -> str:
     evaluations = project / "evaluations"
     if not evaluations.exists():
         return ""
-    candidates = sorted(evaluations.glob(f"chapter-{number:02d}-judge-*.md"), key=lambda path: int(path.stem.rsplit("-", 1)[1]))
+    candidates = sorted(evaluations.glob(f"chapter-{number:02d}-judge-*.md"), key=lambda path: path.stat().st_mtime_ns)
     return candidates[-1].read_text(encoding="utf-8") if candidates else ""
 
 
@@ -374,7 +580,7 @@ def _book_outcome(book, view: View) -> Optional[SessionResult]:
 
 
 def _stopped(project: Path, view: View, stage: str) -> SessionResult:
-    message = f"stopped here; continue any time with: book-genesis resume {project}"
+    message = f"stopped here; continue any time with: {resume_command(project)}"
     view.stage_stop(stage, message)
     return SessionResult("stopped", message)
 

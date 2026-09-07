@@ -22,6 +22,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, Tuple, Union
 import urllib.error
 import urllib.request
@@ -116,15 +118,18 @@ class ClaudeCliAdapter:
 
     name = "claude"
 
-    def __init__(self, executable: str = "claude", timeout_seconds: int = 1800) -> None:
+    def __init__(self, executable: str = "claude", timeout_seconds: int = 1800, *, effort: str = "") -> None:
+        if effort not in ("", "low", "medium", "high", "xhigh", "max"):
+            raise ValueError("Unsupported Claude effort level")
         self.executable = executable
         self.timeout_seconds = timeout_seconds
+        self.effort = effort
 
-    def build_command(self, model: str = "") -> List[str]:
+    def build_command(self, model: str = "", *, streaming: bool = False) -> List[str]:
         command = _resolve(self.executable) + [
             "-p",
             "--output-format",
-            "text",
+            "stream-json" if streaming else "text",
             "--no-session-persistence",
             "--safe-mode",
             "--disable-slash-commands",
@@ -133,24 +138,81 @@ class ClaudeCliAdapter:
         ]
         if model:
             command += ["--model", model]
+        if self.effort:
+            command += ["--effort", self.effort]
+        if streaming:
+            command += ["--verbose", "--include-partial-messages"]
         return command
 
     def complete(self, prompt: str, *, model: str = "") -> str:
         # The CLI must not inherit the project's working directory, where
         # instructions or files could become ambient context. Claude safe mode
         # retains OAuth while disabling project customizations and tools.
+        from runner.activity import public_text_observer
+        observer = public_text_observer()
         try:
             with _temporary_workdir("book-genesis-claude-") as workdir:
-                result = _run(self.build_command(model), prompt, timeout_seconds=self.timeout_seconds, cwd=workdir)
+                if observer is None:
+                    result = _run(self.build_command(model), prompt, timeout_seconds=self.timeout_seconds, cwd=workdir)
+                else:
+                    result = _run(self.build_command(model, streaming=True), prompt,
+                                  timeout_seconds=self.timeout_seconds, cwd=workdir,
+                                  on_stdout_line=lambda line: _claude_public_delta(line, observer))
         except subprocess.TimeoutExpired as exc:
             raise AdapterError(f"claude timed out after {self.timeout_seconds} seconds") from exc
         if result.returncode != 0:
-            raise AdapterError(f"claude exited {result.returncode}: {result.stderr.strip()[:800]}")
+            reason = _claude_failure(result.stdout) if observer is not None else result.stdout.strip()[:800]
+            reason = reason or result.stderr.strip()[:800] or "The provider process stopped without an error message. Check the connection and retry."
+            raise AdapterError(f"claude exited {result.returncode}: {reason}")
         text = result.stdout.strip()
+        if observer is not None:
+            text = _claude_stream_result(text)
         if not text:
             raise AdapterError("claude returned empty output")
         _warn_if_undecodable(text, "claude")
         return text
+
+
+def _claude_public_delta(line, observer):
+    """Allowlist only the public text delta; thinking/tool/system events stay out."""
+    try:
+        event = json.loads(line)
+        if event.get("type") != "stream_event":
+            return
+        delta = event.get("event", {}).get("delta", {})
+        if delta.get("type") == "text_delta" and isinstance(delta.get("text"), str):
+            observer(delta["text"])
+    except (ValueError, AttributeError, TypeError):
+        return
+
+
+def _claude_failure(stream):
+    """Read declared result errors, never partial prose or private stream events."""
+    for line in reversed(stream.splitlines()):
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict) and event.get("type") == "result" and event.get("is_error"):
+            errors = event.get("errors")
+            detail = event.get("result") or ("; ".join(str(e) for e in errors) if isinstance(errors, list) else errors)
+            return str(detail or event.get("subtype") or "Provider reported an unsuccessful response")[:800]
+    return ""
+
+
+def _claude_stream_result(stream):
+    for line in reversed(stream.splitlines()):
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict) and event.get("type") == "result":
+            if event.get("is_error"):
+                raise AdapterError("claude could not complete the streamed response: " + _claude_failure(line))
+            result = event.get("result")
+            if isinstance(result, str) and result.strip():
+                return result.strip()
+    raise AdapterError("claude stream ended without a completed response; partial prose was not accepted")
 
 
 class CodexCliAdapter:
@@ -158,9 +220,31 @@ class CodexCliAdapter:
 
     name = "codex"
 
-    def __init__(self, executable: str = "codex", timeout_seconds: int = 1800) -> None:
+    def __init__(self, executable: str = "codex", timeout_seconds: int = 1800, *, effort: str = "") -> None:
+        if effort not in ("", "minimal", "low", "medium", "high", "xhigh"):
+            raise ValueError("Unsupported Codex effort level")
         self.executable = executable
         self.timeout_seconds = timeout_seconds
+        self.effort = effort
+        self._auth_checked = False
+
+    def _ensure_logged_in(self) -> None:
+        """Fail before a long generation call when CLI authentication is unavailable."""
+        if self._auth_checked:
+            return
+        status = codex_login_status(self.executable, timeout_seconds=min(self.timeout_seconds, 10))
+        if status is None:
+            raise AdapterError(
+                "could not check Codex authentication in this environment. "
+                "This does not mean you are logged out. Check `codex login status` in the same terminal and retry."
+            )
+        if not status:
+            raise AdapterError("Codex CLI is not logged in. Run `codex login` and try again.")
+        self._auth_checked = True
+
+    def preflight(self) -> None:
+        """Check authentication before the runner reserves a chapter attempt."""
+        self._ensure_logged_in()
 
     def build_command(
         self,
@@ -185,9 +269,12 @@ class CodexCliAdapter:
             command += ["-o", str(last_message_file)]
         if model:
             command += ["-m", model]
+        if self.effort:
+            command += ["-c", 'model_reasoning_effort="' + self.effort + '"']
         return command
 
     def complete(self, prompt: str, *, model: str = "") -> str:
+        self._ensure_logged_in()
         try:
             with _temporary_workdir("book-genesis-codex-") as tmp:
                 last_message = Path(tmp) / "last-message.md"
@@ -325,8 +412,12 @@ class OpenAICompatibleAdapter:
         try:
             data = json.loads(raw.decode("utf-8"))
             text = data["choices"][0]["message"]["content"]
+            if data["choices"][0].get("finish_reason") in {"length", "content_filter"}:
+                raise AdapterError(f"{self.name}: provider stopped before completing the response; retry or choose another model")
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise AdapterError(f"{self.name}: unexpected response shape: {_safe_excerpt(raw, self.api_key)}") from exc
+        if text is not None and not isinstance(text, str):
+            raise AdapterError(f"{self.name}: expected a text response, received another content type")
         text = (text or "").strip()
         if not text:
             raise AdapterError(f"{self.name} returned empty output")
@@ -372,6 +463,8 @@ class AnthropicAdapter:
             raise AdapterError(f"{self.name} returned HTTP {status}: {_safe_excerpt(raw, self.api_key)}")
         try:
             data = json.loads(raw.decode("utf-8"))
+            if data.get("stop_reason") in {"max_tokens", "refusal"}:
+                raise AdapterError(f"{self.name}: provider stopped before completing the response; retry or choose another model")
             text = "".join(block.get("text", "") for block in data.get("content", []) if block.get("type") == "text")
         except (ValueError, AttributeError, TypeError) as exc:
             raise AdapterError(f"{self.name}: unexpected response shape: {_safe_excerpt(raw, self.api_key)}") from exc
@@ -391,6 +484,8 @@ def _http_post(url: str, headers: Dict[str, str], body: bytes, timeout_seconds: 
         return error.code, error.read()
     except urllib.error.URLError as error:
         raise AdapterError(f"could not reach {url}: {error.reason}") from error
+    except (TimeoutError, ConnectionError) as error:
+        raise AdapterError(f"provider connection failed or timed out after {timeout_seconds} seconds") from error
 
 
 def _safe_excerpt(raw: bytes, secret: str) -> str:
@@ -409,22 +504,43 @@ def _resolve(executable: str) -> List[str]:
     return [path]
 
 
+def codex_login_status(executable: str = "codex", *, timeout_seconds: int = 10) -> Optional[bool]:
+    """Return Codex authentication state without starting a generation request.
+
+    ``None`` means the status command itself could not be verified. This is kept
+    separate from ``False`` so the CLI can tell a missing login from a broken install.
+    """
+    try:
+        result = _run(
+            _resolve(executable) + ["login", "status"],
+            "", timeout_seconds=timeout_seconds,
+        )
+    except (AdapterError, OSError, subprocess.TimeoutExpired):
+        return None
+    status = f"{result.stdout}\n{result.stderr}".lower()
+    if "not logged in" in status or "not authenticated" in status:
+        return False
+    if result.returncode == 0 and "logged in" in status:
+        return True
+    return None
+
+
 @contextmanager
 def _temporary_workdir(prefix: str):
-    """Do not let a Windows cleanup error replace the provider timeout."""
+    """A briefly locked Windows temp folder must not replace a provider result."""
     directory = tempfile.TemporaryDirectory(prefix=prefix)
-    timed_out = False
     try:
         yield directory.name
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        raise
     finally:
-        try:
-            directory.cleanup()
-        except OSError:
-            if not timed_out:
-                raise
+        for delay in (0, 0.1, 0.2):
+            if delay:
+                time.sleep(delay)
+            try:
+                directory.cleanup()
+                break
+            except OSError:
+                if delay == 0.2:
+                    sys.stderr.write("warning: Windows could not remove a temporary provider folder because it is still in use.\n")
 
 
 def _run(
@@ -433,6 +549,7 @@ def _run(
     *,
     timeout_seconds: int,
     cwd: Optional[Union[str, Path]] = None,
+    on_stdout_line: Optional[Callable[[str], None]] = None,
 ) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     env.pop("CLAUDECODE", None)  # allow `claude -p` to run from inside a Claude Code session
@@ -453,9 +570,28 @@ def _run(
         env=env,
         cwd=str(cwd) if cwd is not None else None,
     )
+    captured = []
+    reader = None
+    if on_stdout_line is not None:
+        stream = process.stdout
+        # communicate still owns stdin, stderr, timeout and cancellation. A
+        # dedicated reader drains stdout as it arrives, then closes its handle.
+        process.stdout = None
+        def read_output():
+            try:
+                for line in iter(stream.readline, ""):
+                    captured.append(line)
+                    try:
+                        on_stdout_line(line)
+                    except Exception:
+                        pass  # a display failure must not block the provider pipe
+            finally:
+                stream.close()
+        reader = threading.Thread(target=read_output, daemon=True)
+        reader.start()
     try:
         stdout, stderr = process.communicate(input=prompt, timeout=timeout_seconds)
-    except subprocess.TimeoutExpired as exc:
+    except (subprocess.TimeoutExpired, KeyboardInterrupt) as exc:
         try:
             _terminate_timed_out_process(process)
             try:
@@ -471,6 +607,13 @@ def _run(
             # Cleanup cannot replace the timeout that triggered it.
             pass
         raise exc
+    finally:
+        if reader is not None:
+            reader.join(timeout=CLEANUP_WAIT_SECONDS)
+    if reader is not None:
+        if reader.is_alive():
+            raise AdapterError("provider stdout did not close after completion")
+        stdout = "".join(captured)
     return subprocess.CompletedProcess(popen_args, process.returncode, stdout, stderr)
 
 

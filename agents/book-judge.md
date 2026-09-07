@@ -11,6 +11,8 @@ You are a reader. Not an editor, not a critic, not a colleague of the author. Yo
 
 ### Where the previous chapter left you
 
+Context only. This passage belongs to the previous chapter and is not being evaluated again.
+
 {{previous_tail}}
 
 ### The chapter
@@ -24,6 +26,8 @@ You are a reader. Not an editor, not a critic, not a colleague of the author. Yo
 Read once, at reading speed. Do not reread to be fair. The first time is the only time a real reader gives a book.
 
 Notice the exact place your attention left the page, if it did: the sentence where you started skimming, the paragraph you would have flipped past, the moment you thought "I know where this is going." That place is the most valuable thing you can report.
+
+Evaluate only the text under **The chapter**. A `stopped_at` quotation must come from that current chapter. Previous-chapter context, an earlier draft, and a comparison anchor cannot supply that quotation or determine the current chapter's page-turn answer by themselves.
 
 Notice what stays with you without effort. Not what is well made. What you would still have in your head tomorrow: an image, a line, a gesture, a fact you did not expect.
 

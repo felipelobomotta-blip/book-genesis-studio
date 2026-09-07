@@ -4,15 +4,18 @@ import shutil
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from runner.chapter import approve  # type: ignore  # noqa: E402
+from runner.book import BookResult  # type: ignore  # noqa: E402
 from runner.filesystem import scaffold_project, update_state_value  # type: ignore  # noqa: E402
 from runner.roles import build_role_adapters  # type: ignore  # noqa: E402
-from runner.session import interpret, run_session, strip_leading_heading  # type: ignore  # noqa: E402
+from runner.session import _drafting, interpret, run_session, strip_leading_heading  # type: ignore  # noqa: E402
 
 OUTLINE = """# Outline
 
@@ -58,6 +61,7 @@ class RecordingView:
         self.interactive = interactive
         self.calls = []
         self.checkpoints = []
+        self.questions = []
         self.card = None
 
     def header(self, **kwargs):
@@ -80,6 +84,10 @@ class RecordingView:
 
     def event(self, line):
         self.calls.append(("event", line))
+
+    def ask(self, prompt, default=""):
+        self.questions.append((prompt, default))
+        return self.answers.pop(0) if self.answers else default
 
     def checkpoint(self, title, body, hint):
         self.checkpoints.append((title, body, hint))
@@ -212,7 +220,7 @@ class SessionTests(unittest.TestCase):
         self.assertIn("open on the body, not the dashboards", rewrite_prompt)
         chapter_two_brief = (self.project / "briefs" / "chapter-02.md").read_text(encoding="utf-8")
         self.assertIn("open on the body", chapter_two_brief)
-        self.assertEqual(10.0, view.card.score)  # the rerun is what counts, not the first pass
+        self.assertEqual(8.5, view.card.score)  # rewritten chapter 1 is not first-draft acceptance
 
     def test_a_reader_who_stops_costs_score_and_a_blocked_chapter_ends_the_run(self) -> None:
         # Chapter 1: panel 2 of 3 turn the page (accepted, cycles 0). Chapter 2: judge says no
@@ -226,6 +234,65 @@ class SessionTests(unittest.TestCase):
         self.assertEqual("blocked", result.status, msg=view.calls)
         self.assertEqual(["Drafting"], view.stages("fail"))
         self.assertIsNone(view.card)  # no score for an unfinished book
+
+    def test_blocked_chapter_asks_to_retry_and_retries_on_yes(self) -> None:
+        (self.project / "artifacts" / "05-outline.md").write_text(OUTLINE, encoding="utf-8")
+        setup = SimpleNamespace(adapters={}, models={}, panel=None)
+        view = RecordingView(answers=["yes", ""])
+        blocked = BookResult("blocked", [], 1, "chapter 1 blocked; best draft: manuscript/drafts/chapter-01/draft-3.md")
+        completed = BookResult("completed", [1], 1, "1 chapter written this run; 2 in the outline")
+
+        with patch("runner.session.run_book", side_effect=[blocked, completed]) as mocked:
+            result = _drafting(self.project, setup, view, ask=True, human=False, cap=1)
+
+        self.assertEqual("stopped", result.status)
+        self.assertEqual(2, mocked.call_count)
+        self.assertEqual([("Try again? (yes/no)", "no")], view.questions)
+        events = [call[1] for call in view.calls if call[0] == "event"]
+        self.assertIn("This chapter did not pass the reader check yet.", events)
+        self.assertIn("I saved the best draft. I can try the chapter again for you.", events)
+
+    def test_blocked_chapter_stops_on_no_and_keeps_best_draft(self) -> None:
+        (self.project / "artifacts" / "05-outline.md").write_text(OUTLINE, encoding="utf-8")
+        setup = SimpleNamespace(adapters={}, models={}, panel=None)
+        view = RecordingView(answers=["no"])
+        blocked = BookResult("blocked", [], 1, "chapter 1 blocked; best draft: manuscript/drafts/chapter-01/draft-3.md")
+
+        with patch("runner.session.run_book", return_value=blocked) as mocked:
+            result = _drafting(self.project, setup, view, ask=True, human=False, cap=1)
+
+        self.assertEqual("blocked", result.status)
+        self.assertEqual(1, mocked.call_count)
+        self.assertEqual([("Try again? (yes/no)", "no")], view.questions)
+        self.assertTrue(any(call[0] == "fail" for call in view.calls))
+
+    def test_blocked_chapter_has_a_clear_retry_limit(self) -> None:
+        (self.project / "artifacts" / "05-outline.md").write_text(OUTLINE, encoding="utf-8")
+        setup = SimpleNamespace(adapters={}, models={}, panel=None)
+        view = RecordingView(answers=["yes", "yes", "yes", "yes"])
+        blocked = BookResult("blocked", [], 1, "chapter 1 blocked; best draft: manuscript/drafts/chapter-01/draft-3.md")
+
+        with patch("runner.session.run_book", side_effect=[blocked] * 5) as mocked:
+            result = _drafting(self.project, setup, view, ask=True, human=False, cap=1)
+
+        self.assertEqual("blocked", result.status)
+        self.assertEqual(4, mocked.call_count)  # initial attempt plus three retries
+        self.assertEqual(3, len(view.questions))
+        events = [call[1] for call in view.calls if call[0] == "event"]
+        self.assertIn("I tried 3 times; keeping the best draft and stopping here.", events)
+
+    def test_noninteractive_block_keeps_the_script_path_prompt_free(self) -> None:
+        (self.project / "artifacts" / "05-outline.md").write_text(OUTLINE, encoding="utf-8")
+        setup = SimpleNamespace(adapters={}, models={}, panel=None)
+        view = RecordingView(interactive=False)
+        blocked = BookResult("blocked", [], 1, "chapter 1 blocked; best draft: manuscript/drafts/chapter-01/draft-3.md")
+
+        with patch("runner.session.run_book", return_value=blocked) as mocked:
+            result = _drafting(self.project, setup, view, ask=True, human=False, cap=1)
+
+        self.assertEqual("blocked", result.status)
+        self.assertEqual(1, mocked.call_count)
+        self.assertEqual([], view.questions)
 
     def test_chapter_cap_stops_after_the_requested_chapters(self) -> None:
         setup = self.setup_with(INTAKE, FOUNDATION, ARCHITECTURE, *CHAPTER_ONE)

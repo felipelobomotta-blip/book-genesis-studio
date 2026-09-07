@@ -100,10 +100,7 @@ class PlainView:
 
     def ask(self, prompt: str, default: str = "") -> str:
         shown = f"{prompt} [{default}]: " if default else f"{prompt}: "
-        try:
-            answer = input(shown).strip()
-        except EOFError:
-            answer = ""
+        answer = input(shown).strip()
         return answer or default
 
     def header(self, *, title: str, idea: str, language: str, roles: Dict[str, str], warnings: List[str]) -> None:
@@ -149,6 +146,7 @@ class PlainView:
         self._say("")
         if not self.interactive:
             return ""
+        self._say("Waiting for your answer. Writing is paused at this checkpoint.")
         return self.ask(hint, "")
 
     def score(self, card: ScoreCard) -> None:
@@ -182,7 +180,10 @@ class RichView:
             # UTF-8 too. Measured 2026-09-04: without this the first checkmark crashed the run.
             force_utf8(getattr(console, "file", None))
         self.console = console
-        self.live_enabled = live
+        # A TTY can still report TERM=dumb or disabled interactivity. Rich then
+        # suppresses intermediate Live renders; keeping a Live object would also
+        # suppress our plain event output and leave the author with no progress.
+        self.live_enabled = live and self.console.is_interactive
         self.unicode = bool(record_path) or unicode_safe(getattr(self.console, "file", None))
         self.stages: Dict[str, StageState] = {name: StageState(name) for name in STAGES}
         self.events: Deque[str] = deque(maxlen=6)
@@ -205,10 +206,17 @@ class RichView:
     # -- input -------------------------------------------------------------------------
     def ask(self, prompt: str, default: str = "") -> str:
         shown = f"[bold]{prompt}[/]" + (f" [dim][{default}][/]" if default else "") + ": "
+        live_was_running = self._live is not None
+        if live_was_running:
+            # Keep the question readable while a chapter is being generated. The live
+            # stage track resumes immediately after the short answer.
+            self._stop_live()
+            self._print_track()
         try:
             answer = self.console.input(shown).strip()
-        except EOFError:
-            answer = ""
+        finally:
+            if live_was_running:
+                self._start_live()
         return answer or default
 
     # -- header ------------------------------------------------------------------------
@@ -268,6 +276,8 @@ class RichView:
 
     def event(self, line: str) -> None:
         self.events.append(line)
+        if self._live is None:
+            self._plain_print(line, "dim")
         self._refresh()
 
     # -- agreement ---------------------------------------------------------------------
@@ -291,6 +301,7 @@ class RichView:
         )
         if not self.interactive:
             return ""
+        self._plain_print("Waiting for your answer. Writing is paused at this checkpoint.", "bold cyan")
         answer = self.ask(hint, "")
         self._start_live()
         return answer
@@ -334,7 +345,7 @@ class RichView:
         self._stop_live()
         table = Table(box=None, show_header=False, padding=(0, 1))
         table.add_column(style="bold")
-        table.add_column(style="cyan")
+        table.add_column(style="cyan", overflow="fold")
         for label, path in paths.items():
             table.add_row(label, str(path))
         self.console.print(table)
@@ -382,7 +393,7 @@ class RichView:
         parts = [table]
         if self.events and any(stage.status == "running" for stage in self.stages.values()):
             parts.append(Rule(style="dim"))
-            parts.append(Text("\n".join(f"  {line}" for line in self.events), style="dim"))
+            parts.append(Text("\n".join(f"  {line}" for line in tuple(self.events)), style="dim"))
         return Group(*parts)
 
     def _start_live(self) -> None:

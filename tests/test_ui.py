@@ -39,6 +39,26 @@ def rendered(build) -> str:
 
 
 class RichViewTests(unittest.TestCase):
+    def test_noninteractive_tty_falls_back_to_visible_progress(self):
+        from rich.console import Console
+        buffer = io.StringIO()
+        console = Console(file=buffer, force_terminal=True, force_interactive=False, width=110)
+        view = RichView(interactive=True, live=True, console=console)
+        view.header(title="Test", idea="A story", language="en", roles={}, warnings=[])
+        view.stage_start("Drafting")
+        view.event("Writer: waiting for provider response | 5s elapsed")
+        view.event("Writer: writing now | The clock struck twice.")
+        self.assertFalse(view.live_enabled)
+        self.assertIsNone(view._live)
+        self.assertIn("waiting for provider response", buffer.getvalue())
+        self.assertIn("The clock struck twice.", buffer.getvalue())
+
+    def test_delivery_never_elides_a_long_output_path(self):
+        long_path = Path("books") / ("a" * 120) / "manuscript.epub"
+        text = rendered(lambda view: view.finish({"EPUB": long_path}))
+        self.assertNotIn("…", text)
+        self.assertIn("manuscript.epub", text)
+
     def test_the_header_names_the_book_and_who_writes_and_judges(self) -> None:
         text = rendered(
             lambda view: view.header(
@@ -94,6 +114,12 @@ class RichViewTests(unittest.TestCase):
 
 
 class PlainViewTests(unittest.TestCase):
+    def test_eof_is_not_an_implicit_yes(self):
+        from unittest.mock import patch
+        with patch("builtins.input", side_effect=EOFError()):
+            with self.assertRaises(EOFError):
+                PlainView(interactive=True).ask("Continue?", "yes")
+
     def render(self, build) -> str:
         buffer = io.StringIO()
         view = PlainView(interactive=False, out=buffer)

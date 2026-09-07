@@ -28,15 +28,48 @@ _WORD = re.compile(r"\S+")
 # A chapter marker is a heading (`## Chapter 3: Title`) or, because real architecture runs
 # produced it, a bold line (`**Capítulo 3 — Título**`). English and Portuguese.
 CHAPTER_MARK = re.compile(
-    r"^\s*(?:(?P<hashes>#{1,6})\s*|\*\*\s*)(?:chapter|cap[ií]tulo|cap\.?)\s*0*(?P<number>\d+)\b",
+    r"^\s*(?:(?P<hashes>#{1,6})\s*(?:#{1,6}\s+)?(?:\*\*\s*)?|\*\*\s*)(?:chapter|cap[ií]tulo|cap\.?)\s*0*(?P<number>\d+)\b",
     re.IGNORECASE,
 )
+
+
+def chapter_markers(outline: str):
+    """Prefer actual headings for a chapter; retain legacy bold-only chapters.
+
+    An outline may recap chapters in bold before its detailed chapter headings.
+    Those summaries must not become extra chapters or the writer's brief.
+    """
+    matches = [(index, match) for index, line in enumerate(outline.splitlines())
+               if (match := CHAPTER_MARK.match(line))]
+    headings = [(index, match) for index, match in matches if match.group("hashes")]
+    headed_numbers = {int(match.group("number")) for _, match in headings}
+    return [(index, match) for index, match in matches
+            if match.group("hashes") or int(match.group("number")) not in headed_numbers]
+
+
+def chapter_word_limits(project: Path) -> tuple[int, int] | None:
+    """Recognize explicit per-chapter ranges, never a whole-book total.
+
+    Free-form requests remain supported; this check only applies when the author
+    explicitly says e.g. '350 to 500 words each' or '350-500 palavras por capítulo'.
+    """
+    idea = load_state_summary(project).get("idea", "")
+    match = re.search(r"\b(\d+)\s*(?:to|a|[-–—])\s*(\d+)\s+(?:words|palavras)\s+(?:each|per\s+chapter|por\s+cap[ií]tulo|cada)\b", idea, re.I)
+    if match:
+        low, high = map(int, match.groups())
+        if 0 < low <= high:
+            return low, high
+    return None
 
 
 def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> str:
     summary = load_state_summary(project)
     genre = summary.get("genre", "")
     profile = load_genre_profile(genre)
+    explicit_limits = chapter_word_limits(project)
+    low, high = explicit_limits or (profile.words_per_chapter_min, profile.words_per_chapter_max)
+    length_rule = ("The author's explicit range is required, including the heading."
+                   if explicit_limits else "Use the outline's target if it specifies one.")
 
     outline_path = project / OUTLINE_PATH
     if not outline_path.exists():
@@ -54,9 +87,9 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
         "",
         "## Constants",
         "",
+        f"- Book language: {summary.get('language') or 'infer from the idea'}. Write all prose in this language.",
         f"- Genre profile: {profile.key} (declared genre: {genre or 'unspecified'})",
-        f"- Target length: {profile.words_per_chapter_min}-{profile.words_per_chapter_max} words, "
-        "unless the outline section below states its own target.",
+        f"- Target length: {low}-{high} words. {length_rule}",
         f"- Dialogue share: {profile.dialogue_min_pct}-{profile.dialogue_max_pct}% of the chapter.",
         "",
         "## This chapter in the outline",
@@ -64,10 +97,25 @@ def build_chapter_brief(project: Path, chapter: int, *, write: bool = True) -> s
         section.strip(),
         "",
     ]
+    if summary.get("idea"):
+        parts += ["## Original author request", "", summary["idea"], "",
+                  "Preserve explicit length, chapter-count, and ending requirements from this request. "
+                  "They override genre defaults.", ""]
     for relative, heading in ALWAYS_INCLUDE:
         path = project / relative
         if path.exists():
             parts += [f"## {heading}", "", path.read_text(encoding="utf-8").strip(), ""]
+    retry = project / "work" / f"retry-chapter-{chapter:02d}.md"
+    if retry.is_file():
+        parts += ["## Feedback from the previous attempt", "", retry.read_text(encoding="utf-8"), ""]
+    editorial = project / "work" / "editorial-revision.md"
+    if editorial.is_file():
+        parts += ["## Whole-book editorial revision", "", editorial.read_text(encoding="utf-8"), ""]
+        from runner.revision import revision_context
+        parts += [revision_context(project, chapter)]
+        previous_draft = project / "manuscript" / "chapters" / f"chapter-{chapter:02d}.md"
+        if previous_draft.is_file():
+            parts += ["## Previous version to revise", "", previous_draft.read_text(encoding="utf-8"), ""]
     notes = project / "work" / "author-notes.md"
     if notes.exists() and notes.read_text(encoding="utf-8").strip():
         parts += [
@@ -103,9 +151,9 @@ def extract_chapter_section(outline: str, chapter: int) -> str:
     lines = outline.splitlines()
     start = -1
     level = 0
-    for index, line in enumerate(lines):
-        match = CHAPTER_MARK.match(line)
-        if match and int(match.group("number")) == chapter:
+    markers = dict(chapter_markers(outline))
+    for index, match in markers.items():
+        if int(match.group("number")) == chapter:
             start = index
             level = len(match.group("hashes") or "")
             break
@@ -114,7 +162,7 @@ def extract_chapter_section(outline: str, chapter: int) -> str:
     end = len(lines)
     for index in range(start + 1, len(lines)):
         line = lines[index]
-        if CHAPTER_MARK.match(line):
+        if index in markers:
             end = index
             break
         heading = _HEADING.match(line)

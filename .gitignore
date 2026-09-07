@@ -52,3 +52,6 @@ build/
 dist/
 
 .book-genesis/
+
+# Local Studio library (books written on this machine)
+.studio-books/

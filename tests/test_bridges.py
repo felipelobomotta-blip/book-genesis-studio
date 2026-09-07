@@ -32,6 +32,33 @@ AGY_QUOTA = (
 
 
 class AntigravityTests(unittest.TestCase):
+    def test_headless_permission_error_does_not_recommend_bypassing_permissions(self):
+        error = ('jetski: no output produced — a tool required the "command" permission that headless mode '
+                 'cannot prompt for, so it was auto-denied. Re-run with --dangerously-skip-permissions.')
+        message = agy.friendly_error(error)
+        self.assertIn("permission check blocked it", message)
+        self.assertIn("Retry", message)
+        self.assertNotIn("--dangerously-skip-permissions", message)
+
+    def test_null_or_non_text_content_never_becomes_a_chapter(self):
+        import json
+        self.assertEqual(("SUCCESS", "", None), agy.parse_result(json.dumps({"event":"result", "result":{"status":"SUCCESS", "response":None}})))
+        self.assertEqual("INVALID_RESULT", agy.parse_result(json.dumps({"event":"result", "result":{"status":"SUCCESS", "response":{"text":"unexpected"}}}))[0])
+        self.assertEqual("NO_RESULT", agy.parse_result("[]")[0])
+
+    def test_success_status_with_an_error_never_accepts_partial_text(self):
+        import io
+        import json
+        import subprocess
+        from unittest.mock import patch
+        stream = json.dumps({"event":"result", "result":{"status":"SUCCESS", "response":"Partial prose", "error":"provider failed"}})
+        output = io.StringIO()
+        with patch.object(agy.sys, "argv", ["bridge"]), patch.object(agy.sys, "stdin", io.StringIO("A story")), patch.object(agy.sys, "stdout", output), patch.object(agy.sys, "stderr", io.StringIO()), patch.object(agy.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, stream, "")):
+            with self.assertRaises(SystemExit) as stopped:
+                agy.main()
+        self.assertEqual(1, stopped.exception.code)
+        self.assertEqual("", output.getvalue())
+
     def test_the_prompt_goes_in_as_one_ndjson_event_never_on_the_command_line(self) -> None:
         encoded = agy.encode_prompt("write chapter 1\nwith two lines")
         self.assertTrue(encoded.endswith("\n"))

@@ -25,6 +25,7 @@ from runner.adapters import (
     ManualAdapter,
     OpenAICompatibleAdapter,
     command_template_argv,
+    resolve_repo_relative_argv,
 )
 from runner.constants import (
     DEFAULT_PERSONAS,
@@ -40,6 +41,15 @@ from runner.panel import PanelJudge, PanelMember
 
 FAKE_SEPARATOR = "=== NEXT ==="
 KNOWN_CLIS = ("claude", "codex")
+_BRIDGE_REQUIREMENTS = {
+    (Path(__file__).parent / filename).resolve(): executable
+    for filename, executable in {
+        "bridge_hermes.py": "hermes",
+        "bridge_antigravity.py": "agy",
+        "bridge_gemini.py": "agy",
+        "bridge_opencode.py": "opencode",
+    }.items()
+}
 
 _CLAUDE_DEFAULTS = {
     "writer": "opus",
@@ -77,7 +87,13 @@ def available_adapters() -> Dict[str, bool]:
             found[name] = False
             continue
         head = argv[0] if argv else ""
-        needed = requirements.get(name) or ([head] if head else [])
+        needed = ([head] if head else []) + list(requirements.get(name) or [])
+        # Legacy user declarations often name only Python. For our own bridge
+        # files, also check the CLI they launch, regardless of the adapter alias.
+        for token in resolve_repo_relative_argv(argv[1:]):
+            required = _BRIDGE_REQUIREMENTS.get(Path(token).resolve())
+            if required:
+                needed.append(required)
         found[name] = bool(needed) and all(
             shutil.which(executable) is not None or Path(executable).is_file()
             for executable in needed
@@ -249,6 +265,12 @@ def build_role_adapters(
 
     adapters = {role: get(role_model.adapter) for role, role_model in plan.roles.items()}
     models = {role: role_model.model for role, role_model in plan.roles.items()}
+    # New contracts use dedicated roles. Legacy sequential fake/manual fixtures
+    # remain unchanged; contract-specific tests supply these roles explicitly.
+    adapters["continuity"] = adapters.get("extractor", adapters["editor"])
+    models["continuity"] = models.get("extractor", models.get("editor", ""))
+    adapters["auditor"] = adapters["judge"]
+    models["auditor"] = models.get("judge", "")
     panel = PanelJudge([PanelMember(get(spec.adapter), spec.model, spec.persona) for spec in plan.panel])
     return RunSetup(adapters, models, panel, list(plan.warnings))
 

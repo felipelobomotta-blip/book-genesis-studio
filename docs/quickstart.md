@@ -27,6 +27,8 @@ python -m pip wheel --no-deps --no-build-isolation --wheel-dir dist .
 
 ## Connect a provider
 
+For a visual workspace after connecting a provider, run `book-genesis studio`. It supports idea entry, detected CLI selection, writing samples, checkpoints, live public prose where supported, saved chapters, safe pause/resume, and EPUB export. See [Writing Studio](studio.md).
+
 Run the setup wizard once:
 
 ```bash
@@ -37,6 +39,10 @@ book-genesis doctor
 `setup` detects compatible local CLIs, configured key variables, and local servers; it can also configure supported HTTP providers. It keeps personal configuration in `~/.book-genesis/config.yaml` (or `BOOK_GENESIS_CONFIG`). Do not commit that file. Keys are not stored in this repository, prompts, or run logs.
 
 Book Genesis uses your own provider accounts and subscriptions. Model use can cost money. The number of calls depends on genre, chapter count, and revision cycles, so inspect `doctor` and your provider's pricing before a long run.
+
+For the Codex CLI route, authenticate once with `codex login`. If the executable is installed but
+the account is not authenticated, Book Genesis stops before writing a chapter attempt and tells you
+to run that command; it does not wait indefinitely for the provider.
 
 If you have no CLI or API route, use manual mode. The runner writes each prompt to `work/manual/`; paste a model's response into the matching response file and repeat the command. Manual mode exits with code 5 while waiting for a reply.
 
@@ -61,6 +67,11 @@ The guided session pauses after the brief, the outline, and a blind reading of c
 book-genesis resume books/returned-books
 ```
 
+If a chapter fails the blind-reader gate during an interactive run, the runner explains what
+happened and asks `Try again? (yes/no)`. Answer `yes` to let it start another attempt automatically
+(up to three retries), or `no` to keep the best draft and stop safely. `--yes` remains fully
+non-interactive and stops on a blocked chapter so scripts and CI keep deterministic behavior.
+
 Use `--human` to require a deliberate human approval after chapter 1. The choice is saved with that project, so every later `resume` continues to require `approve` even when invoked with `--yes`. Without it, the model-reader panel runs and the session continues automatically. Use `--chapters N` for a limited run.
 
 ## Read and export
@@ -80,7 +91,25 @@ book-genesis export books/returned-books --format epub --output releases/returne
 
 The manuscript-level audit must end with exactly one status: `audit_status: pass`, `audit_status: revise`, or `audit_status: major_rewrite`. The last two stop the session at Audit, preserve the report, and return exit code 4. Score and Package do not run.
 
-Read `artifacts/08-adversarial-audit.md`, revise the canonical manuscript yourself, and run `book-genesis resume <project>`. The runner audits again. There is no automatic structural repair command.
+In an interactive session, the app asks **Revise the book for me? (yes/no)**. Answer `yes` or `ok` to use the audit report to revise the chapters, then run the reader checks and whole-book audit again. Previous versions remain in history. This uses more model calls and does not guarantee that the next audit will pass. Answer `no` to stop with your work saved. With `--yes` or redirected input, an audit failure stops the run instead of starting additional rewrites.
+
+Before those chapter edits, the editor reads the complete saved manuscript and creates one shared revision plan. It settles conflicting dates, names, quantities, and terminology once, then gives each chapter specific actions. The plan is saved under `work/revision-plans/` and reused on resume. Chapter editors and length repairs receive those decisions; blind readers still receive prose rather than the plan. A new audit or new author notes creates a new plan while preserving the earlier one.
+
+When you stop a failed or blocked session with saved canonical chapters, the app still prepares a reading page and draft Markdown/EPUB files. They are labelled as unfinished; this does not bypass the audit or declare the book publication-ready.
+
+## Visible progress and delivery
+
+While a model is working, the session shows its role, provider, and elapsed time every five seconds. Claude Code also streams public prose previews during writing and editing, so you can see the text arrive before the request finishes. Reasoning, tool, and system events are never shown. Connections that buffer their response keep the activity timer and show a preview when the response arrives. A partial stream is never accepted as a finished chapter.
+
+If a length rewrite still overshoots an explicit per-chapter range, the editor can select expendable paragraphs and the runner measures the cuts. Headings, the opening, and the ending are preserved; the normal reader check still applies. Saved drafts remain available, and an unsuccessful repair offers a simple retry.
+
+If a step fails, an interactive session offers a bounded retry in the same session. For a chapter rejected by the model readers, it first explains the changes it will try, using their feedback. You can answer `yes`, `no`, or `ok`.
+
+After all stages pass, the app automatically prepares a local reading page, a Markdown manuscript, and an EPUB in the project folder and displays their paths. Existing export files are preserved under their original names. Your selected book language is retained across stages, and explicit requirements in your idea are passed to the writer and revisers.
+
+For an enforceable short test, include an explicit per-chapter range in your idea, such as `350 to 500 words each` or `350-500 palavras por capítulo`. The runner measures whitespace-separated words, including the chapter heading, and allows up to two length repairs before asking for recovery. It preserves out-of-range drafts. Other free-form length requests remain instructions to the models rather than a guaranteed numerical check.
+
+The internal score counts a rewritten chapter as a revision even if the new attempt passes its first reader check. It also excludes chapters that needed a length repair from first-draft acceptance. This process signal is not a rating of literary quality or the app itself.
 
 ## Common local commands
 

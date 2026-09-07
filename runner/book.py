@@ -8,7 +8,7 @@ import re
 from typing import Callable, Dict, List, Optional
 
 from runner.adapters import Adapter
-from runner.brief import CHAPTER_MARK
+from runner.brief import chapter_markers
 from runner.chapter import AwaitingHuman, FIRST_CHAPTER_SLUG, Judge, resolve_human_checkpoint, run_chapter
 
 
@@ -36,12 +36,7 @@ def outline_chapters(outline: str) -> List[int]:
 
 
 def _chapter_numbers(outline: str) -> List[int]:
-    numbers: List[int] = []
-    for line in outline.splitlines():
-        match = CHAPTER_MARK.match(line)
-        if match:
-            numbers.append(int(match.group("number")))
-    return numbers
+    return [int(match.group("number")) for _, match in chapter_markers(outline)]
 
 
 def _validate_range(first: int, last: int, total: int) -> None:

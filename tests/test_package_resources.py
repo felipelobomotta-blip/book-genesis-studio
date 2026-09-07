@@ -57,6 +57,10 @@ class WheelResourceTests(unittest.TestCase):
         with zipfile.ZipFile(wheel) as archive:
             names = set(archive.namelist())
         for required in (
+            "runner/web/index.html",
+            "runner/web/studio.js",
+            "runner/web/studio_poll.js",
+            "runner/web/studio.css",
             "runner/data/agents/book-writer.md",
             "runner/data/knowledge/bestseller-dna.md",
             "runner/data/skills/book-genesis-codex/references/pipeline/manifest.yaml",

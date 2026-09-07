@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import os
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -169,11 +170,18 @@ def write_user_config(config: UserConfig, path: Optional[Path] = None) -> Path:
             "",
         ]
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    descriptor, temporary = tempfile.mkstemp(prefix=".book-genesis-config-", dir=target.parent)
     try:
-        os.chmod(target, 0o600)
-    except OSError:
-        pass
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(lines).rstrip() + "\n")
+        try:
+            os.chmod(temporary, 0o600)
+        except OSError:
+            pass
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
     config.path = target
     return target
 

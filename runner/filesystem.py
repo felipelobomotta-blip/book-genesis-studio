@@ -416,8 +416,8 @@ def pending_outputs(target: Path, outputs: List[str]) -> List[str]:
 
 
 def _outline_chapter_numbers(outline: str) -> List[int]:
-    marker = re.compile(r"^\s*(?:#{1,6}\s*|\*\*\s*)(?:chapter|cap[ií]tulo|cap\.?)\s*0*(\d+)\b", re.IGNORECASE)
-    numbers = [int(match.group(1)) for line in outline.splitlines() if (match := marker.match(line))]
+    from runner.brief import chapter_markers
+    numbers = [int(match.group("number")) for _, match in chapter_markers(outline)]
     expected = list(range(1, max(numbers) + 1)) if numbers else []
     return expected if sorted(numbers) == expected else []
 

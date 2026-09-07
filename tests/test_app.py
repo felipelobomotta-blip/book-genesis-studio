@@ -30,6 +30,20 @@ from test_session import (  # type: ignore  # noqa: E402
 
 
 class AppRoutingTests(unittest.TestCase):
+    def test_closed_input_stops_instead_of_accepting_a_checkpoint(self):
+        view = RecordingView()
+        view.ask = lambda *args: (_ for _ in ()).throw(EOFError())
+        with patch.object(app, "build_setup") as setup:
+            code = app.session_main(["new"], view=view)
+        self.assertEqual(app.cli.EXIT_OK, code)
+        setup.assert_not_called()
+        self.assertIn("paused", view.calls[-1][1])
+
+    def test_noninteractive_missing_idea_never_attempts_to_read_stdin(self):
+        view = RecordingView(interactive=False)
+        view.ask = lambda *args: self.fail("Noninteractive mode must not ask for input")
+        self.assertEqual(app.cli.EXIT_USAGE, app.session_main(["new", "--yes"], view=view))
+
     def setUp(self) -> None:
         self.tempdir = Path(tempfile.mkdtemp(prefix="book-genesis-app-"))
 
@@ -70,6 +84,18 @@ class AppRoutingTests(unittest.TestCase):
         setup.assert_not_called()
         self.assertEqual(original, (project / "PROJECT_STATE.yaml").read_bytes())
         self.assertIn("resume", view.calls[-1][1])
+
+    def test_new_provider_failure_does_not_leave_an_empty_project(self) -> None:
+        project = self.tempdir / "blocked-book"
+        view = RecordingView(interactive=False)
+        with patch.object(app, "build_setup", side_effect=app.AdapterError("Codex CLI is not logged in")):
+            code = app.session_main(
+                ["new", "--idea", "a book that needs a provider", "--language", "en", "--path", str(project)],
+                view=view,
+            )
+        self.assertEqual(app.cli.EXIT_FAILURE, code)
+        self.assertFalse(project.exists())
+        self.assertIn("not logged in", view.calls[-1][1])
 
     def test_resume_continues_an_existing_project(self) -> None:
         project = self.tempdir / "book"

@@ -49,15 +49,26 @@ def parse_result(stdout: str) -> Tuple[str, str, Optional[str]]:
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if event.get("event") != "result":
+        if not isinstance(event, dict) or event.get("event") != "result":
             continue
         result = event.get("result", {})
+        if not isinstance(result, dict):
+            return "INVALID_RESULT", "", "agy returned an invalid result object"
         status = str(result.get("status", ""))
-        response = str(result.get("response", ""))
-        error = result.get("error") or None
+        response = result.get("response") or ""
+        if not isinstance(response, str):
+            return "INVALID_RESULT", "", "agy returned non-text content"
+        error = str(result.get("error")) if result.get("error") else None
     if not status:
         return "NO_RESULT", "", "agy produced no result event"
     return status, response, error
+
+
+def friendly_error(error: str) -> str:
+    if "permission" in error.lower() and "headless" in error.lower():
+        return ("Antigravity tried to use a tool during text generation, and its permission check blocked it. "
+                "No complete response was returned. Retry, or choose another connection with book-genesis setup.")
+    return error
 
 
 def main() -> None:
@@ -76,8 +87,9 @@ def main() -> None:
         errors="replace",
     )
     status, response, error = parse_result(result.stdout)
-    if status != "SUCCESS" or not response.strip():
-        sys.stderr.write(f"agy status={status or 'unknown'}: {error or result.stderr.strip() or 'no response'}\n")
+    if status != "SUCCESS" or error or not response.strip():
+        message = friendly_error(error or result.stderr.strip() or "no response")
+        sys.stderr.write(f"Antigravity could not complete the request: {message}\n")
         raise SystemExit(result.returncode or 1)
     sys.stdout.write(response.strip())
 

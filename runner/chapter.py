@@ -10,14 +10,16 @@ the models only ever see text and return text (ADR 0001). No human is required;
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import json
 from pathlib import Path
 import re
 from typing import Callable, Dict, List, Optional, Protocol
 
-from runner.adapters import Adapter
-from runner.brief import TAIL_WORDS, build_chapter_brief, tail_words
+from runner.adapters import Adapter, AdapterError
+from runner.activity import complete_with_activity
+from runner.brief import TAIL_WORDS, build_chapter_brief, tail_words, chapter_word_limits
 from runner.constants import GenreProfile, load_genre_profile
-from runner.filesystem import load_state_summary, set_human_checkpoint_required
+from runner.filesystem import load_state_summary, set_human_checkpoint_required, update_state_value
 from runner.history import load_manifest, project_relative, record_draft, reserve_attempt, sha256, write_manifest
 from runner.judge import SingleJudge, Verdict
 
@@ -146,12 +148,47 @@ def run_chapter(
 
     summary = load_state_summary(project)
     genre = summary.get("genre", "")
+    author_constraints = ("\n\n# AUTHOR REQUIREMENTS\n\n" + summary.get("idea", "") +
+                          "\nBook language: " + summary.get("language", "") +
+                          "\nPreserve the author's requested length, chapter count, and ending. "
+                          "These override genre defaults.\n")
+    notes_path = project / "work" / "author-notes.md"
+    if notes_path.is_file():
+        author_constraints += "\n# AUTHOR NOTES\n" + notes_path.read_text(encoding="utf-8")
     reader = summary.get("audience", "")
     profile = load_genre_profile(genre)
     previous_tail = _previous_tail(project, chapter)
 
+    # Provider failures must happen before the immutable attempt marker is written.
+    # Otherwise an unauthenticated CLI leaves a misleading pending attempt behind.
+    for adapter in adapters.values():
+        preflight = getattr(adapter, "preflight", None)
+        if callable(preflight):
+            preflight()
+    if judge is not None:
+        for member in getattr(judge, "members", []):
+            preflight = getattr(getattr(member, "adapter", None), "preflight", None)
+            if callable(preflight):
+                preflight()
+
     drafts_dir = project / "manuscript" / "drafts" / f"chapter-{chapter:02d}"
     evaluations_dir = project / "evaluations"
+    if seed_draft is None:
+        seed_draft = _resumable_length_draft(project, chapter)
+
+    from runner.revision import ensure_revision_plan, revision_context
+    editorial = project / "work" / "editorial-revision.md"
+    existing_chapter = project / "manuscript" / "chapters" / f"chapter-{chapter:02d}.md"
+    rewrite = project / "work" / f"rewrite-chapter-{chapter:02d}.pending"
+    if editorial.is_file() and existing_chapter.is_file() and rewrite.exists():
+        ensure_revision_plan(project, adapters["editor"], models.get("editor", ""), say)
+    author_constraints += revision_context(project, chapter)
+    from runner.continuity import memory_before, memory_context, verify_candidate, select_facts
+    memory_adapter = adapters.get("continuity")
+    facts = (memory_before(project, chapter, memory_adapter, models.get("continuity", ""))
+             if memory_adapter is not None else [])
+    continuity_context = memory_context(select_facts(facts, build_chapter_brief(project, chapter, write=False))) if facts else ""
+    author_constraints += continuity_context
 
     # Reserve before invoking writer/judge: a crashed/manual provider leaves a
     # durable pending attempt and the retry gets a new immutable filename.
@@ -159,20 +196,32 @@ def run_chapter(
     if seed_draft is not None:
         say(f"chapter {chapter}: polish: seeding from existing prose ({len(seed_draft.split())} words)")
         draft = clean_chapter(seed_draft)
+    elif editorial.is_file() and existing_chapter.is_file() and rewrite.exists():
+        say(f"chapter {chapter}: applying the whole-book audit to the saved chapter")
+        prompt = (RUNNER_CONTRACT + "Edit the saved chapter only where the audit requests a concrete change. "
+                  "Preserve what already works, factual continuity, names, and the ending. Do not add unrelated "
+                  "creative flourishes or rewrite the whole plot. Return only the complete revised chapter, "
+                  "starting with its existing heading.\n\n" + author_constraints +
+                  "\n\n# AUDIT TO ADDRESS\n\n" + editorial.read_text(encoding="utf-8") +
+                  "\n\n# SAVED CHAPTER\n\n" + existing_chapter.read_text(encoding="utf-8"))
+        draft = clean_chapter(complete_with_activity(adapters["editor"], prompt,
+                              model=models.get("editor", ""), task=f"Chapter {chapter} audit editor"))
     else:
-        brief = build_chapter_brief(project, chapter)
+        brief = build_chapter_brief(project, chapter) + continuity_context
         say(f"chapter {chapter}: writer ({adapters['writer'].name}{' ' + models['writer'] if models.get('writer') else ''})...")
         draft = clean_chapter(
-            adapters["writer"].complete(writer_prompt(brief, chapter, genre, profile), model=models.get("writer", ""))
+            complete_with_activity(adapters["writer"], writer_prompt(brief, chapter, genre, profile), model=models.get("writer", ""), task=f"Chapter {chapter} writer")
         )
         say(f"chapter {chapter}: writer done, {len(draft.split())} words")
+        say("Draft preview: " + " ".join(draft.splitlines()[1:]).strip()[:240])
         if profile.disruptor_default and "disruptor" in adapters:
             say(f"chapter {chapter}: disruptor...")
             draft = clean_chapter(
-                adapters["disruptor"].complete(disruptor_prompt(draft, chapter, genre), model=models.get("disruptor", ""))
+                complete_with_activity(adapters["disruptor"], disruptor_prompt(draft, chapter, genre) + author_constraints, model=models.get("disruptor", ""), task=f"Chapter {chapter} reviser")
             )
             say(f"chapter {chapter}: disruptor done, {len(draft.split())} words")
 
+    draft = _fit_requested_length(project, chapter, draft, adapters, models, attempt_id, say)
     draft_number = 1
     draft_path = _attempt_draft_path(drafts_dir, attempt_id, attempt_sequence, draft_number)
     _write(draft_path, draft)
@@ -191,11 +240,13 @@ def run_chapter(
         cycles += 1
         say(f"chapter {chapter}: editor, cycle {cycles} of {profile.max_revision_cycles} (modes: {', '.join(best_verdict.flags) or 'stopped_at only'})...")
         candidate = clean_chapter(
-            adapters["editor"].complete(
-                editor_prompt(best, best_verdict, chapter, genre, profile),
+            complete_with_activity(adapters["editor"],
+                editor_prompt(best, best_verdict, chapter, genre, profile) + author_constraints,
                 model=models.get("editor", ""),
+                task=f"Chapter {chapter} editor",
             )
         )
+        candidate = _fit_requested_length(project, chapter, candidate, adapters, models, attempt_id, say)
         draft_number += 1
         draft_path = _attempt_draft_path(drafts_dir, attempt_id, attempt_sequence, draft_number)
         _write(draft_path, candidate)
@@ -214,17 +265,172 @@ def run_chapter(
             break
         accepted = _accepted(best_verdict)
 
+    # The continuity reviewer is separate from the blind reader. It sees facts;
+    # the reader continues to receive prose only. Never publish an unchecked repair.
+    if accepted and memory_adapter is not None:
+        conflicts = verify_candidate(project, chapter, best, facts, memory_adapter, models.get("continuity", ""))
+        if conflicts:
+            say(f"chapter {chapter}: repairing {len(conflicts)} source-backed continuity finding(s)")
+            prompt = (RUNNER_CONTRACT + "Repair only the contradictions below. Preserve the heading, "
+                      "unaffected prose, requested length, and ending. Return the complete chapter only.\n"
+                      + author_constraints + "\nFINDINGS\n" + json.dumps(conflicts, ensure_ascii=False)
+                      + "\nCHAPTER\n" + best)
+            candidate = clean_chapter(complete_with_activity(adapters["editor"], prompt,
+                model=models.get("editor", ""), task=f"Chapter {chapter} continuity editor"))
+            candidate = _fit_requested_length(project, chapter, candidate, adapters, models, attempt_id, say)
+            draft_number += 1
+            path = _attempt_draft_path(drafts_dir, attempt_id, attempt_sequence, draft_number)
+            _write(path, candidate)
+            record_draft(project, chapter, attempt_id, path)
+            check = judge.judge(candidate, previous_tail, genre, previous_draft=best, reader=reader)
+            check_path = _attempt_verdict_path(evaluations_dir, chapter, attempt_id, attempt_sequence, draft_number)
+            _write(check_path, check.raw)
+            verdicts.append(check)
+            remaining = verify_candidate(project, chapter, candidate, facts, memory_adapter, models.get("continuity", ""))
+            accepted = _accepted(check) and not remaining
+            if accepted:
+                best, best_verdict, best_draft_path, best_verdict_path = candidate, check, path, check_path
+            else:
+                say(f"chapter {chapter}: continuity repair did not pass both checks; previous canonical text is preserved")
+
     label = getattr(judge, "label", "judge")
     if accepted:
         final = project / "manuscript" / "chapters" / f"chapter-{chapter:02d}.md"
+        if (final.is_file() and final.read_text(encoding="utf-8") != best and
+                (summary.get("status") == "completed" or
+                 summary.get("current_phase", "").startswith(("Phase 4:", "Phase 5:", "Phase 6:")))):
+            # Invalidate completion before replacing prose. Existing exports and
+            # reports remain historical snapshots; resume rechecks the changed book.
+            state = project / "PROJECT_STATE.yaml"
+            update_state_value(state, "current_phase", "Phase 4: Adversarial Audit")
+            update_state_value(state, "status", "in_progress")
+            say("The manuscript changed; the whole-book review and delivery must run again.")
         _write(final, best)
         result = ChapterResult(chapter, True, "accepted", cycles, final, verdicts)
     else:
         result = ChapterResult(chapter, False, "blocked", cycles, best_draft_path, verdicts)
     _record_attempt(project, chapter, attempt_id, attempt_sequence, result, best_draft_path, best_verdict_path)
+    if accepted and memory_adapter is not None:
+        from runner.continuity import remember_accepted
+        remember_accepted(project, chapter, best, facts, memory_adapter, models.get("continuity", ""))
     _append_run_report(project, result, label)
     say(f"chapter {chapter}: {result.status} after {cycles} revision cycle(s)")
     return result
+
+
+def _resumable_length_draft(project: Path, chapter: int) -> Optional[str]:
+    """Continue a saved length repair unless newer author/revision notes supersede it."""
+    attempts = load_manifest(project, chapter)["attempts"]
+    if not attempts:
+        return None
+    latest = attempts[-1]
+    relative = latest.get("draft_path", "")
+    if latest.get("status") != "drafted" or not isinstance(relative, str):
+        return None
+    path = (project / relative).resolve()
+    expected = (project / "manuscript" / "drafts" / f"chapter-{chapter:02d}").resolve()
+    if (not path.is_relative_to(project.resolve()) or path.parent != expected
+            or not re.fullmatch(r"attempt-\d+-length-\d+\.md", path.name)
+            or not path.is_file() or latest.get("sha256") != sha256(path)):
+        return None
+    for note in ("author-notes.md", "editorial-revision.md", f"rewrite-chapter-{chapter:02d}.pending",
+                 f"retry-chapter-{chapter:02d}.md"):
+        changed = project / "work" / note
+        if changed.exists() and changed.stat().st_mtime_ns > path.stat().st_mtime_ns:
+            return None
+    return path.read_text(encoding="utf-8")
+
+
+def _fit_requested_length(project, chapter, draft, adapters, models, attempt_id, say):
+    from runner.revision import revision_context
+    continuity = revision_context(project, chapter)
+    limits = chapter_word_limits(project)
+    if limits is None:
+        return draft
+    low, high = limits
+    for repair in range(3):
+        count = len(draft.split())
+        if low <= count <= high:
+            return draft
+        # Keep every out-of-range version before attempting a repair.
+        directory = project / "manuscript" / "drafts" / f"chapter-{chapter:02d}"
+        number = 1
+        saved = directory / f"{attempt_id}-length-{number}.md"
+        while saved.exists():
+            number += 1
+            saved = directory / f"{attempt_id}-length-{number}.md"
+        _write(saved, draft)
+        record_draft(project, chapter, attempt_id, saved)
+        if repair == 2:
+            raise AdapterError(f"Chapter {chapter} is saved but still has {count} words; "
+                               f"the requested range is {low}-{high}. Length repair stopped after two attempts.")
+        say(f"chapter {chapter}: adjusting length ({count} words; requested {low}-{high})")
+        if repair == 1 and count > high:
+            draft = _select_length_cuts(draft, low, high, adapters["editor"], models.get("editor", ""), chapter, constraints=continuity)
+            continue
+        target = low + (high - low) // 5 if count > high else (low + high) // 2
+        change = (f"DELETE at least {count - target} words. Remove secondary banter and incidental "
+                  "description; do not merely swap words. " if count > high else "Develop existing moments without adding new plot threads. ")
+        prompt = (RUNNER_CONTRACT + f"This is a strict length-editing task. Rewrite this chapter in about {target} words. "
+                  f"{change}Allowed range: {low}-{high} whitespace-separated words INCLUDING the heading. The current text has "
+                  f"{count} words. Preserve its language, central events, names, and ending. "
+                  "Remove expendable lines when shortening; do not add new plot threads. Return only the full "
+                  "revised chapter with the same heading, no commentary.\n\n" + continuity + "\n\n# CHAPTER\n\n" + draft)
+        draft = clean_chapter(complete_with_activity(adapters["editor"], prompt, model=models.get("editor", ""),
+                                                     task=f"Chapter {chapter} length editor"))
+    return draft
+
+
+def _select_length_cuts(draft, low, high, adapter, model, chapter, *, constraints=""):
+    """An editor selects expendable paragraphs; the runner measures each removal.
+
+    Used only after a prose rewrite missed the range. Never truncate a sentence,
+    invent text, remove a heading/opening/ending, or bypass the blind reader gate.
+    If the suggested cuts cannot meet the range, preserve the draft and fail the
+    normal bounded length check. The original is already saved in draft history.
+    """
+    paragraphs = re.split(r"\n\s*\n", draft.strip())
+    prose_ids = [i for i, p in enumerate(paragraphs) if not p.lstrip().startswith("#")]
+    if len(prose_ids) < 3:
+        return draft
+    protected = {prose_ids[0], prose_ids[-1]} | {
+        i for i, p in enumerate(paragraphs) if p.lstrip().startswith("#")
+    }
+    count = len(draft.split())
+    numbered = "\n\n".join(
+        f"[{i}] ({len(p.split())} words{'; KEEP' if i in protected else ''})\n{p}"
+        for i, p in enumerate(paragraphs)
+    )
+    prompt = (RUNNER_CONTRACT + "You are doing a deletion-only editorial pass. The chapter is too long. "
+              f"It has {count} words and must finish between {low} and {high}. Identify whole paragraphs "
+              f"that can be removed, totaling at least {count - high} words. Rank the safest deletions first. "
+              "Preserve essential events, clues, named facts, examples needed to understand instructions, "
+              "dialogue responses needed for coherence, and the ending. Prefer repeated explanations, "
+              "incidental description, and redundant banter. Do not select any paragraph marked KEEP. "
+              "The runner will stop deleting once the length fits and blind readers will check coherence. "
+              'Return only JSON: {"remove_order": [paragraph IDs in priority order]}. No rewritten prose.\n\n' + constraints + "\n\n" + numbered)
+    raw = complete_with_activity(adapter, prompt, model=model, task=f"Chapter {chapter} precision length editor")
+    try:
+        payload = raw.strip()
+        if payload.startswith("```"):
+            payload = payload.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        order = json.loads(payload)["remove_order"]
+        if not isinstance(order, list) or any(type(i) is not int or i < 0 or i >= len(paragraphs) for i in order):
+            return draft
+    except (ValueError, TypeError, KeyError, IndexError):
+        return draft
+    removed = set()
+    for i in order:
+        if i in protected or i in removed:
+            continue
+        words = len(paragraphs[i].split())
+        if count - words < low:
+            continue
+        removed.add(i)
+        count -= words
+        if count <= high:
+            return "\n\n".join(p for j, p in enumerate(paragraphs) if j not in removed) + "\n"
+    return draft
 
 
 def _verdict_line(verdict: Verdict) -> str:
@@ -239,13 +445,14 @@ def writer_prompt(brief: str, chapter: int, genre: str, profile: GenreProfile) -
     return (
         RUNNER_CONTRACT
         + _template("book-writer.md")
+        + craft_guidance(profile.key)
         + "\n\n# THE BRIEF\n\n"
         + brief.strip()
         + "\n\n# OUTPUT\n\n"
         + f"Return only Chapter {chapter}, as Markdown, starting with a level-1 heading of the form "
         + f"`# Chapter {chapter}: Title`, translated into the book's language (Portuguese: `# Capítulo {chapter}: Título`). Prose only: no craft notes, no self-report, no preamble, no "
-        + "commentary before or after the chapter. Stay inside the target length given in the brief "
-        + f"({profile.words_per_chapter_min}-{profile.words_per_chapter_max} words unless the outline says otherwise).\n"
+        + "commentary before or after the chapter. Stay inside the target length given in the brief. "
+        + "The author's explicit range overrides all genre or outline defaults.\n"
     )
 
 
@@ -277,6 +484,7 @@ def editor_prompt(draft: str, verdict: Verdict, chapter: int, genre: str, profil
     return (
         RUNNER_CONTRACT
         + _template("book-editor.md")
+        + craft_guidance(profile.key)
         + "\n\n"
         + reader_report
         + f"# THE CHAPTER (current best draft of Chapter {chapter}, {genre or 'fiction'})\n\n"
@@ -289,6 +497,21 @@ def editor_prompt(draft: str, verdict: Verdict, chapter: int, genre: str, profil
     )
 
 
+def craft_guidance(profile: str) -> str:
+    if profile in {"nonfiction", "memoir"}:
+        return ("\n\n# FORM-SPECIFIC GUIDANCE\nDevelop one clear question or practical outcome per chapter. "
+                "Use concrete demonstrations and track quantities, durations, and examples consistently. "
+                "Distinguish supplied facts, interpretation, and explicitly fictional illustrations. "
+                "Label fictional examples briefly on first appearance; avoid repeated process disclaimers or explanations of how the book was generated. "
+                "Do not invent citations, research, dialogue or biographical events presented as real. "
+                "Avoid repeating the previous chapter's lesson or appending a generic moral.\n")
+    return ("\n\n# FORM-SPECIFIC GUIDANCE\nGive each scene a concrete desire, credible resistance, "
+            "a consequential choice, and a changed situation. Let resistance fit this story's scale. "
+            "Differentiate speakers through vocabulary, attention, omissions and motives. "
+            "Avoid shared aphoristic voices, repeated mechanism explanations, effortless solutions, "
+            "and endings that explain the scene's meaning after the reader already understands.\n")
+
+
 def clean_chapter(raw: str) -> str:
     """Keep the prose, drop what models add around it: fences, preambles, craft notes."""
     text = raw.strip()
@@ -299,6 +522,10 @@ def clean_chapter(raw: str) -> str:
     for index, line in enumerate(lines):
         if _LEVEL_ONE_HEADING.match(line):
             lines = lines[index:]
+            break
+        title = line.strip().strip("*").strip()
+        if re.fullmatch(r"(?:chapter|cap[ií]tulo)\s+\d+(?:\s*[:—–-]\s*\S.*)?", title, re.I):
+            lines = ["# " + title, *lines[index + 1:]]
             break
     for index in range(1, len(lines)):
         if _NOTES_HEADING.match(lines[index]):
@@ -390,4 +617,6 @@ def _append_run_report(project: Path, result: ChapterResult, judge_label: str) -
 
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(text, encoding="utf-8")
+    temporary.replace(path)

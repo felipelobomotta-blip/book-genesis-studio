@@ -14,6 +14,22 @@ from runner.roles import plan_roles  # type: ignore  # noqa: E402
 
 
 class PlanRolesTests(unittest.TestCase):
+    def test_legacy_bridge_alias_cannot_hide_a_missing_underlying_cli(self) -> None:
+        with (
+            patch.object(roles, "load_generic_adapters", return_value={"my-hermes": "python runner/bridge_hermes.py {model}"}),
+            patch.object(roles, "load_generic_adapter_requirements", return_value={}),
+            patch.object(roles.shutil, "which", side_effect=lambda name: "python.exe" if name == "python" else None),
+        ):
+            self.assertFalse(roles.available_adapters()["my-hermes"])
+
+    def test_declared_requirement_does_not_replace_command_executable_check(self) -> None:
+        with (
+            patch.object(roles, "load_generic_adapters", return_value={"tool": "missing-wrapper --stdio"}),
+            patch.object(roles, "load_generic_adapter_requirements", return_value={"tool": ["available-engine"]}),
+            patch.object(roles.shutil, "which", side_effect=lambda name: "engine.exe" if name == "available-engine" else None),
+        ):
+            self.assertFalse(roles.available_adapters()["tool"])
+
     def test_wrapped_cli_requires_its_real_executable_not_just_python(self) -> None:
         with (
             patch.object(roles, "load_generic_adapters", return_value={"gemini": "python runner/bridge_gemini.py {model}", "muse-spark": "python runner/bridge_opencode.py {model}"}),

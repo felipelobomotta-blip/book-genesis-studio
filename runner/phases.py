@@ -16,9 +16,10 @@ import json
 import os
 import re
 import shutil
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from runner.adapters import Adapter
+from runner.activity import complete_with_activity
 from runner.chapter import RUNNER_CONTRACT
 from runner.audit import audit_status
 from runner.filesystem import (
@@ -59,6 +60,7 @@ def run_phase(
     models: Dict[str, str],
     *,
     role: str = PHASE_ROLE,
+    progress: Callable[[str], None] | None = None,
 ) -> PhaseRunResult:
     recover_pending_publication(project)
     phase = current_phase(project)
@@ -66,7 +68,15 @@ def run_phase(
         raise ValueError("Phase 3 (drafting) runs chapter by chapter: use `book` or `chapter`, not `run-phase`")
 
     prompt = build_phase_prompt(project, phase)
-    response = adapters[role].complete(prompt, model=models.get(role, ""))
+    say = progress or (lambda _message: None)
+    if phase.label == "Phase 4: Adversarial Audit" and role == PHASE_ROLE and "auditor" in adapters:
+        role = "auditor"
+    adapter = adapters[role]
+    model = models.get(role, "")
+    provider = f"{adapter.name}{' ' + model if model else ''}"
+    say(f"{phase.label}: {role} agent is working via {provider}")
+    response = complete_with_activity(adapter, prompt, model=model, task=phase.label)
+    say(f"{phase.label}: {role} agent returned {len(response.split())} words; validating artifacts")
     files, state = split_files(response)
 
     required = [output for output in phase.outputs if output != "manuscript/chapters"]
@@ -78,7 +88,8 @@ def run_phase(
     if "artifacts/05-outline.md" in required:
         try:
             from runner.book import outline_chapters
-            outline_chapters(files["artifacts/05-outline.md"])
+            if not outline_chapters(files["artifacts/05-outline.md"]):
+                raise ValueError("The outline needs numbered chapter headings such as ## Chapter 1: Title.")
         except ValueError as exc:
             _stage_failed_attempt(project, phase, files)
             return PhaseRunResult(False, phase.label, [], [str(exc)], list(files), phase.label)
@@ -100,7 +111,10 @@ def run_phase(
         _publish_staged(project, staged, required)
         written.extend(required)
         state_path = project / "PROJECT_STATE.yaml"
+        selected_language = load_state_summary(project).get("language", "")
         for key, value in state.items():
+            if key == "language" and selected_language:
+                continue  # The author's chosen language is not a model decision.
             if key in STATE_KEYS and value:
                 update_state_value(state_path, key, value)
         if phase.label == "Phase 4: Adversarial Audit" and status != "pass":
@@ -140,6 +154,7 @@ def build_phase_prompt(project: Path, phase: Phase) -> str:
         [
             f"- Idea: {summary['idea'] or '(none recorded)'}",
             f"- Language: {summary['language'] or 'infer from the idea'}",
+            "- Use the selected language for all book content; preserve it in the state response.",
             f"- Genre: {summary['genre'] or 'infer'}",
             f"- Audience: {summary['audience'] or 'infer'}",
             f"- Title: {summary['title'] or 'none yet'}",
@@ -147,10 +162,14 @@ def build_phase_prompt(project: Path, phase: Phase) -> str:
     )
     existing = "".join(
         f"## Current `{relative}`\n\n{text}\n\n" for relative, text in _existing_artifacts(project)
+        if relevant_artifact(relative, phase.key)
     )
     if phase.key in {"phase_4_adversarial_audit", "phase_5_final_score", "phase_6_editorial_package"}:
         existing += _manuscript_context(project)
     notes = author_notes(project)
+    feedback = project / "work" / f"phase-feedback-{phase.key}.md"
+    if feedback.is_file():
+        existing += "## Previous output problem to correct\n\n" + feedback.read_text(encoding="utf-8") + "\n\n"
     if notes:
         existing += (
             "## Author notes\n\n"
@@ -173,12 +192,23 @@ def build_phase_prompt(project: Path, phase: Phase) -> str:
         "`=== FILE: <path> ===` followed by the complete Markdown content of that file. Required files:\n"
         f"{required_lines}\n{outline_rule}\n"
         "After the files, add one block starting with the line `=== STATE ===` holding these lines, filled "
-        "from your decisions: `title:`, `genre:` (one or two words: thriller, literary, memoir, fantasy, scifi, "
-        "romance, nonfiction), `audience:`, `language:` (ISO code), `target_length:` (in words). "
+        "from your decisions: `title:`, `genre:` (a short accurate description, such as gentle mystery, "
+        "thriller, literary, memoir, fantasy, scifi, romance, nonfiction), `audience:`, `language:` (ISO code), `target_length:` (in words). "
         "Nothing before the first block and nothing after the last.\n"
     )
     if phase.label == "Phase 4: Adversarial Audit":
         output_contract += "The audit artifact must contain exactly one standalone line: `audit_status: pass`, `audit_status: revise`, or `audit_status: major_rewrite`.\n"
+        output_contract += ("Judge the author's requested kind of book and scale. A quiet mystery does not need "
+                            "thriller danger merely because an earlier state used that genre label. If the genre "
+                            "label is inaccurate, correct it in the STATE block; do not change the author's premise "
+                            "to fit the label. Keep genuine plot, continuity, and length failures blocking.\n")
+        output_contract += (
+            "Separate blocking findings from optional polish. Each blocker needs specific chapter numbers, "
+            "exact source quotations (or a clearly identified missing requirement), an explanation of the material "
+            "reader impact, and a concrete verification criterion. Style preferences alone are not blockers; "
+            "substantial craft failures may block when supported by evidence. Do not soften real failures to pass. "
+            "If a previous audit is supplied, check whether each issue is resolved and identify any new regressions. "
+            "Do not infer market success or human-reader approval.\n")
     return (
         RUNNER_CONTRACT
         + prompt_text
@@ -188,6 +218,20 @@ def build_phase_prompt(project: Path, phase: Phase) -> str:
         + existing
         + output_contract
     )
+
+
+def relevant_artifact(relative: str, phase: str) -> bool:
+    """Avoid returning future/stale stages and irrelevant marketing context to a model."""
+    sets = {
+        "phase_0_intake": {"ASSUMPTIONS.md"},
+        "phase_1_foundation": {"ASSUMPTIONS.md", "artifacts/00-brief.md", "artifacts/02-story-engine.md"},
+        "phase_2_architecture": {"ASSUMPTIONS.md", "artifacts/00-brief.md", "artifacts/02-story-engine.md",
+                                 "artifacts/03-characters.md", "artifacts/04-theme.md", "artifacts/06-emotional-curve.md"},
+        "phase_4_adversarial_audit": {"artifacts/00-brief.md", "artifacts/05-outline.md", "artifacts/08-adversarial-audit.md"},
+        "phase_5_final_score": {"artifacts/00-brief.md", "artifacts/08-adversarial-audit.md"},
+        "phase_6_editorial_package": {"artifacts/00-brief.md", "artifacts/01-market-map.md", "artifacts/08-adversarial-audit.md", "artifacts/09-genesis-score-codex.md"},
+    }
+    return relative in sets[phase] if phase in sets else True
 
 
 def author_notes(project: Path) -> str:
@@ -218,7 +262,7 @@ def _manuscript_context(project: Path) -> str:
         text = path.read_text(encoding="utf-8").strip()
         if not text:
             raise ValueError(f"Canonical chapter is empty: {relative}")
-        blocks.append(f"## SOURCE `{relative}`\n\n{text}\n\n")
+        blocks.append(f"## SOURCE `{relative}`\n\nMeasured length: {len(text.split())} whitespace-separated words, including heading.\n\n{text}\n\n")
     return "".join(blocks)
 
 

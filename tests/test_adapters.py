@@ -16,6 +16,7 @@ from runner.adapters import (  # type: ignore  # noqa: E402
     AdapterError,
     ClaudeCliAdapter,
     CodexCliAdapter,
+    codex_login_status,
     GenericCliAdapter,
     ManualAdapter,
     _run,
@@ -91,6 +92,40 @@ class BuiltInCliIsolationTests(unittest.TestCase):
         self.assertEqual("read-only", command[command.index("-s") + 1])
         self.assertIn("--ignore-user-config", command)
         self.assertNotIn("--ignore-rules", command)
+
+    def test_codex_fails_fast_when_the_cli_is_not_logged_in(self) -> None:
+        adapter = CodexCliAdapter(timeout_seconds=30)
+        status = __import__("subprocess").CompletedProcess(
+            ["codex", "login", "status"], 0, "Not logged in\n", ""
+        )
+        with patch("runner.adapters._resolve", return_value=["codex"]), patch(
+            "runner.adapters._run", return_value=status
+        ) as provider_call:
+            with self.assertRaisesRegex(AdapterError, "codex login"):
+                adapter.complete("prompt")
+        provider_call.assert_called_once()
+        self.assertEqual(["codex", "login", "status"], provider_call.call_args.args[0])
+
+    def test_codex_checks_login_once_per_adapter(self) -> None:
+        adapter = CodexCliAdapter(timeout_seconds=30)
+        status = __import__("subprocess").CompletedProcess(
+            ["codex", "login", "status"], 0, "Logged in\n", ""
+        )
+        with patch("runner.adapters._resolve", return_value=["codex"]), patch(
+            "runner.adapters._run", return_value=status
+        ) as login_check:
+            adapter._ensure_logged_in()
+            adapter._ensure_logged_in()
+        login_check.assert_called_once()
+
+    def test_codex_login_status_distinguishes_missing_auth(self) -> None:
+        status = __import__("subprocess").CompletedProcess(
+            ["codex", "login", "status"], 0, "Not logged in\n", ""
+        )
+        with patch("runner.adapters._resolve", return_value=["codex"]), patch(
+            "runner.adapters._run", return_value=status
+        ):
+            self.assertFalse(codex_login_status())
 
     def test_claude_uses_a_temporary_working_directory(self) -> None:
         adapter = ClaudeCliAdapter(timeout_seconds=1)
