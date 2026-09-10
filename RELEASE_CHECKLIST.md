@@ -39,7 +39,7 @@ Steps to cut a new Book Genesis release. The public runtime is the native agent 
 ## Post-release
 
 - [ ] Pin release on GitHub
-- [ ] Post release announcement in [Discussions](https://github.com/felipelobomotta-blip/book-genesis-v4/discussions/categories/announcements) (if category exists)
+- [ ] Post release announcement in [Discussions](https://github.com/felipelobomotta-blip/book-genesis-studio/discussions/categories/announcements) (if category exists)
 - [ ] Update social preview banner if the version number is on it
 - [ ] Twitter/X + LinkedIn post linking the release
 - [ ] Show HN or Reddit r/ClaudeAI post if the release is significant (major features, not patch)

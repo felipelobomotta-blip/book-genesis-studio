@@ -15,8 +15,8 @@ This is a **short-story demonstration**, not a full-length book benchmark. Use a
 Capture the real commands, selecting the tested target:
 
 ```bash
-git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
-cd book-genesis-v4
+git clone https://github.com/felipelobomotta-blip/book-genesis-studio.git
+cd book-genesis-studio
 python runner/installer.py verify-suite
 python runner/installer.py install deepseek
 python runner/installer.py verify-install deepseek

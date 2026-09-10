@@ -114,7 +114,7 @@ export const Scene6CTA: React.FC = () => {
                 letterSpacing: '0.02em',
               }}
             >
-              github.com/felipelobomotta-blip/book-genesis-v4
+              github.com/felipelobomotta-blip/book-genesis-studio
             </span>
           </div>
         </div>

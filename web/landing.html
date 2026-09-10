@@ -35,6 +35,10 @@
     line-height: 1.7;
     overflow-x: hidden;
   }
+  #three-scene {
+    position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
+    pointer-events: none; opacity: 0.72;
+  }
   ::selection { background: var(--gold); color: var(--ink); }
 
   /* Background grid + glow */
@@ -78,7 +82,14 @@
   .lang-toggle button.active { background: var(--gold); color: var(--ink); }
 
   /* Hero */
-  .hero { padding: 120px 0 80px; text-align: center; position: relative; }
+  .hero { padding: 120px 0 80px; text-align: center; position: relative; min-height: 860px; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; width: 760px; height: 760px; left: 50%; top: 38%;
+    transform: translate(-50%, -50%); border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.12); box-shadow: 0 0 120px rgba(212,165,116,0.08), inset 0 0 120px rgba(212,165,116,0.04);
+    pointer-events: none;
+  }
+  .hero > .container { z-index: 2; }
   .hero .kicker {
     font-size: 11px; letter-spacing: 6px; text-transform: uppercase; color: var(--gold);
     display: inline-flex; align-items: center; gap: 14px; margin-bottom: 28px;
@@ -100,6 +111,18 @@
     color: var(--parchment-2); font-weight: 300;
   }
   .hero .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .hero-showcase {
+    display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 20px;
+    max-width: 1080px; margin: 58px auto 0; text-align: left;
+  }
+  .hero-showcase figure {
+    margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px;
+    background: rgba(20,25,55,0.72); box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+  }
+  .hero-showcase img, .hero-showcase video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .hero-showcase video { background: #080b1b; }
+  .hero-showcase figcaption { padding: 13px 16px; color: var(--parchment-2); font-size: 12px; letter-spacing: 0.8px; }
+  @media (max-width: 820px) { .hero-showcase { grid-template-columns: 1fr; margin-top: 42px; } }
   .btn {
     display: inline-flex; align-items: center; gap: 10px;
     padding: 16px 32px; border-radius: 4px;
@@ -204,6 +227,23 @@
 
   /* Cases */
   .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .book-gallery {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;
+    margin: 0 0 48px;
+  }
+  .book-card {
+    display: block; color: inherit; text-decoration: none; overflow: hidden;
+    border: 1px solid var(--line); background: rgba(20,25,55,0.52);
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .book-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.26); }
+  .book-card img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: var(--ink-2); }
+  .book-card .book-meta { padding: 14px 15px 16px; }
+  .book-card .book-type { color: var(--gold); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+  .book-card strong { display: block; margin-top: 7px; font-family: var(--serif); font-size: 20px; font-weight: 500; }
+  .book-card .book-link { display: block; margin-top: 9px; color: var(--parchment-2); font-size: 11px; letter-spacing: 0.6px; }
+  @media (max-width: 900px) { .book-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .book-gallery { gap: 10px; } .book-card .book-meta { padding: 11px; } .book-card strong { font-size: 17px; } }
   .case {
     border: 1px solid var(--line); padding: 24px;
     background: rgba(20,25,55,0.4);
@@ -239,11 +279,12 @@
   footer a { color: var(--gold); text-decoration: none; }
 
   /* Lang switch */
-  [data-lang-pt], [data-lang-en] { display: none; }
-  body[data-lang="en"] [data-lang-en] { display: revert; }
-  body[data-lang="pt"] [data-lang-pt] { display: revert; }
+  /* Keep the bilingual copy deterministic even when component rules set their own display. */
+  [data-lang-pt], [data-lang-en] { display: none !important; }
+  body[data-lang="en"] [data-lang-en] { display: revert !important; }
+  body[data-lang="pt"] [data-lang-pt] { display: revert !important; }
   body[data-lang="en"] .ctas [data-lang-en],
-  body[data-lang="pt"] .ctas [data-lang-pt] { display: inline-flex; }
+  body[data-lang="pt"] .ctas [data-lang-pt] { display: inline-flex !important; }
 
   @media (max-width: 900px) {
     nav ul { gap: 18px; }
@@ -262,6 +303,8 @@
 </style>
 </head>
 <body data-lang="en">
+
+<canvas id="three-scene" aria-hidden="true"></canvas>
 
 <nav>
   <div class="container">
@@ -287,13 +330,13 @@
     <div class="kicker" data-lang-pt>AGENT-AGNÓSTICO · FILE-NATIVE · BOOK-FIRST</div>
 
     <h1 data-lang-en>Your creativity.<br>Your agent.<br><em>Your book.</em></h1>
-    <h1 data-lang-pt>Dez livros.<br>Trinta dias.<br><em>Um pipeline.</em></h1>
+    <h1 data-lang-pt>Sua criatividade.<br>Seu agente.<br><em>Seu livro.</em></h1>
 
     <p class="lede" data-lang-en>Open-source writing skills for the agent you already use. Take an idea through direction, outline, chapters, review, revision, and an editorial package — on Claude Code, Codex, DeepSeek Harness, Cursor, Copilot, Qwen, Pi, Windsurf, or another file-aware agent.</p>
     <p class="lede" data-lang-pt>Um pipeline de produção de livros com IA, agnóstico de agente. Leve uma ideia de uma linha por pesquisa, escrita, auditoria adversarial, pontuação e empacotamento editorial — no Claude Code, Codex, Antigravity, Kimi ou qualquer agente que enxergue arquivos.</p>
 
     <div class="ctas">
-      <a class="btn btn-primary" href="https://github.com/felipelobomotta-blip/book-genesis-v4" target="_blank" rel="noopener">
+      <a class="btn btn-primary" href="https://github.com/felipelobomotta-blip/book-genesis-studio" target="_blank" rel="noopener">
         <span data-lang-en>Open on GitHub →</span>
         <span data-lang-pt>Abrir no GitHub →</span>
       </a>
@@ -301,6 +344,21 @@
         <span data-lang-en>How it works</span>
         <span data-lang-pt>Como funciona</span>
       </a>
+    </div>
+
+    <div class="hero-showcase" aria-label="Book Genesis visual introduction">
+      <figure>
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/brand/book-genesis-workflow.png" alt="An idea moving through files and writing skills into an open book">
+        <figcaption data-lang-en>Idea → files → editorial workflow</figcaption>
+        <figcaption data-lang-pt>Ideia → arquivos → fluxo editorial</figcaption>
+      </figure>
+      <figure>
+        <video controls preload="metadata" poster="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/screenshots/install-cli.png">
+          <source src="https://github.com/felipelobomotta-blip/book-genesis-studio/releases/download/v5.0.1/install-demo.mp4" type="video/mp4">
+        </video>
+        <figcaption data-lang-en>Watch the 48-second install and host walkthrough</figcaption>
+        <figcaption data-lang-pt>Veja o walkthrough de instalação e uso em 48 segundos</figcaption>
+      </figure>
     </div>
 
     <div class="stats">
@@ -494,8 +552,47 @@
       <div class="eyebrow" data-lang-pt>Galeria de prova</div>
       <h2 data-lang-en>Books, not benchmarks.</h2>
       <h2 data-lang-pt>Livros, não benchmarks.</h2>
-      <p data-lang-en>Ten projects through the system in under thirty days. Manuscripts stay private. The repo ships pipeline, covers, public artifacts, and case studies.</p>
+      <p data-lang-en>These are public artifacts from projects built with Book Genesis: covers, editorial packages, and case studies you can open and inspect.</p>
       <p data-lang-pt>Dez projetos pelo sistema em menos de trinta dias. Os manuscritos ficam privados. O repo entrega pipeline, capas, artefatos públicos e estudos de caso.</p>
+    </div>
+
+    <div class="book-gallery" aria-label="Book Genesis public book artifacts">
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/protocolo-nao-encontrado.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/protocolo-nao-encontrado-v2.png" alt="Cover of Protocolo Não Encontrado" loading="lazy">
+        <div class="book-meta"><span class="book-type">Memoir / essay</span><strong>Protocolo Não Encontrado</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/age-of-aquarius.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/age-of-aquarius.svg" alt="Cover of Age of Aquarius" loading="lazy">
+        <div class="book-meta"><span class="book-type">Hermetic fantasy</span><strong>Age of Aquarius</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/protocolo-vermelho.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/protocolo-vermelho.svg" alt="Cover of Protocolo Vermelho" loading="lazy">
+        <div class="book-meta"><span class="book-type">Vigilante thriller</span><strong>Protocolo Vermelho</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-source-code.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-source-code-v2.svg" alt="Cover of The Source Code" loading="lazy">
+        <div class="book-meta"><span class="book-type">Literary sci-fi</span><strong>The Source Code</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-trumpet-protocol.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-trumpet-protocol.svg" alt="Cover of The Trumpet Protocol" loading="lazy">
+        <div class="book-meta"><span class="book-type">Apocalyptic thriller</span><strong>The Trumpet Protocol</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-seventh-manuscript.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-seventh-manuscript.svg" alt="Cover of The Seventh Manuscript" loading="lazy">
+        <div class="book-meta"><span class="book-type">Dark academia</span><strong>The Seventh Manuscript</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/iron-core.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/iron-core.svg" alt="Cover of Iron Core" loading="lazy">
+        <div class="book-meta"><span class="book-type">LitRPG / dungeon core</span><strong>Iron Core</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/saltwater-loaf.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/saltwater-loaf.svg" alt="Cover of The Saltwater Loaf" loading="lazy">
+        <div class="book-meta"><span class="book-type">Cozy mystery</span><strong>The Saltwater Loaf</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/agenda-2030.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/agenda-2030.svg" alt="Cover of Agenda 2030" loading="lazy">
+        <div class="book-meta"><span class="book-type">Apocalyptic sci-fi</span><strong>Agenda 2030</strong><span class="book-link">Open the case study →</span></div>
+      </a>
     </div>
 
     <div class="cases">
@@ -571,7 +668,7 @@
     <p class="quote" data-lang-en>Built for writers who want to <em>run the loop,</em><br>not babysit it.</p>
     <p class="quote" data-lang-pt>Feito pra escritores que querem <em>rodar o loop,</em><br>não vigiar ele.</p>
     <div class="ctas" style="justify-content: center;">
-      <a class="btn btn-primary" href="https://github.com/felipelobomotta-blip/book-genesis-v4" target="_blank" rel="noopener">
+      <a class="btn btn-primary" href="https://github.com/felipelobomotta-blip/book-genesis-studio" target="_blank" rel="noopener">
         <span data-lang-en>Star on GitHub</span>
         <span data-lang-pt>Estrelar no GitHub</span>
       </a>
@@ -583,11 +680,84 @@
   <div class="container">
     <span data-lang-en>MIT licensed · </span>
     <span data-lang-pt>Licença MIT · </span>
-    <a href="https://github.com/felipelobomotta-blip/book-genesis-v4" target="_blank" rel="noopener">github.com/felipelobomotta-blip/book-genesis-v4</a>
+    <a href="https://github.com/felipelobomotta-blip/book-genesis-studio" target="_blank" rel="noopener">github.com/felipelobomotta-blip/book-genesis-studio</a>
   </div>
 </footer>
 
 <script>
+  // Three.js ambient scene: an idea moving through a file-native workflow.
+  // The page remains usable if a CDN or WebGL is unavailable.
+  (async () => {
+    const canvas = document.getElementById('three-scene');
+    if (!canvas || !window.WebGLRenderingContext) return;
+    try {
+      const THREE = await import('https://unpkg.com/three@0.166.1/build/three.module.js');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 40);
+      camera.position.set(0, 0, 8.5);
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6));
+      renderer.setSize(innerWidth, innerHeight, false);
+
+      const violet = new THREE.Color('#a855f7');
+      const gold = new THREE.Color('#d4a574');
+      const green = new THREE.Color('#34d399');
+
+      const particleCount = 680;
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        const radius = 2.2 + Math.random() * 4.8;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.62;
+        positions[i * 3 + 2] = radius * Math.cos(phi) - 1.8;
+        const tint = Math.random();
+        const color = tint > 0.78 ? green : tint > 0.44 ? gold : violet;
+        colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
+      }
+      const particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const particles = new THREE.Points(particleGeometry, new THREE.PointsMaterial({ size: 0.028, vertexColors: true, transparent: true, opacity: 0.66, depthWrite: false }));
+      scene.add(particles);
+
+      const routePoints = [];
+      for (let i = 0; i < 9; i++) routePoints.push(new THREE.Vector3(-5.3 + i * 1.32, Math.sin(i * 0.9) * 0.35, -1.8 + Math.cos(i * 0.7) * 0.35));
+      const route = new THREE.Line(new THREE.BufferGeometry().setFromPoints(routePoints), new THREE.LineBasicMaterial({ color: 0xd4a574, transparent: true, opacity: 0.26 }));
+      scene.add(route);
+
+      const nodes = routePoints.filter((_, index) => [0, 3, 6, 8].includes(index)).map((point, index) => {
+        const node = new THREE.Mesh(new THREE.SphereGeometry(index === 3 ? 0.14 : 0.085, 16, 16), new THREE.MeshBasicMaterial({ color: index === 3 ? 0x34d399 : 0xd4a574, transparent: true, opacity: 0.82 }));
+        node.position.copy(point); scene.add(node); return node;
+      });
+
+      let pointerX = 0; let pointerY = 0; let targetX = 0; let targetY = 0;
+      addEventListener('pointermove', (event) => { pointerX = (event.clientX / innerWidth - 0.5) * 2; pointerY = (event.clientY / innerHeight - 0.5) * 2; });
+      addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); });
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let frame = 0;
+      const animate = () => {
+        frame += 1;
+        targetX += (pointerX - targetX) * 0.025; targetY += (pointerY - targetY) * 0.025;
+        particles.rotation.y += reducedMotion ? 0.00008 : 0.00042;
+        particles.rotation.x = targetY * 0.025;
+        route.rotation.y = targetX * 0.035;
+        nodes.forEach((node, index) => { node.scale.setScalar(1 + Math.sin(frame * 0.025 + index) * 0.18); });
+        camera.position.x += (targetX * 0.16 - camera.position.x) * 0.02;
+        camera.position.y += (-targetY * 0.10 - camera.position.y) * 0.02;
+        camera.lookAt(0, 0, -1.5);
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      };
+      animate();
+    } catch (error) {
+      canvas.style.display = 'none';
+      console.warn('Book Genesis visual layer unavailable; CSS fallback active.', error);
+    }
+  })();
+
   document.querySelectorAll('[data-set-lang]').forEach(btn => {
     btn.addEventListener('click', () => {
       const lang = btn.dataset.setLang;

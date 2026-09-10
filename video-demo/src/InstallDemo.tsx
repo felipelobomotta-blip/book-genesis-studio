@@ -3,8 +3,8 @@ import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } fr
 import { BG, GRAY, GRAY_DIM, GREEN, PURPLE, PURPLE_LIGHT, WHITE, AMBER } from './constants';
 
 const INSTALL_LINES = [
-  '$ git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git',
-  '$ cd book-genesis-v4',
+  '$ git clone https://github.com/felipelobomotta-blip/book-genesis-studio.git',
+  '$ cd book-genesis-studio',
   '$ python runner/installer.py install claude --dest .book-genesis-demo --force',
   'install: beta-reader',
   'install: book-genesis',
@@ -105,7 +105,7 @@ const InstallScene: React.FC<{ frame: number }> = ({ frame }) => (
       <h2 style={{ fontSize: 54, margin: '0 0 12px', letterSpacing: '-0.04em' }}>Install the writing skills.</h2>
       <p style={{ color: GRAY, fontSize: 21, margin: '0 0 32px' }}>One command copies the same portable bundle into your chosen host.</p>
       <div style={{ background: 'rgba(9,13,28,0.92)', border: '1px solid rgba(168,85,247,0.38)', borderRadius: 18, padding: '30px 34px', boxShadow: '0 24px 80px rgba(0,0,0,0.28)' }}>
-        <WindowChrome title="PowerShell · book-genesis-v4" status="local" />
+        <WindowChrome title="PowerShell · book-genesis-studio" status="local" />
         <Terminal lines={INSTALL_LINES} frame={frame} />
       </div>
     </div>
@@ -167,7 +167,7 @@ const CTA: React.FC<{ frame: number }> = ({ frame }) => {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
       <div style={{ color: PURPLE_LIGHT, fontFamily: "'Courier New', monospace", fontSize: 14, letterSpacing: '0.18em', marginBottom: 24 }}>YOUR CREATIVITY. YOUR AGENT. YOUR BOOK.</div>
       <h2 style={{ fontSize: 78, margin: '0 0 22px', letterSpacing: '-0.055em' }}>Start with the idea.</h2>
-      <div style={{ transform: `scale(${pulse})`, border: '1px solid rgba(168,85,247,0.45)', background: 'rgba(124,58,237,0.12)', borderRadius: 14, padding: '19px 30px', color: WHITE, fontFamily: "'Courier New', monospace", fontSize: 22 }}>github.com/felipelobomotta-blip/book-genesis-v4</div>
+      <div style={{ transform: `scale(${pulse})`, border: '1px solid rgba(168,85,247,0.45)', background: 'rgba(124,58,237,0.12)', borderRadius: 14, padding: '19px 30px', color: WHITE, fontFamily: "'Courier New', monospace", fontSize: 22 }}>github.com/felipelobomotta-blip/book-genesis-studio</div>
       <div style={{ marginTop: 24, color: GRAY, fontSize: 17 }}>MIT licensed · 15 writing skills · 15 installation targets</div>
     </div>
   </Shell>;
@@ -199,4 +199,3 @@ const Title: React.FC<{ frame: number }> = ({ frame }) => {
     </div>
   </Shell>;
 };
-
