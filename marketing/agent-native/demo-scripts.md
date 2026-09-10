@@ -17,9 +17,9 @@ Capture the real commands, selecting the tested target:
 ```bash
 git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
 cd book-genesis-v4
-python runner/cli.py verify-suite
-python runner/cli.py install deepseek
-python runner/cli.py verify-install deepseek
+python runner/installer.py verify-suite
+python runner/installer.py install deepseek
+python runner/installer.py verify-install deepseek
 ```
 
 The example names DeepSeek because it is the new integration; it must be exercised natively before using DeepSeek footage or claiming a successful writing run. Select another verified host for the first recording if necessary. The installer cannot prove native writing by itself.

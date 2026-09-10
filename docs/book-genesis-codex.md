@@ -17,17 +17,17 @@ skills/book-genesis/
     legacy-v4-book-genesis.md
 ```
 
-The optional local runner lives at:
+The maintainer-only installer/verifier lives at:
 
 ```text
 runner/
-  cli.py
+  installer.py
   filesystem.py
 tests/
   test_runner.py
 ```
 
-The runner scaffolds projects, prepares phase packets, validates required files, advances gates, prepares optional Book Swarm Panel/MiroFish bridge folders, and writes specialist agent packets for Book Bestseller Studio. It does not call a model or generate real prose.
+The installer copies skills, validates references, and records installation integrity. It does not call a model, scaffold a project, advance gates, or generate prose. The historical runner implementation remains in Git history but is not part of the 5.0 product surface.
 
 The folder `book-genesis-codex` is historical and preserved for compatibility. New installs use `book-genesis`: **Book Genesis is a universal book pipeline for AI agents.**
 
@@ -146,10 +146,8 @@ Use Book Genesis. Read AGENTS.md, then run the manifest in skills/book-genesis/r
 For a local mechanical check:
 
 ```bash
-python runner/cli.py demo .tmp-book-genesis-demo
-python runner/cli.py validate .tmp-book-genesis-demo
-python runner/cli.py prepare-swarm .tmp-book-genesis-demo --mode hybrid --slug launch-reaction
-python runner/cli.py prepare-agent-packet .tmp-book-genesis-demo pacing_engineer
+python runner/installer.py verify-suite
+python runner/installer.py install shared --dry-run
 ```
 
 For an existing manuscript:
