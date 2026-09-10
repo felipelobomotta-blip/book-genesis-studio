@@ -4,11 +4,25 @@
 
 **Version 5.0.0 · Agent-native edition · MIT licensed**
 
+![Book Genesis workflow: an idea moving through files, skills, and an open book](assets/brand/book-genesis-workflow.png)
+
 An open-source collection of writing skills for the AI agent you already use. Book Genesis 5.0 installs into Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf, Antigravity, Gemini CLI, Kimi Code, OpenClaw, or Hermes Agent. A shared directory target is also available.
 
 Bring an idea. Book Genesis gives your agent a workflow for developing it into a manuscript: direction, characters, outline, chapters, editorial review, revision, and a publishing package. You keep the project files and creative decisions.
 
 [MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
+
+## See it work
+
+Watch the [48-second installation and host walkthrough](video-demo/out/install-demo.mp4) or download it from the [latest release](https://github.com/felipelobomotta-blip/book-genesis-v4/releases/latest). It shows a real local installer run, file verification, the prompt to use inside Claude Code/OpenCode/Codex, and a fresh-session resume from `PROJECT_STATE.yaml`.
+
+![Installing the Book Genesis skills with the maintainer installer](assets/screenshots/install-cli.png)
+
+![Using the installed workflow inside a native host](assets/screenshots/claude-session.png)
+
+![Resuming the same project in a new session](assets/screenshots/resume-state.png)
+
+The terminal installation and verification panels use output captured from the local 5.0 installer. The host conversation panels are an English usage example; model output depends on the host account, model, permissions, and quota.
 
 **5.0 adds six host targets and removes the interactive book generator from the public product.** DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf receive the same 15-skill bundle. There are now **15 installation targets: 14 named hosts plus Shared**. Installation and file integrity are tested; native writing acceptance is tracked separately in the compatibility table.
 

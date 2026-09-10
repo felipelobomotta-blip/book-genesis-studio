@@ -5,7 +5,9 @@
   "scripts": {
     "start": "npx remotion studio",
     "render": "npx remotion render src/index.ts BookGenesis50Demo out/demo.mp4",
-    "still": "npx remotion still src/index.ts BookGenesis50Demo --frame=0 out/frame0.png"
+    "render-install": "npx remotion render src/index.ts BookGenesisInstallDemo out/install-demo.mp4",
+    "still": "npx remotion still src/index.ts BookGenesis50Demo --frame=0 out/frame0.png",
+    "still-install": "npx remotion still src/index.ts BookGenesisInstallDemo --frame=240 out/install-frame.png"
   },
   "dependencies": {
     "@remotion/cli": "4.0.523",
