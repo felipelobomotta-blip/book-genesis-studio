@@ -10,7 +10,7 @@ Checked September 10, 2026. Every installer target receives the same 15 writing 
 | OpenClaw | Passed | No fresh native writing run |
 | Hermes Agent | Passed | Native `hermes skills list`: all 15 enabled |
 | OpenCode | Passed | v1.18.30 `opencode --pure debug skill`: all 15 discovered from the isolated config directory |
-| Antigravity | Passed | CLI v1.1.27: real intake wrote six files; fresh read-only session recovered the next phase and identified inconsistencies |
+| Antigravity | Passed | CLI v1.1.27: real intake wrote six files; fresh read-only session recovered the next phase; targeted native edits corrected state and evidence labels |
 | Gemini CLI | Passed | v0.56.0 `gemini skills list`: all 15 enabled from isolated user home |
 | Shared Agent Skills | Passed | Generic directory export; discovery depends on the consuming host |
 
@@ -20,7 +20,7 @@ The regression suite verifies all nine targets through the Python CLI: preview, 
 
 The real intake used the installed bundle and native file tools, without the repository Python helper. It saved `PROJECT_STATE.yaml`, `ASSUMPTIONS.md`, `RUN_REPORT.md`, the brief, market map, and story engine. File inspection found unsupported market assertions and inconsistent state fields. The current intake and host contract now explicitly require evidence labels, directory creation, and consistent state transitions.
 
-A subsequent write-recovery attempt encountered a host-denied terminal command. Its response envelope said `SUCCESS`, but contained no final response and a denied action; no repair is counted as completed. A fresh read-only probe then correctly recovered the title, Foundation phase, three required artifacts, and inconsistent gate/status fields from disk. This verifies reading and recovery diagnosis, not unattended repair or full-book production. The tightened creation instructions still need another complete intake acceptance run.
+A subsequent write-recovery attempt encountered a host-denied terminal command. Its response envelope said `SUCCESS`, but contained no final response and a denied action; no repair is counted as completed. A fresh read-only probe then correctly recovered the title, Foundation phase, three required artifacts, and inconsistent gate/status fields from disk. A subsequent targeted native-file-edit probe succeeded: direct inspection confirmed cleared `current_gate`, pipeline status `ready`, unchanged Foundation phase/manuscript facts, and unverified-hypothesis labels on the market claims. This verifies reading and explicitly directed repair, not unattended full-book production. The tightened creation instructions still need another complete intake acceptance run.
 
 ## Check your installation
 

@@ -24,7 +24,8 @@
       "intake": "six saved files inspected; initial state and evidence flaws found",
       "write_recovery": "host denied RunCommand; no repair claimed",
       "read_only_resume": "saved title, next phase, artifacts and state discrepancies correctly identified",
-      "full_book": "not tested"
+      "full_book": "not tested",
+      "targeted_native_edit": "passed: state and market evidence corrections inspected; no terminal commands"
     }
   }
 }
