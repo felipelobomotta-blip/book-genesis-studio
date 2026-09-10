@@ -227,6 +227,23 @@
 
   /* Cases */
   .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .book-gallery {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;
+    margin: 0 0 48px;
+  }
+  .book-card {
+    display: block; color: inherit; text-decoration: none; overflow: hidden;
+    border: 1px solid var(--line); background: rgba(20,25,55,0.52);
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .book-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.26); }
+  .book-card img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: var(--ink-2); }
+  .book-card .book-meta { padding: 14px 15px 16px; }
+  .book-card .book-type { color: var(--gold); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+  .book-card strong { display: block; margin-top: 7px; font-family: var(--serif); font-size: 20px; font-weight: 500; }
+  .book-card .book-link { display: block; margin-top: 9px; color: var(--parchment-2); font-size: 11px; letter-spacing: 0.6px; }
+  @media (max-width: 900px) { .book-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .book-gallery { gap: 10px; } .book-card .book-meta { padding: 11px; } .book-card strong { font-size: 17px; } }
   .case {
     border: 1px solid var(--line); padding: 24px;
     background: rgba(20,25,55,0.4);
@@ -535,8 +552,47 @@
       <div class="eyebrow" data-lang-pt>Galeria de prova</div>
       <h2 data-lang-en>Books, not benchmarks.</h2>
       <h2 data-lang-pt>Livros, não benchmarks.</h2>
-      <p data-lang-en>Ten projects through the system in under thirty days. Manuscripts stay private. The repo ships pipeline, covers, public artifacts, and case studies.</p>
+      <p data-lang-en>These are public artifacts from projects built with Book Genesis: covers, editorial packages, and case studies you can open and inspect.</p>
       <p data-lang-pt>Dez projetos pelo sistema em menos de trinta dias. Os manuscritos ficam privados. O repo entrega pipeline, capas, artefatos públicos e estudos de caso.</p>
+    </div>
+
+    <div class="book-gallery" aria-label="Book Genesis public book artifacts">
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/protocolo-nao-encontrado.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/protocolo-nao-encontrado-v2.png" alt="Cover of Protocolo Não Encontrado" loading="lazy">
+        <div class="book-meta"><span class="book-type">Memoir / essay</span><strong>Protocolo Não Encontrado</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/age-of-aquarius.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/age-of-aquarius.svg" alt="Cover of Age of Aquarius" loading="lazy">
+        <div class="book-meta"><span class="book-type">Hermetic fantasy</span><strong>Age of Aquarius</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/protocolo-vermelho.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/protocolo-vermelho.svg" alt="Cover of Protocolo Vermelho" loading="lazy">
+        <div class="book-meta"><span class="book-type">Vigilante thriller</span><strong>Protocolo Vermelho</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-source-code.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-source-code-v2.svg" alt="Cover of The Source Code" loading="lazy">
+        <div class="book-meta"><span class="book-type">Literary sci-fi</span><strong>The Source Code</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-trumpet-protocol.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-trumpet-protocol.svg" alt="Cover of The Trumpet Protocol" loading="lazy">
+        <div class="book-meta"><span class="book-type">Apocalyptic thriller</span><strong>The Trumpet Protocol</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/the-seventh-manuscript.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/the-seventh-manuscript.svg" alt="Cover of The Seventh Manuscript" loading="lazy">
+        <div class="book-meta"><span class="book-type">Dark academia</span><strong>The Seventh Manuscript</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/iron-core.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/iron-core.svg" alt="Cover of Iron Core" loading="lazy">
+        <div class="book-meta"><span class="book-type">LitRPG / dungeon core</span><strong>Iron Core</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/saltwater-loaf.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/saltwater-loaf.svg" alt="Cover of The Saltwater Loaf" loading="lazy">
+        <div class="book-meta"><span class="book-type">Cozy mystery</span><strong>The Saltwater Loaf</strong><span class="book-link">Open the case study →</span></div>
+      </a>
+      <a class="book-card" href="https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/examples/cases/agenda-2030.md" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/felipelobomotta-blip/book-genesis-studio/master/assets/covers/agenda-2030.svg" alt="Cover of Agenda 2030" loading="lazy">
+        <div class="book-meta"><span class="book-type">Apocalyptic sci-fi</span><strong>Agenda 2030</strong><span class="book-link">Open the case study →</span></div>
+      </a>
     </div>
 
     <div class="cases">
