@@ -75,6 +75,37 @@
       "home_env": "HERMES_HOME",
       "default_home": ".hermes",
       "skills_dir": "skills"
+    },
+    "deepseek": {
+      "home_env": "DSH_HOME",
+      "ignore_blank_home": true,
+      "default_home": ".dsh",
+      "skills_dir": "skills"
+    },
+    "cursor": {
+      "home_env": "",
+      "default_home": ".cursor",
+      "skills_dir": "skills"
+    },
+    "copilot": {
+      "home_env": "",
+      "default_home": ".copilot",
+      "skills_dir": "skills"
+    },
+    "qwen": {
+      "home_env": "",
+      "default_home": ".qwen",
+      "skills_dir": "skills"
+    },
+    "pi": {
+      "home_env": "PI_CODING_AGENT_DIR",
+      "default_home": ".pi/agent",
+      "skills_dir": "skills"
+    },
+    "windsurf": {
+      "home_env": "",
+      "default_home": ".codeium/windsurf",
+      "skills_dir": "skills"
     }
   }
 }

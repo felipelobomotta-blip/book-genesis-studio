@@ -21,13 +21,13 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          foreach ($target in @('claude', 'codex', 'kimi', 'openclaw', 'hermes', 'opencode', 'antigravity', 'gemini', 'shared')) {
+          foreach ($target in @('claude', 'codex', 'kimi', 'openclaw', 'hermes', 'opencode', 'antigravity', 'gemini', 'shared', 'deepseek', 'cursor', 'copilot', 'qwen', 'pi', 'windsurf')) {
             ./install.ps1 -Target $target -Destination "${{ runner.temp }}/book-genesis/$target/skills" -DryRun
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
       - name: Shell installer preview
         if: runner.os != 'Windows'
         run: |
-          for target in claude codex kimi openclaw hermes opencode antigravity gemini shared; do
+          for target in claude codex kimi openclaw hermes opencode antigravity gemini shared deepseek cursor copilot qwen pi windsurf; do
             bash install.sh "$target" --dest "$RUNNER_TEMP/book-genesis/$target/skills" --dry-run
           done

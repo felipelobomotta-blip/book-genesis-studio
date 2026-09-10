@@ -13,8 +13,14 @@ Checked September 10, 2026. Every installer target receives the same 15 writing 
 | Antigravity | Passed | CLI v1.1.27: real intake wrote six files; fresh read-only session recovered the next phase; targeted native edits corrected state and evidence labels |
 | Gemini CLI | Passed | v0.56.0 `gemini skills list`: all 15 enabled from isolated user home |
 | Shared Agent Skills | Passed | Generic directory export; discovery depends on the consuming host |
+| DeepSeek Harness | Passed | Official paths/source checked; no fresh native run |
+| Cursor | Passed | Official paths checked; no fresh native run |
+| GitHub Copilot | Passed | Official paths checked; no fresh native run |
+| Qwen Code | Passed | Official paths checked; no fresh native run |
+| Pi | Passed | Official paths/source checked; no fresh native run |
+| Windsurf / Cascade | Passed | Official paths checked; no fresh native run |
 
-The regression suite verifies all nine targets through the Python CLI: preview, actual copying, reference integrity, and reinstall. CI runs the suite on Windows, Linux, and macOS with Python 3.10 and 3.12, plus installer wrapper previews. CI tests do not start commercial models. See the [recorded host observations](host-verification-20260910.json).
+The regression suite verifies all 15 targets through the Python CLI: preview, actual copying, reference integrity, and reinstall. CI runs the suite on Windows, Linux, and macOS with Python 3.10 and 3.12, plus installer wrapper previews. CI tests do not start commercial models. See the [recorded earlier host observations](host-verification-20260910.json) and [new host setup sources](portability.md#deepseek-harness-cursor-copilot-qwen-pi-and-windsurf). The historical JSON predates the six-target expansion; it is not evidence of live runs in the new hosts.
 
 ## Antigravity findings
 

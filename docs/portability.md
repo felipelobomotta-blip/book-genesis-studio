@@ -1,6 +1,6 @@
 # Portability
 
-Book Genesis is an Agent Skills package, not a hosted model wrapper. Claude Code, Codex, OpenCode, Antigravity, Gemini CLI, Kimi Code, OpenClaw, and Hermes Agent install the same canonical skill folders and execute them with their own accounts, models, permissions, and quotas.
+Book Genesis is an Agent Skills package. All 15 installation targets receive the same canonical skill folders. The consuming host executes them with its own account, models, permissions, and quotas. The target list contains 14 named hosts and one Shared directory export.
 
 ## Canonical Package
 
@@ -32,6 +32,12 @@ bash install.sh opencode
 bash install.sh antigravity
 bash install.sh gemini
 bash install.sh shared
+bash install.sh deepseek
+bash install.sh cursor
+bash install.sh copilot
+bash install.sh qwen
+bash install.sh pi
+bash install.sh windsurf
 ```
 
 Windows PowerShell:
@@ -46,6 +52,12 @@ Windows PowerShell:
 .\install.ps1 -Target antigravity
 .\install.ps1 -Target gemini
 .\install.ps1 -Target shared
+.\install.ps1 -Target deepseek
+.\install.ps1 -Target cursor
+.\install.ps1 -Target copilot
+.\install.ps1 -Target qwen
+.\install.ps1 -Target pi
+.\install.ps1 -Target windsurf
 ```
 
 Default user locations:
@@ -61,6 +73,12 @@ Default user locations:
 | Antigravity | `~/.gemini/config/skills/` | ask Antigravity to use `book-genesis` |
 | Gemini CLI | `$GEMINI_CLI_HOME/.gemini/skills/` or `~/.gemini/skills/` | ask Gemini to activate `book-genesis` |
 | Shared | `~/.agents/skills/` | runtime-dependent |
+| DeepSeek Harness | `$DSH_HOME/skills/` or `~/.dsh/skills/` | ask the harness to load `book-genesis` |
+| Cursor | `~/.cursor/skills/` | ask Agent to use `book-genesis` |
+| GitHub Copilot | `~/.copilot/skills/` | ask Copilot to use `book-genesis` |
+| Qwen Code | `~/.qwen/skills/` | `/book-genesis`, or ask Qwen to use it |
+| Pi | `$PI_CODING_AGENT_DIR/skills/` or `~/.pi/agent/skills/` | `/skill:book-genesis` |
+| Windsurf / Cascade | `~/.codeium/windsurf/skills/` | `@book-genesis`, or ask Cascade to use it |
 
 Use `--dest PATH` with the Python command for an isolated or project-specific skills directory:
 
@@ -139,3 +157,37 @@ Antigravity's current global directory is `~/.gemini/config/skills`. Older editi
 After installing, run `python runner/cli.py verify-install TARGET` with the same `--dest`, if any. A changed checkout or locally edited skill will be reported as different; inspect before replacing it. This command performs no model calls. The host must still discover and activate the skill. [Compatibility evidence](compatibility.md) separates those checks.
 
 A skills-only installation contains the startup/recovery contract and initial state template under `book-genesis/references/pipeline/`. Native agents can initialize and resume a book without the repository Python helper. Optional external marketing or image skills are not required to write.
+
+## DeepSeek Harness, Cursor, Copilot, Qwen, Pi, and Windsurf
+
+Added September 10, 2026, against official host documentation and source. These are native skill installations. DeepSeek Harness is a separate product from the DeepSeek model API; installing this target does not configure an API provider inside a different agent.
+
+```bash
+python runner/cli.py install deepseek --dry-run
+python runner/cli.py install deepseek
+python runner/cli.py verify-install deepseek
+```
+
+Open a fresh DeepSeek Harness session in a writable book folder. Ask it to locate `book-genesis`, read its phase manifest and host contract, and save the intake artifacts before continuing. The same steps apply to the other targets with the appropriate host and target name.
+
+| Host | Configuration and discovery notes | Official reference |
+| --- | --- | --- |
+| DeepSeek Harness | Default `~/.dsh/skills`; `DSH_HOME` overrides the home. Empty or whitespace-only values use the default. Project `.dsh/skills` and `.agents/skills` are also supported. Explicit harness provider configuration can override the home; use `--dest` to match it. | [Skills subsystem](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.md), [home resolver](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/util/home-paths/src/index.ts) |
+| Cursor | User `.cursor/skills`, project `.cursor/skills`, and Agent Skills directories. Local user skills are not automatically copied into cloud or remote agent environments. | [Cursor skills](https://cursor.com/docs/skills) |
+| GitHub Copilot | User `.copilot/skills`; project `.github/skills` is also supported. `COPILOT_SKILLS_DIRS` is a list of additional search paths, not a replacement home. In Copilot CLI, use `copilot skill list`; `/skills reload` refreshes an active session. | [Copilot skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills) |
+| Qwen Code | User `.qwen/skills` or project `.qwen/skills`; inspect `/skills` in the host. | [Qwen skills](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md) |
+| Pi | User `.pi/agent/skills`; `PI_CODING_AGENT_DIR` replaces `.pi/agent`. Project `.pi/skills` is available. | [Pi skills](https://pi.dev/docs/latest/skills), [configuration source](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/config.ts) |
+| Windsurf / Cascade | User `.codeium/windsurf/skills` or project `.windsurf/skills`. The official documentation redirects to Devin Desktop; this target does not claim compatibility with Devin cloud's separate skill system. | [Cascade skills](https://docs.devin.ai/desktop/cascade/skills) |
+
+For project or remote installations, pass the actual skills directory to `--dest`, for example:
+
+```bash
+python runner/cli.py install deepseek --dest /path/to/book/.dsh/skills
+python runner/cli.py install cursor --dest /path/to/book/.cursor/skills
+python runner/cli.py install copilot --dest /path/to/book/.github/skills
+python runner/cli.py install qwen --dest /path/to/book/.qwen/skills
+python runner/cli.py install pi --dest /path/to/book/.pi/skills
+python runner/cli.py install windsurf --dest /path/to/book/.windsurf/skills
+```
+
+Run the installer where the host reads files. Avoid installing the same suite into several directories searched by the same host. Check discovery after an update, including possible duplicate skills from custom recursive search configurations. Host commands, trust settings, and release behavior can change; the [compatibility table](compatibility.md) records what was actually exercised.

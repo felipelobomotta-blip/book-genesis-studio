@@ -5,9 +5,9 @@ repo_dir="$(cd "$(dirname "$0")" && pwd)"
 target="${1:-claude}"
 
 case "$target" in
-  claude|codex|kimi|openclaw|hermes|shared|opencode|antigravity|gemini) ;;
+  claude|codex|kimi|openclaw|hermes|shared|opencode|antigravity|gemini|deepseek|cursor|copilot|qwen|pi|windsurf) ;;
   *)
-    echo "Usage: ./install.sh [claude|codex|kimi|openclaw|hermes|shared|opencode|antigravity|gemini] [--dest PATH] [--dry-run] [--force] [--include-legacy]" >&2
+    echo "Usage: ./install.sh [claude|codex|kimi|openclaw|hermes|shared|opencode|antigravity|gemini|deepseek|cursor|copilot|qwen|pi|windsurf] [--dest PATH] [--dry-run] [--force] [--include-legacy]" >&2
     exit 2
     ;;
 esac

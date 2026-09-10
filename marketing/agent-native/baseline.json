@@ -1,0 +1,29 @@
+{
+  "observed_date": "2026-09-10",
+  "source": "GitHub repository REST API; repository attention snapshot, not an active-user or growth-rate ranking",
+  "project": {
+    "repository": "felipelobomotta-blip/book-genesis-v4",
+    "url": "https://github.com/felipelobomotta-blip/book-genesis-v4",
+    "stars": 114,
+    "forks": 38,
+    "open_items_including_pull_requests": 12,
+    "measured_installs": null,
+    "activated_projects": null,
+    "seven_day_returning_users": null
+  },
+  "ecosystem_attention": [
+    {"repository": "deepseek-ai/deepseek-harness", "stars": 218623, "created_at": "2026-08-13T11:56:32Z"},
+    {"repository": "earendil-works/pi", "stars": 103730},
+    {"repository": "QwenLM/qwen-code", "stars": 27743},
+    {"repository": "github/copilot-cli", "stars": 11152}
+  ],
+  "planning_targets_30_days_not_forecasts": {
+    "observed_pilot_attempts": 10,
+    "successful_pilot_chapter_and_resume_journeys": 8,
+    "activated_projects_total": 30,
+    "users_returning_after_at_least_seven_days": 10,
+    "permission_based_examples": 5,
+    "stretch_stars_total": 300
+  },
+  "publication_state": "Plan and drafts only; no social campaign or new video published by this kit"
+}

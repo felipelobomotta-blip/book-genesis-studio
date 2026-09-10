@@ -77,6 +77,42 @@ class DistributionTests(unittest.TestCase):
                     target, destination=explicit, environ={variable: str(custom)}))
                 self.assertFalse(home.exists())
 
+    def test_additional_host_default_directories(self) -> None:
+        home = self.tempdir / "home"
+        for target, folder in {
+            "deepseek": ".dsh", "cursor": ".cursor", "copilot": ".copilot",
+            "qwen": ".qwen", "pi": ".pi/agent", "windsurf": ".codeium/windsurf",
+        }.items():
+            with self.subTest(target=target):
+                self.assertEqual((home / folder / "skills").resolve(),
+                                 resolve_install_root(target, home=home, environ={}))
+                explicit = self.tempdir / "project skills"
+                self.assertEqual(explicit.resolve(), resolve_install_root(
+                    target, home=home, destination=explicit, environ={}))
+        self.assertFalse(home.exists())
+
+    def test_deepseek_and_pi_custom_home_directories(self) -> None:
+        for target, variable in (("deepseek", "DSH_HOME"), ("pi", "PI_CODING_AGENT_DIR")):
+            with self.subTest(target=target):
+                custom = self.tempdir / "custom agent home"
+                self.assertEqual((custom / "skills").resolve(), resolve_install_root(
+                    target, environ={variable: str(custom)}))
+                explicit = self.tempdir / "workspace skills"
+                self.assertEqual(explicit.resolve(), resolve_install_root(
+                    target, destination=explicit, environ={variable: str(custom)}))
+
+    def test_deepseek_blank_home_matches_native_default(self) -> None:
+        home = self.tempdir / "home"
+        for value in ("", "   ", "\t "):
+            with self.subTest(value=value):
+                self.assertEqual((home / ".dsh/skills").resolve(), resolve_install_root(
+                    "deepseek", home=home, environ={"DSH_HOME": value}))
+
+    def test_copilot_additional_search_paths_are_not_a_home_directory(self) -> None:
+        home = self.tempdir / "home"
+        self.assertEqual((home / ".copilot/skills").resolve(), resolve_install_root(
+            "copilot", home=home, environ={"COPILOT_SKILLS_DIRS": "one,two"}))
+
     def test_new_targets_cli_install_reinstall_and_reference_integrity(self) -> None:
         for target in supported_targets():
             with self.subTest(target=target):
@@ -88,6 +124,8 @@ class DistributionTests(unittest.TestCase):
                 self.assertFalse(destination.exists())
                 installed = subprocess.run(command, capture_output=True, text=True)
                 self.assertEqual(0, installed.returncode, installed.stdout + installed.stderr)
+                verified = verify_install(target, destination=destination)
+                self.assertTrue(verified["ok"], msg=str(verified["errors"]))
                 for source in (REPO_ROOT / "skills/book-genesis").rglob("*"):
                     if source.is_file():
                         copied = destination / "book-genesis" / source.relative_to(REPO_ROOT / "skills/book-genesis")
