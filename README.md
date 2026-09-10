@@ -14,7 +14,7 @@ Bring an idea. Book Genesis gives your agent a workflow for developing it into a
 
 ## See it work
 
-Watch the [48-second installation and host walkthrough](video-demo/out/install-demo.mp4) or download it from the [latest release](https://github.com/felipelobomotta-blip/book-genesis-v4/releases/latest). It shows a real local installer run, file verification, the prompt to use inside Claude Code/OpenCode/Codex, and a fresh-session resume from `PROJECT_STATE.yaml`.
+Watch the [48-second installation and host walkthrough](video-demo/out/install-demo.mp4) or download it from the [latest release](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/latest). It shows a real local installer run, file verification, the prompt to use inside Claude Code/OpenCode/Codex, and a fresh-session resume from `PROJECT_STATE.yaml`.
 
 ![Installing the Book Genesis skills with the maintainer installer](assets/screenshots/install-cli.png)
 
@@ -37,8 +37,8 @@ Earlier standalone-app experiments remain in Git history for provenance and are 
 You need Git and Python 3.10+ for this installer, plus the agent you want to use. The installer only copies skills and their references. It does not start a model, install the host agent, or collect API keys.
 
 ```bash
-git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
-cd book-genesis-v4
+git clone https://github.com/felipelobomotta-blip/book-genesis-studio.git
+cd book-genesis-studio
 python runner/installer.py verify-suite
 ```
 
@@ -143,6 +143,6 @@ The repository includes a small installer/verifier for maintainers and scripted 
 python -m unittest discover -s tests -v
 ```
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/felipelobomotta-blip/book-genesis-v4/issues)
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/felipelobomotta-blip/book-genesis-studio/issues)
 
 Created by [Felipe Lobo](https://github.com/felipelobomotta-blip). MIT licensed.

@@ -5,8 +5,8 @@ Book Genesis accepts improvements to editorial contracts, portable skills, deter
 ## Setup
 
 ```bash
-git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
-cd book-genesis-v4
+git clone https://github.com/felipelobomotta-blip/book-genesis-studio.git
+cd book-genesis-studio
 python runner/installer.py verify-suite
 python -m unittest discover -s tests -v
 ```

@@ -1,6 +1,6 @@
 # English platform drafts
 
-Drafts for human review. Repository URL: https://github.com/felipelobomotta-blip/book-genesis-v4
+Drafts for human review. Repository URL: https://github.com/felipelobomotta-blip/book-genesis-studio
 
 Recheck the current release and compatibility table before posting. Attach a real demonstration only after recording it. These drafts do not claim that a book was completed in this release. Do not paste any of this text into Hacker News; that platform requires independently human-written posts and comments.
 
@@ -12,7 +12,7 @@ I'm building Book Genesis: open-source writing skills for the agent you already 
 
 Try one chapter. Tell me where it breaks.
 
-https://github.com/felipelobomotta-blip/book-genesis-v4
+https://github.com/felipelobomotta-blip/book-genesis-studio
 
 ## X: five-post thread
 
@@ -26,7 +26,7 @@ https://github.com/felipelobomotta-blip/book-genesis-v4
 
 5. I'm looking for people willing to try a first chapter and give honest feedback. Bring an idea and an agent you already use.
 
-https://github.com/felipelobomotta-blip/book-genesis-v4
+https://github.com/felipelobomotta-blip/book-genesis-studio
 
 ## LinkedIn: founder story
 
@@ -43,7 +43,7 @@ I care about making the creative starting point more accessible. I also want to 
 If you already use an agent and have a book idea, I'd value a practical test. Try a chapter and tell me where you get stuck. I want to improve this with real feedback.
 
 The code and skills are MIT licensed:
-https://github.com/felipelobomotta-blip/book-genesis-v4
+https://github.com/felipelobomotta-blip/book-genesis-studio
 
 ## YouTube: walkthrough package
 
@@ -59,9 +59,9 @@ Book Genesis is an open-source writing skills package for agents such as Claude 
 
 This walkthrough shows the actual host, installation, writing artifacts, and recovery steps captured in the video. Read the compatibility table for what has been tested in each host. The package is MIT licensed; model usage depends on your host account and may have a cost or quota.
 
-Get the project: https://github.com/felipelobomotta-blip/book-genesis-v4
-Installation: https://github.com/felipelobomotta-blip/book-genesis-v4/blob/master/docs/portability.md
-Host evidence: https://github.com/felipelobomotta-blip/book-genesis-v4/blob/master/docs/compatibility.md
+Get the project: https://github.com/felipelobomotta-blip/book-genesis-studio
+Installation: https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/docs/portability.md
+Host evidence: https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/docs/compatibility.md
 
 Bring a book idea. Try one chapter. Tell me where the process needs work.
 
@@ -107,7 +107,7 @@ I've added native skill-directory installers for several hosts, including DeepSe
 I'm looking for specific feedback on setup and continuing a project in a new session. The repository separates installation checks from actual native-agent observations. Complete-book reliability across every host is still something to establish.
 
 If this fits the community rules, the source and setup are here:
-https://github.com/felipelobomotta-blip/book-genesis-v4
+https://github.com/felipelobomotta-blip/book-genesis-studio
 
 For an agent-specific community, replace the generic description with a real example captured in that host. If self-promotion is disallowed, do not post this draft or disguise it as an unrelated question.
 
@@ -137,7 +137,7 @@ Use only when an individual has a relevant public submission/contact route, and 
 
 “Hi [name], I'm Felipe. Your [specific public tutorial] helped me understand [actual detail]. I'm building Book Genesis, an open-source writing workflow that installs into existing agents. I thought it might fit the kind of practical experiments you show.
 
-Here's the repo and compatibility evidence: https://github.com/felipelobomotta-blip/book-genesis-v4
+Here's the repo and compatibility evidence: https://github.com/felipelobomotta-blip/book-genesis-studio
 
 If you try it, I'd welcome a critical look at the setup and first chapter. No obligation to cover it. Thanks for taking a look.”
 

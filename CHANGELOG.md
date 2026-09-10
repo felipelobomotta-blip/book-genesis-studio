@@ -55,7 +55,7 @@ Restored the portable-skills foundation from `c974486` as the public product. Ad
 
 - `skills/book-genesis/` is now canonical universal core.
 - Platform-specific agents consume shared packets and gates instead of redefining editorial logic.
-- Public links now point to `felipelobomotta-blip/book-genesis-v4`.
+- Public links now point to `felipelobomotta-blip/book-genesis-studio`.
 - Legacy V4 skills, plus native Claude agents/knowledge, remain opt-in through `--include-legacy`.
 
 ## V4.2 — 2026-06-10
