@@ -1,20 +1,22 @@
-# Book Genesis
+# Book Genesis 5.0
 
 **Your creativity. Your agent. Your book.**
 
-An open-source collection of writing skills for the AI agent you already use. Install into Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf, Antigravity, Gemini CLI, Kimi Code, OpenClaw, or Hermes Agent. A shared directory target is also available.
+**Version 5.0.0 · Agent-native edition · MIT licensed**
+
+An open-source collection of writing skills for the AI agent you already use. Book Genesis 5.0 installs into Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf, Antigravity, Gemini CLI, Kimi Code, OpenClaw, or Hermes Agent. A shared directory target is also available.
 
 Bring an idea. Book Genesis gives your agent a workflow for developing it into a manuscript: direction, characters, outline, chapters, editorial review, revision, and a publishing package. You keep the project files and creative decisions.
 
 [MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
 
-**New: six more install targets.** DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf receive the same 15-skill bundle. There are now **15 installation targets: 14 named hosts plus Shared**. Installation and file integrity are tested; native writing acceptance is tracked separately in the compatibility table.
+**5.0 adds six host targets and removes the interactive book generator from the public product.** DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf receive the same 15-skill bundle. There are now **15 installation targets: 14 named hosts plus Shared**. Installation and file integrity are tested; native writing acceptance is tracked separately in the compatibility table.
 
 ## Back to the skills
 
-This repository has returned to its portable-skills foundation, based on commit [`c974486`](https://github.com/felipelobomotta-blip/book-genesis-v4/commit/c9744863efab1a8de8728f8f67d2cbe0cfc6b8d6). The host agent handles models, authentication, tools, progress, and permissions. Book Genesis supplies the writing workflow and reference material.
+The host agent handles models, authentication, tools, progress, and permissions. Book Genesis supplies the writing workflow and reference material. There is no hosted service, model API gateway, background agent farm, or interactive book-generation CLI in this release.
 
-The later standalone app and model-orchestration experiment is preserved in Git history. See [what was restored and verified](docs/restoration-20260910.md). Existing app book folders should be preserved; automatic migration of their state to the older skill workflow has not been verified.
+Earlier standalone-app experiments remain in Git history for provenance and are not part of the 5.0 product. Existing folders from those experiments are not automatically migrated.
 
 ## Install into your agent
 
@@ -23,26 +25,26 @@ You need Git and Python 3.10+ for this installer, plus the agent you want to use
 ```bash
 git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
 cd book-genesis-v4
-python runner/cli.py verify-suite
+python runner/installer.py verify-suite
 ```
 
 Choose **one** target:
 
 ```bash
-python runner/cli.py install claude
-python runner/cli.py install codex
-python runner/cli.py install kimi
-python runner/cli.py install openclaw
-python runner/cli.py install hermes
-python runner/cli.py install opencode
-python runner/cli.py install antigravity
-python runner/cli.py install gemini
-python runner/cli.py install deepseek
-python runner/cli.py install cursor
-python runner/cli.py install copilot
-python runner/cli.py install qwen
-python runner/cli.py install pi
-python runner/cli.py install windsurf
+python runner/installer.py install claude
+python runner/installer.py install codex
+python runner/installer.py install kimi
+python runner/installer.py install openclaw
+python runner/installer.py install hermes
+python runner/installer.py install opencode
+python runner/installer.py install antigravity
+python runner/installer.py install gemini
+python runner/installer.py install deepseek
+python runner/installer.py install cursor
+python runner/installer.py install copilot
+python runner/installer.py install qwen
+python runner/installer.py install pi
+python runner/installer.py install windsurf
 ```
 
 PowerShell and shell shortcuts are also included:
@@ -60,7 +62,7 @@ Use `--dry-run` to preview an installation. Existing modified skills block repla
 Check the installed package before starting (use your chosen target):
 
 ```bash
-python runner/cli.py verify-install opencode
+python runner/installer.py verify-install opencode
 ```
 
 This checks every skill and reference against your checkout. Confirm discovery in the host too: OpenCode exposes `opencode debug skill`; Gemini CLI exposes `gemini skills list`; Hermes exposes `hermes skills list`. See the [compatibility evidence and host checks](docs/compatibility.md).
@@ -121,7 +123,7 @@ The [architecture audit](docs/architecture-audit-20260910.md) records the reliab
 
 ## Development
 
-The optional Python helper installs the suite, scaffolds projects, validates files, and prepares phase packets. It does not call a model. You do not need to keep it running while your agent writes.
+The repository includes a small installer/verifier for maintainers and scripted environments. It does not call a model, generate a book, or run in the background. Your chosen host does the writing.
 
 ```bash
 python -m unittest discover -s tests -v

@@ -1,12 +1,11 @@
 from pathlib import Path
 import shutil
-import subprocess
-import sys
 import tempfile
 import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+import sys
 sys.path.insert(0, str(REPO_ROOT))
 
 from runner.filesystem import (  # type: ignore  # noqa: E402
@@ -181,25 +180,6 @@ class RunnerTests(unittest.TestCase):
         text = protocol.read_text(encoding="utf-8")
         self.assertIn("Independence Grades", text)
         self.assertIn("Grade C is diagnostic only", text)
-
-    def test_cli_init_runs_by_path(self) -> None:
-        project = self.tempdir / "cli-project"
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "runner" / "cli.py"),
-                "init",
-                str(project),
-                "--idea",
-                "a short test",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        self.assertEqual(0, result.returncode, msg=result.stderr)
-        self.assertTrue((project / "PROJECT_STATE.yaml").exists())
-
 
 if __name__ == "__main__":
     unittest.main()

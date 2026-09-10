@@ -111,7 +111,7 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        id="BestSellerDemo"
+        id="BookGenesis50Demo"
         component={MainComposition}
         durationInFrames={TOTAL_FRAMES}
         fps={FPS}

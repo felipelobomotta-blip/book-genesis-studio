@@ -65,7 +65,7 @@ export const Scene1Title: React.FC = () => {
             marginBottom: 8,
           }}
         >
-          Best Seller Studio
+          Book Genesis 5.0
         </div>
         <div
           style={{
@@ -90,7 +90,7 @@ export const Scene1Title: React.FC = () => {
           marginTop: 8,
         }}
       >
-        shower thought → finished book
+        your idea → a saved chapter
       </div>
     </div>
   );

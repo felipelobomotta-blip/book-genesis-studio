@@ -1,6 +1,6 @@
-# Release Checklist
+# Book Genesis Release Checklist
 
-Steps to cut a new version of Best Seller Studio. Copy this into a GitHub Issue when preparing a release, tick items as you go.
+Steps to cut a new Book Genesis release. The public runtime is the native agent skill bundle; the maintainer installer is not a book-generation product. Copy this into a GitHub Issue when preparing a release, tick items as you go.
 
 ## Pre-flight (T-2 days)
 

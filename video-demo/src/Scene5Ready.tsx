@@ -3,9 +3,9 @@ import { useCurrentFrame, useVideoConfig, interpolate, Easing } from 'remotion';
 import { BG, WHITE, PURPLE_LIGHT, GREEN, GRAY, GRAY_DIM } from './constants';
 
 const BADGES = [
-  { label: '8.5/10 quality gate', color: PURPLE_LIGHT },
-  { label: '3 checkpoints', color: PURPLE_LIGHT },
-  { label: 'fully autonomous', color: GREEN },
+  { label: 'saved project files', color: PURPLE_LIGHT },
+  { label: 'editorial review loop', color: PURPLE_LIGHT },
+  { label: 'you remain the author', color: GREEN },
 ];
 
 export const Scene5Ready: React.FC = () => {
@@ -85,7 +85,7 @@ export const Scene5Ready: React.FC = () => {
             lineHeight: 1.05,
           }}
         >
-          Your book is ready.
+          Your next chapter is ready.
         </div>
 
         {/* Divider */}

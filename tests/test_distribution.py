@@ -117,7 +117,7 @@ class DistributionTests(unittest.TestCase):
         for target in supported_targets():
             with self.subTest(target=target):
                 destination = self.tempdir / target / "skills with spaces"
-                command = [sys.executable, str(REPO_ROOT / "runner/cli.py"),
+                command = [sys.executable, str(REPO_ROOT / "runner/installer.py"),
                            "install", target, "--dest", str(destination)]
                 preview = subprocess.run(command + ["--dry-run"], capture_output=True, text=True)
                 self.assertEqual(0, preview.returncode, preview.stdout + preview.stderr)
@@ -231,7 +231,7 @@ class DistributionTests(unittest.TestCase):
 
     def test_cli_verifies_suite(self) -> None:
         result = subprocess.run(
-            [sys.executable, str(REPO_ROOT / "runner" / "cli.py"), "verify-suite"],
+            [sys.executable, str(REPO_ROOT / "runner" / "installer.py"), "verify-suite"],
             capture_output=True,
             text=True,
             check=False,

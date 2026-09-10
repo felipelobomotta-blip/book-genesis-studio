@@ -22,6 +22,24 @@ Restored the portable-skills foundation from `c974486` as the public product. Ad
 
 # Changelog
 
+## 5.0.0 — 2026-09-10
+
+### Changed
+
+- Recenter the public product on native agent skills: the host owns model access, tools, permissions, and progress.
+- Remove the interactive `book-genesis` book-generation CLI from the release surface. The maintainer helper is now `runner/installer.py` and only installs or verifies skills.
+- Add DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf/Cascade targets.
+- Replace legacy top-level launch copy with English release documentation and a factual launch kit.
+- Update the Remotion demo to show idea → saved chapter → review → next step without an autonomous-book or bestseller claim.
+
+### Removed
+
+- Old top-level V4 marketing drafts, duplicate Portuguese README/card, and stale standalone-app promotional copy.
+
+### Known limits
+
+- Native writing acceptance and repeated complete-book reliability remain host-specific evidence tasks. Installation checks do not establish reader preference, publication readiness, or sales.
+
 ## Unreleased
 
 ### Added

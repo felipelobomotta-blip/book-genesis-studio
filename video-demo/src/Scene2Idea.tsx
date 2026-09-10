@@ -3,7 +3,7 @@ import { useCurrentFrame, useVideoConfig, interpolate, Easing } from 'remotion';
 import { BG, WHITE, PURPLE_LIGHT, GRAY, GRAY_DIM } from './constants';
 
 const IDEA_TEXT =
-  '"A journalist covering the 2026 World Cup uncovers a government alien contact cover-up"';
+  '"A retired dispatcher finds a letter inside a station clock"';
 
 export const Scene2Idea: React.FC = () => {
   const frame = useCurrentFrame();

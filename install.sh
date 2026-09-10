@@ -25,4 +25,4 @@ else
   exit 1
 fi
 
-exec "$python_bin" "$repo_dir/runner/cli.py" install "$target" "$@"
+exec "$python_bin" "$repo_dir/runner/installer.py" install "$target" "$@"

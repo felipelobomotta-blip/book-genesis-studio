@@ -1,6 +1,6 @@
 # Portability
 
-Book Genesis is an Agent Skills package. All 15 installation targets receive the same canonical skill folders. The consuming host executes them with its own account, models, permissions, and quotas. The target list contains 14 named hosts and one Shared directory export.
+Book Genesis 5.0 is an Agent Skills package. All 15 installation targets receive the same canonical skill folders. The consuming host executes them with its own account, models, permissions, and quotas. The target list contains 14 named hosts and one Shared directory export. The old interactive book-generation CLI is not shipped; the repository helper is for installation and verification only.
 
 ## Canonical Package
 
@@ -13,7 +13,7 @@ Do not copy only `SKILL.md`. Phase prompts, scoring rules, and evaluator protoco
 ## Verify Before Installing
 
 ```bash
-python runner/cli.py verify-suite
+python runner/installer.py verify-suite
 ```
 
 Validation checks skill frontmatter, dependency closure, phase prompts, mandatory adversarial audit, Literary Barrier loop, evaluator protocol, and target definitions.
@@ -83,7 +83,7 @@ Default user locations:
 Use `--dest PATH` with the Python command for an isolated or project-specific skills directory:
 
 ```bash
-python runner/cli.py install kimi --dest ./sandbox/skills --dry-run
+python runner/installer.py install kimi --dest ./sandbox/skills --dry-run
 ```
 
 ## Conflict Safety
@@ -98,13 +98,7 @@ python runner/cli.py install kimi --dest ./sandbox/skills --dry-run
 
 Portable agents are roles, packets, and gates rather than duplicated platform prompts.
 
-```bash
-python runner/cli.py prepare-agent-packet my-book prose_writer
-python runner/cli.py prepare-agent-packet my-book adversarial_auditor
-python runner/cli.py prepare-agent-packet my-book scorekeeper
-```
-
-Give each packet to a fresh runtime-native subagent. Claude Code may use custom or general-purpose subagents, Codex may dispatch isolated subagents, and Kimi Code may dispatch its built-in subagents. When isolation is unavailable, run roles sequentially and record Evaluation Independence Grade C.
+Give each specialist packet to the native host's own subagent or run it sequentially when that host has no subagent feature. The installer does not create background agents or orchestrate a team.
 
 ## Generic Agents
 
@@ -133,7 +127,7 @@ These targets copy the complete portable suite into the host's skill directory. 
 OpenClaw can use workspace-local skills instead of shared state skills:
 
 ```bash
-python runner/cli.py install openclaw --dest /path/to/openclaw-workspace/skills --dry-run
+python runner/installer.py install openclaw --dest /path/to/openclaw-workspace/skills --dry-run
 ```
 
 Remove `--dry-run` after reviewing the destination. Keep the host's normal permission and tool-approval settings. For Hermes profiles, select the matching `HERMES_HOME` or an explicit skills destination. The folder paths follow [OpenClaw's skill-loading documentation](https://docs.openclaw.ai/tools/skills) and [Hermes's skills documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills), checked September 10, 2026.
@@ -147,14 +141,14 @@ These are directory bundles with the original references, not platform-specific 
 For a workspace install, specify the host's actual directory:
 
 ```bash
-python runner/cli.py install opencode --dest /path/to/book/.opencode/skills
-python runner/cli.py install antigravity --dest /path/to/book/.agents/skills
-python runner/cli.py install gemini --dest /path/to/book/.gemini/skills
+python runner/installer.py install opencode --dest /path/to/book/.opencode/skills
+python runner/installer.py install antigravity --dest /path/to/book/.agents/skills
+python runner/installer.py install gemini --dest /path/to/book/.gemini/skills
 ```
 
 Antigravity's current global directory is `~/.gemini/config/skills`. Older editions used `~/.gemini/antigravity/skills`; use `--dest` only if your installed edition expects that legacy path. Do not install duplicate copies into every historical path. Gemini CLI is a separate target with a different global directory.
 
-After installing, run `python runner/cli.py verify-install TARGET` with the same `--dest`, if any. A changed checkout or locally edited skill will be reported as different; inspect before replacing it. This command performs no model calls. The host must still discover and activate the skill. [Compatibility evidence](compatibility.md) separates those checks.
+After installing, run `python runner/installer.py verify-install TARGET` with the same `--dest`, if any. A changed checkout or locally edited skill will be reported as different; inspect before replacing it. This command performs no model calls. The host must still discover and activate the skill. [Compatibility evidence](compatibility.md) separates those checks.
 
 A skills-only installation contains the startup/recovery contract and initial state template under `book-genesis/references/pipeline/`. Native agents can initialize and resume a book without the repository Python helper. Optional external marketing or image skills are not required to write.
 
@@ -163,9 +157,9 @@ A skills-only installation contains the startup/recovery contract and initial st
 Added September 10, 2026, against official host documentation and source. These are native skill installations. DeepSeek Harness is a separate product from the DeepSeek model API; installing this target does not configure an API provider inside a different agent.
 
 ```bash
-python runner/cli.py install deepseek --dry-run
-python runner/cli.py install deepseek
-python runner/cli.py verify-install deepseek
+python runner/installer.py install deepseek --dry-run
+python runner/installer.py install deepseek
+python runner/installer.py verify-install deepseek
 ```
 
 Open a fresh DeepSeek Harness session in a writable book folder. Ask it to locate `book-genesis`, read its phase manifest and host contract, and save the intake artifacts before continuing. The same steps apply to the other targets with the appropriate host and target name.
@@ -182,12 +176,12 @@ Open a fresh DeepSeek Harness session in a writable book folder. Ask it to locat
 For project or remote installations, pass the actual skills directory to `--dest`, for example:
 
 ```bash
-python runner/cli.py install deepseek --dest /path/to/book/.dsh/skills
-python runner/cli.py install cursor --dest /path/to/book/.cursor/skills
-python runner/cli.py install copilot --dest /path/to/book/.github/skills
-python runner/cli.py install qwen --dest /path/to/book/.qwen/skills
-python runner/cli.py install pi --dest /path/to/book/.pi/skills
-python runner/cli.py install windsurf --dest /path/to/book/.windsurf/skills
+python runner/installer.py install deepseek --dest /path/to/book/.dsh/skills
+python runner/installer.py install cursor --dest /path/to/book/.cursor/skills
+python runner/installer.py install copilot --dest /path/to/book/.github/skills
+python runner/installer.py install qwen --dest /path/to/book/.qwen/skills
+python runner/installer.py install pi --dest /path/to/book/.pi/skills
+python runner/installer.py install windsurf --dest /path/to/book/.windsurf/skills
 ```
 
 Run the installer where the host reads files. Avoid installing the same suite into several directories searched by the same host. Check discovery after an update, including possible duplicate skills from custom recursive search configurations. Host commands, trust settings, and release behavior can change; the [compatibility table](compatibility.md) records what was actually exercised.

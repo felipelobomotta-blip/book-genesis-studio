@@ -10,12 +10,12 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-  { phase: 'Phase 1', label: 'Market Research', color: GRAY },
-  { phase: 'Phase 1.5', label: 'Premise Forge', tag: '5 variants · floor ≥ 8.0', color: PURPLE_LIGHT },
-  { phase: 'Phase 2', label: 'Foundation & Outline', color: GRAY },
-  { phase: 'Phase 3', label: 'Chapter Loop', tag: 'gate 8.5/10 per chapter', color: PURPLE_LIGHT },
-  { phase: 'Phase 5', label: 'Full Revision', tag: 'CVI ≥ 9.0', color: GREEN },
-  { phase: 'Phase 6', label: 'Delivery Package', color: GREEN },
+  { phase: '01', label: 'Direction & Research', color: GRAY },
+  { phase: '02', label: 'Foundation & Outline', color: PURPLE_LIGHT },
+  { phase: '03', label: 'Chapter Drafting', tag: 'save as you go', color: PURPLE_LIGHT },
+  { phase: '04', label: 'Adversarial Review', tag: 'find what fails', color: GRAY },
+  { phase: '05', label: 'Revision Loop', tag: 'improve the weak spots', color: GREEN },
+  { phase: '06', label: 'Editorial Package', color: GREEN },
 ];
 
 // Each step slides in staggered
