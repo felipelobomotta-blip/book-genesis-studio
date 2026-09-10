@@ -31,10 +31,10 @@ A subsequent write-recovery attempt encountered a host-denied terminal command. 
 ## Check your installation
 
 ```bash
-python runner/cli.py verify-suite
-python runner/cli.py install opencode --dry-run
-python runner/cli.py install opencode
-python runner/cli.py verify-install opencode
+python runner/installer.py verify-suite
+python runner/installer.py install opencode --dry-run
+python runner/installer.py install opencode
+python runner/installer.py verify-install opencode
 opencode debug skill
 ```
 

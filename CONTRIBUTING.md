@@ -7,7 +7,7 @@ Book Genesis accepts improvements to editorial contracts, portable skills, deter
 ```bash
 git clone https://github.com/felipelobomotta-blip/book-genesis-v4.git
 cd book-genesis-v4
-python runner/cli.py verify-suite
+python runner/installer.py verify-suite
 python -m unittest discover -s tests -v
 ```
 
@@ -28,7 +28,7 @@ No provider API key is needed for repository tests. Runner never calls a model.
 - Keep `SKILL.md` concise and put detailed contracts under `references/`.
 - Preserve `name` and `description` frontmatter.
 - Add referenced specialist skills to `distribution/portable-suite.json`.
-- Run `python runner/cli.py verify-suite` after changing manifests, registries, prompts, or skill packaging.
+- Run `python runner/installer.py verify-suite` after changing manifests, registries, prompts, or skill packaging.
 
 ## Runner Changes
 
