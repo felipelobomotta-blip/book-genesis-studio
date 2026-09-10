@@ -1,5 +1,0 @@
-node_modules/
-out/
-public/raw-video/
-*.webm
-!package-lock.json

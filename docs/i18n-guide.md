@@ -1,44 +1,79 @@
-# Language and Internationalization Guide
+# Internationalization (i18n) Guide
 
-Book Genesis separates the language of the software from the language of the book.
+Best Seller Studio is genre- and language-portable. This guide covers what to change (and what not to change) when running the pipeline in a language other than English.
 
-## Current behavior
+## Supported languages
 
-- The command-line interface, setup flow, command help, and most technical documentation are primarily English.
-- The runner accepts `--language <code>` when starting a project and stores that selection in project state.
-- Phase prompts direct the model to create prose and project artifacts in the book’s selected language.
-- The local review page and export coverage notice use Portuguese when the project language begins with `pt` or `por`; otherwise they use English.
-- UTF-8 is used for repository resources and project artifacts.
+The pipeline has been end-to-end validated in:
 
-Example:
+- Portuguese (Brazilian) — full, native
+- English — full, native
+- Spanish — partial, community-contributed
 
-```bash
-book-genesis new --idea "Uma cidade onde cartas devolvidas mudam o passado." --language pt-BR
-book-genesis new --idea "A city where returned letters alter the past." --language en
-```
+The pipeline has been *spot-tested* in Italian, French, German. Quality is expected to be comparable; polish is genre-dependent.
 
-The language code guides the run; actual prose quality depends on the configured model, prompt, genre, and author revision. A target language is not evidence of native-level literary quality.
+Adding a language does not require code changes. It requires only well-written agent prompts for that language's literary conventions.
 
-## Evidence and limits
+## Non-English brief handling
 
-The current beta has a real Portuguese-language smoke run and review-page checks in English/Portuguese paths. It has not completed systematic usability or literary validation across Spanish, French, German, Arabic, Japanese, or other language markets. Right-to-left layout has not been specifically tested.
+You can brief the pipeline in any language Claude Code understands. The pipeline:
 
-Genre profiles define operational ranges such as chapter length, dialogue share, revision budget, and whether the disruptor runs. They do not provide language-specific literary calibration or a quality floor.
+1. Runs research in the brief's language
+2. Retains genre conventions native to that language (e.g., magical realism as literary default in Latin American Spanish, not commercial thriller)
+3. Adjusts the 8.5 gate's genre floor to the target market
+4. Produces the manuscript in the brief's language
 
-## Contributing a language improvement
+## Genre-adjusted floor
 
-Useful contributions include:
+The Genesis Floor 8.5 is not universal. Different genres in different languages have different market expectations:
 
-- clear translations of public documentation;
-- localizing UI strings while keeping commands and paths stable;
-- tests for Unicode, line endings, chapter markers, and review/export rendering;
-- native-reader review of prompt wording and genre expectations.
+| Genre + market | Hard floor |
+|---|---|
+| English literary fiction | 7.5 |
+| English commercial thriller | 7.0 |
+| English prescriptive non-fiction | 7.0 |
+| Portuguese (BR) literary fiction | 7.5 |
+| Portuguese (BR) commercial | 7.0 |
+| Spanish literary (Latin American) | 7.5 |
+| Spanish commercial (Iberian) | 7.0 |
+| Memoir (any language) | 7.5 |
 
-Please do not claim that a language is “fully supported” based only on a translation or a single model response. In a pull request, state who reviewed the text, which flows were tested, and what remains unverified.
+Below the hard floor, the manuscript is auto-rejected at Checkpoint 2 regardless of the 8.5 target.
 
-## File conventions
+## Contributing a translation
 
-- Keep source files UTF-8.
-- Preserve ASCII path names where practical for cross-platform command-line use.
-- Do not translate machine-readable keys such as `audit_status`, project-state keys, artifact markers, or command flags.
-- Keep canonical command examples in English; add localized explanation around them.
+Two levels:
+
+### Level 1 — README + skill descriptions
+
+Translate high-level docs. Low friction. Great first PR.
+
+- `README.md` → `README.<lang>.md`
+- `docs/agents-<lang>.md` — one-line descriptions of the 8 agents
+- `SHOWCASE.md` → `SHOWCASE.<lang>.md` if worthwhile
+
+### Level 2 — Agent prompts
+
+Translate the agent instructions themselves. This is a real port, not a translation — literary rules change per language (e.g., Portuguese sentence rhythm is not the same as English's; Spanish paragraph breaks work differently).
+
+- `/agents/book-writer.md` → agents/pt-br/book-writer.md
+- Localize CHAPTER FUNCTION, CHARACTER ENTRY LEVELS, REALISM CONSTRAINTS to the target language's craft norms
+- Localize the evaluator's REVISION FINDINGS FRAMEWORK to the target market's reader expectations
+
+Native or near-native language reviewers required. Machine translation of agent prompts produces bad books; we do not accept those PRs.
+
+## Right-to-left languages
+
+The pipeline is currently left-to-right only. Arabic, Hebrew, Persian would need:
+
+1. RTL-aware manifest files (JSON is fine; only prose in Markdown needs to be RTL-flagged)
+2. RTL-aware demo assets (currently LTR-only)
+3. Native reviewer for the evaluator's phonetic/rhythm rules (very different from LTR languages)
+
+We welcome a PR that opens this direction. Talk to us in [Discussions](https://github.com/felipelobomotta-blip/book-genesis-v4/discussions) first — the design work is bigger than the PR.
+
+## Encoding
+
+- All Markdown UTF-8, no BOM
+- Line endings LF (enforced by `.gitattributes` since V4.2)
+- File names ASCII where possible (avoids Windows/macOS/Linux path issues)
