@@ -10,7 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$cliPath = Join-Path $repoDir "runner\cli.py"
+$cliPath = Join-Path $repoDir "runner\installer.py"
 
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
 $launcherArgs = @()

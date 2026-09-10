@@ -1,17 +1,17 @@
 {
-  "name": "best-seller-studio-demo",
-  "version": "1.0.0",
-  "description": "Demo video for Best Seller Studio — AI book pipeline",
+  "name": "book-genesis-5-demo",
+  "version": "5.0.0",
+  "description": "Book Genesis 5.0 agent-native workflow demo",
   "scripts": {
     "start": "npx remotion studio",
-    "render": "npx remotion render src/index.ts BestSellerDemo out/demo.mp4",
-    "still": "npx remotion still src/index.ts BestSellerDemo --frame=0 out/frame0.png"
+    "render": "npx remotion render src/index.ts BookGenesis50Demo out/demo.mp4",
+    "still": "npx remotion still src/index.ts BookGenesis50Demo --frame=0 out/frame0.png"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.239",
+    "@remotion/cli": "4.0.523",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remotion": "4.0.239"
+    "remotion": "4.0.523"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

@@ -1,22 +1,27 @@
-# Local Runner
+# Local Runner (historical)
 
-Book Genesis is still a markdown-first, agent-run workflow. The local runner exists to make the workflow reproducible: it scaffolds the project tree, prepares the active phase packet, validates required outputs, and advances gates.
+Book Genesis 5.0 is a markdown-first, native-agent workflow. The old interactive
+book-generation CLI has been removed from the public product. The maintainer
+installer is `runner/installer.py` and only installs or verifies the skill bundle.
+
+The mechanical helpers below are retained for regression fixtures and historical
+reproduction; they do not call an LLM and do not claim literary quality.
 
 It does not call an LLM and it does not claim literary quality. Agents still write, audit, score, and package the manuscript using the active phase prompt.
 
 ## Commands
 
 ```bash
-python runner/cli.py init my-book --idea "a detective audits a haunted manuscript"
-python runner/cli.py status my-book
-python runner/cli.py prepare-phase my-book
-python runner/cli.py advance-phase my-book
-python runner/cli.py validate my-book
-python runner/cli.py prepare-swarm my-book --mode hybrid --slug launch-reaction
-python runner/cli.py prepare-agent-packet my-book prose_writer
+python runner/installer.py verify-suite
 ```
 
-`prepare-phase` writes:
+The maintainer installer exposes only `install`, `verify-suite`, and
+`verify-install`. The native host reads phase prompts and dispatches its own
+agents. The helper does not scaffold a book or simulate a completed run.
+
+Historical helper behavior:
+
+`prepare-phase` used to write:
 
 ```text
 my-book/work/current-phase.md
@@ -24,7 +29,7 @@ my-book/work/current-phase.md
 
 That file contains the phase label, gate, required outputs, and the full active phase prompt from `skills/book-genesis/references/`.
 
-`prepare-swarm` writes:
+`prepare-swarm` used to write:
 
 ```text
 my-book/evaluations/book-swarm/<date>-launch-reaction/
@@ -32,7 +37,7 @@ my-book/evaluations/book-swarm/<date>-launch-reaction/
 
 That folder contains the Book Swarm Panel contract: persona roster, sample map, cohort reports, interviews, public-opinion report, risk heatmap, revision tickets, score calibration, summary, and an optional `mirofish-requirement.md` bridge file for external MiroFish runs.
 
-`prepare-agent-packet` writes:
+`prepare-agent-packet` used to write:
 
 ```text
 my-book/work/agent-packets/prose_writer.md
@@ -40,17 +45,11 @@ my-book/work/agent-packets/prose_writer.md
 
 That file contains the specialist mission, missing inputs, required outputs, gates, score floor, and relevant skill prompt from `skills/book-bestseller-studio/references/agent-registry.yaml`.
 
-## Mechanical Demo
+## Historical Mechanical Demo
 
-Use this before launch, CI, or a demo recording:
-
-```bash
-python runner/cli.py demo .tmp-book-genesis-demo
-python runner/cli.py status .tmp-book-genesis-demo
-python runner/cli.py validate .tmp-book-genesis-demo
-```
-
-The demo fills deterministic placeholder outputs and advances all gates. It proves the file contract and phase mechanics, not manuscript quality.
+The old deterministic demo is not exposed by the 5.0 installer and must not be
+used as evidence of literary output. It remains represented in regression
+fixtures solely to protect the file-contract logic.
 
 ## What The Runner Guarantees
 

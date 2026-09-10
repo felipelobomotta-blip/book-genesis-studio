@@ -4,9 +4,9 @@ import { BG, WHITE, PURPLE, PURPLE_LIGHT, GREEN, GRAY, GRAY_DIM } from './consta
 
 const SCORE_KEYFRAMES = [
   { time: 0.3, value: 0 },
-  { time: 1.0, value: 7.2 },
-  { time: 2.2, value: 8.1 },
-  { time: 3.6, value: 8.5 },
+  { time: 1.0, value: 1 },
+  { time: 2.2, value: 2 },
+  { time: 3.6, value: 3 },
 ];
 
 export const Scene4Score: React.FC = () => {
@@ -28,8 +28,8 @@ export const Scene4Score: React.FC = () => {
     }
   }
 
-  const passed = score >= 8.5;
-  const barPercent = interpolate(score, [0, 10], [0, 100], {
+  const passed = score >= 3;
+  const barPercent = interpolate(score, [0, 3], [0, 100], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -93,7 +93,7 @@ export const Scene4Score: React.FC = () => {
             marginBottom: 32,
           }}
         >
-          // genesis score
+          // editorial checkpoint
         </div>
 
         {/* Score display */}
@@ -116,7 +116,7 @@ export const Scene4Score: React.FC = () => {
               transition: 'color 0.3s',
             }}
           >
-            {score.toFixed(1)}
+              {Math.round(score)}
           </div>
 
           <div style={{ textAlign: 'right' }}>
@@ -131,7 +131,7 @@ export const Scene4Score: React.FC = () => {
                 fontFamily: "'Courier New', monospace",
               }}
             >
-              8.5 / 10
+              3 checkpoints
             </div>
           </div>
         </div>
@@ -159,12 +159,12 @@ export const Scene4Score: React.FC = () => {
             }}
           />
 
-          {/* Gate marker at 8.5 */}
+          {/* Completion marker */}
           <div
             style={{
               position: 'absolute',
               top: 0,
-              left: '85%',
+              left: '100%',
               width: 2,
               height: '100%',
               background: 'rgba(255,255,255,0.35)',
@@ -183,9 +183,9 @@ export const Scene4Score: React.FC = () => {
             color: GRAY_DIM,
           }}
         >
-          <span>0.0</span>
-          <span style={{ color: PURPLE_LIGHT, marginLeft: '80%' }}>8.5</span>
-          <span>10.0</span>
+          <span>start</span>
+          <span style={{ color: PURPLE_LIGHT }}>review</span>
+          <span>next step</span>
         </div>
 
         {/* Status row */}
@@ -218,7 +218,7 @@ export const Scene4Score: React.FC = () => {
 
           <div style={{ opacity: checkFade }}>
             <div style={{ fontSize: 20, fontWeight: 600, color: GREEN }}>
-              Gate passed
+              Ready to review
             </div>
             <div
               style={{
@@ -228,7 +228,7 @@ export const Scene4Score: React.FC = () => {
                 marginTop: 2,
               }}
             >
-              chapter approved · proceeding to next
+              saved artifact · continue in your host
             </div>
           </div>
         </div>

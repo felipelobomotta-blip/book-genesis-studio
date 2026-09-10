@@ -47,7 +47,7 @@ skills/book-genesis/references/pipeline/manifest.yaml
 - Codex can use this repo directly through `AGENTS.md` and the skill folder.
 - Antigravity can use this file as the repo-level playbook.
 - Kimi Code can run `/skill:book-genesis` after installing the portable suite.
-- The optional local runner in `runner/cli.py` can scaffold projects and prepare phase packets, but it does not call a model or write literary output.
+- The maintainer-only installer/verifier in `runner/installer.py` can validate the package and prepare files; it does not call a model or write literary output. Book Genesis 5.0 has no interactive book-generation CLI.
 
 - OpenClaw and Hermes Agent load the same installed skills; ask the host to use `book-genesis` in a writable book-project workspace.
 

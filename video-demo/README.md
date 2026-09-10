@@ -1,6 +1,6 @@
-# Best Seller Studio — Demo Video
+# Book Genesis 5.0 — Demo Video
 
-Remotion project for the ~32-second product demo video.
+Remotion project for the ~32-second product demo video. It demonstrates the native-agent workflow and must be recorded against a real host before publication.
 
 ## Quick start
 
@@ -21,33 +21,33 @@ npm start
 
 ```bash
 # Frame 0 — Scene 1: Title
-npx remotion still src/index.ts BestSellerDemo --frame=0 out/frame-s1.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=0 out/frame-s1.png
 
 # Frame 120 — Scene 2: Idea typing (~4s in)
-npx remotion still src/index.ts BestSellerDemo --frame=120 out/frame-s2.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=120 out/frame-s2.png
 
 # Frame 270 — Scene 3: Pipeline (~9s in)
-npx remotion still src/index.ts BestSellerDemo --frame=270 out/frame-s3.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=270 out/frame-s3.png
 
 # Frame 600 — Scene 4: Score bar (~20s in)
-npx remotion still src/index.ts BestSellerDemo --frame=600 out/frame-s4.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=600 out/frame-s4.png
 
 # Frame 750 — Scene 5: Book ready (~25s in)
-npx remotion still src/index.ts BestSellerDemo --frame=750 out/frame-s5.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=750 out/frame-s5.png
 
 # Frame 870 — Scene 6: CTA (~29s in)
-npx remotion still src/index.ts BestSellerDemo --frame=870 out/frame-s6.png
+npx remotion still src/index.ts BookGenesis50Demo --frame=870 out/frame-s6.png
 ```
 
 ## Scene breakdown
 
 | Scene | Frames | Time | Content |
 |-------|--------|------|---------|
-| S1 | 0–89 | 0–3s | Title fade-in: "Best Seller Studio" |
+| S1 | 0–89 | 0–3s | Title fade-in: "Book Genesis 5.0" |
 | S2 | 90–239 | 3–8s | Idea typing animation |
 | S3 | 240–539 | 8–18s | Pipeline steps slide in |
-| S4 | 540–719 | 18–24s | Genesis Score 7.2→8.5 with gate pass |
-| S5 | 720–839 | 24–28s | "Your book is ready." |
+| S4 | 540–719 | 18–24s | Editorial checkpoint and saved artifact |
+| S5 | 720–839 | 24–28s | "Your next chapter is ready." |
 | S6 | 840–959 | 28–32s | GitHub CTA |
 
 ## Visual spec
