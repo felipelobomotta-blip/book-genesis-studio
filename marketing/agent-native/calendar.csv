@@ -1,0 +1,31 @@
+day,focus,action,channel,completion_criterion,status
+1,Proof,Choose host and record clean installation,Internal,Host version and commit logged,planned
+2,Proof,Record intake and save a real first chapter,Internal,Actual non-template chapter inspected,planned
+3,Recovery,Record fresh-session resume and repair blockers,Internal,Next step recovered from saved files,planned
+4,Pilot,Invite willing testers through appropriate existing contacts,Direct,Ten pilot attempts arranged or recruitment gap logged,planned
+5,Pilot,Observe first five installation and chapter attempts,Internal,Successes and failures recorded privately,planned
+6,Pilot,Observe remaining five attempts and prioritize blockers,Internal,Ten attempts recorded or launch held,planned
+7,Editorial proof,Complete sample short book and request two independent readings,Internal,Run evidence saved and readers invited,planned
+8,Demo,Edit factual walkthrough and label time cuts,YouTube,Draft clip reviewed against real artifacts,planned
+9,Founder story,Publish founder story with working repository link,LinkedIn,Live URL verified if posted,planned
+10,Demo distribution,Publish walkthrough and one short excerpt,YouTube,Live video verified and baseline analytics recorded,planned
+11,Hook experiment A,Share coding-agent-to-book hook with actual clip,X,Post URL and observation window recorded,planned
+12,Technical explanation,Publish portable-workflow article,DEV,Current publication policy checked and article verified,planned
+13,Community feedback,Share a useful host-specific example where permitted,One community,Rules checked and resulting feedback logged,planned
+14,Weekly decision,Review pilot and reader feedback plus activation,Internal,Broad-launch gate passed or deferred,planned
+15,Hook experiment B,Share idea-to-chapter hook in comparable format,X,Comparable observation window recorded,planned
+16,Short clip,Adapt a real revision example for vertical video,Shorts Reels TikTok,Readable native edits reviewed and live URLs logged,planned
+17,Creator outreach,Identify five relevant creators and personalize invitations,Direct,Only permitted individual contact routes used,planned
+18,Host tutorial,Record the most-requested additional host,YouTube or GitHub,Actual discovery and writing evidence recorded,planned
+19,Launch preparation,Prepare real gallery and maker comment,Product Hunt,Proof gate and current submission requirements checked,planned
+20,Conditional launch,Launch Product Hunt only if ready and support is available,Product Hunt,Live listing verified or reason for delay logged,planned
+21,Conditional technical launch,Founder independently writes appropriate Show HN submission,Hacker News,Human-written text and guidelines checked or launch deferred,planned
+22,User outcome,Request permission to feature one actual author example,Direct,Scope of excerpt and attribution permission recorded,planned
+23,User story,Publish permitted sample with honest editing notes,LinkedIn and GitHub,Permission and live URL verified,planned
+24,Retention,Check seven-day return usage for eligible participants,Internal,Eligible denominator and observed returns recorded,planned
+25,Product improvement,Fix the most frequent remaining first-session blocker,GitHub,Reproduction and fix verification published,planned
+26,Demonstrate improvement,Record the fixed journey in the affected host,X or YouTube,Before and after evidence accurately labeled,planned
+27,Sharing,Invite optional author case studies without manuscript promotion insertion,GitHub,Consenting examples counted with no invented testimonials,planned
+28,Distribution review,Assess curated skills.sh package feasibility,Internal,Canonical reference-complete install verified or left pending,planned
+29,Measurement,Compare channels by activated and returning projects,Internal,Unknown metrics left blank and decisions written,planned
+30,Public report,Publish month-one outcomes failures and next priorities,GitHub and LinkedIn,Aggregates supported by records and next-month scope chosen,planned

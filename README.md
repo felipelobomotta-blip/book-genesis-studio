@@ -2,11 +2,13 @@
 
 **Your creativity. Your agent. Your book.**
 
-An open-source collection of writing skills that runs inside the AI agent you already use: Claude Code, Codex, OpenCode, Antigravity, Gemini CLI, Kimi Code, OpenClaw, Hermes Agent, or another file-aware agent.
+An open-source collection of writing skills for the AI agent you already use. Install into Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf, Antigravity, Gemini CLI, Kimi Code, OpenClaw, or Hermes Agent. A shared directory target is also available.
 
 Bring an idea. Book Genesis gives your agent a workflow for developing it into a manuscript: direction, characters, outline, chapters, editorial review, revision, and a publishing package. You keep the project files and creative decisions.
 
-[MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Writing skills](skills/book-genesis/SKILL.md) · [Project casebook](SHOWCASE.md)
+[MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
+
+**New: six more install targets.** DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf receive the same 15-skill bundle. There are now **15 installation targets: 14 named hosts plus Shared**. Installation and file integrity are tested; native writing acceptance is tracked separately in the compatibility table.
 
 ## Back to the skills
 
@@ -35,6 +37,12 @@ python runner/cli.py install hermes
 python runner/cli.py install opencode
 python runner/cli.py install antigravity
 python runner/cli.py install gemini
+python runner/cli.py install deepseek
+python runner/cli.py install cursor
+python runner/cli.py install copilot
+python runner/cli.py install qwen
+python runner/cli.py install pi
+python runner/cli.py install windsurf
 ```
 
 PowerShell and shell shortcuts are also included:
@@ -91,9 +99,17 @@ The same [15-skill suite](distribution/portable-suite.json) goes to every suppor
 | OpenCode | `~/.config/opencode/skills/` |
 | Antigravity | `~/.gemini/config/skills/` |
 | Gemini CLI | `~/.gemini/skills/` |
+| DeepSeek Harness | `~/.dsh/skills/` |
+| Cursor | `~/.cursor/skills/` |
+| GitHub Copilot | `~/.copilot/skills/` |
+| Qwen Code | `~/.qwen/skills/` |
+| Pi | `~/.pi/agent/skills/` |
+| Windsurf / Cascade | `~/.codeium/windsurf/skills/` |
 | Shared Agent Skills | `~/.agents/skills/` via `install shared` |
 
 Host-specific home variables and `--dest` override these locations. OpenCode also respects `XDG_CONFIG_HOME`; its explicit `OPENCODE_CONFIG_DIR` takes priority. The OpenClaw and Hermes destinations follow their official [OpenClaw](https://docs.openclaw.ai/tools/skills) and [Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) skill-directory conventions. Installer compatibility is tested separately from live writing in those hosts.
+
+DeepSeek Harness respects `DSH_HOME`; Pi respects `PI_CODING_AGENT_DIR`. See [the six new host setup notes and official sources](docs/portability.md#deepseek-harness-cursor-copilot-qwen-pi-and-windsurf). The package is MIT licensed. Model usage may have a cost or quota under your host account.
 
 ## The work behind it
 

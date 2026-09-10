@@ -55,6 +55,8 @@ def resolve_install_root(
     environment = os.environ if environ is None else environ
     home_env = str(spec.get("home_env", ""))
     configured_home = environment.get(home_env, "") if home_env else ""
+    if spec.get("ignore_blank_home") and not configured_home.strip():
+        configured_home = ""
     xdg_home = environment.get("XDG_CONFIG_HOME", "")
     if configured_home:
         runtime_home = Path(configured_home).expanduser() / str(spec.get("configured_home_subdir", ""))
@@ -150,7 +152,11 @@ def validate_suite() -> dict[str, object]:
     if not evaluator_protocol.exists():
         errors.append("independent evaluator protocol is missing")
 
-    required_targets = {"claude", "codex", "kimi", "openclaw", "hermes", "shared", "opencode", "antigravity", "gemini"}
+    required_targets = {
+        "claude", "codex", "kimi", "openclaw", "hermes", "shared",
+        "opencode", "antigravity", "gemini", "deepseek", "cursor",
+        "copilot", "qwen", "pi", "windsurf",
+    }
     target_names = set(supported_targets())
     missing_targets = sorted(required_targets - target_names)
     if missing_targets:

@@ -1,4 +1,11 @@
 
+## 2026-09-10 — DeepSeek Harness and wider agent distribution
+
+- Add DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf/Cascade: 15 install targets, comprising 14 named hosts and Shared.
+- Respect `DSH_HOME` (including its blank-value fallback) and `PI_CODING_AGENT_DIR`; retain custom destinations, reference integrity, and conflict backups.
+- Extend install/reinstall and wrapper verification to all targets; document official discovery conventions separately from native writing evidence.
+- Add an English [30-day launch kit](marketing/agent-native/README.md), platform drafts, demo scripts, measurement templates, and evidence gates. These are launch materials, not claims of a published video or social campaign.
+
 ## 2026-09-10 — More native hosts and recovery checks
 
 - Add OpenCode, Antigravity, and Gemini CLI installer targets; handle OpenCode custom/XDG configuration and Gemini substitute home correctly.
