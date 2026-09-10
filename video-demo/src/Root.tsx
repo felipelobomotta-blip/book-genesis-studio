@@ -7,6 +7,7 @@ import { Scene3Pipeline } from './Scene3Pipeline';
 import { Scene4Score } from './Scene4Score';
 import { Scene5Ready } from './Scene5Ready';
 import { Scene6CTA } from './Scene6CTA';
+import { InstallDemo } from './InstallDemo';
 
 // Wraps a scene in a Sequence with opacity-based fade-in/out.
 // `from` and `durationInFrames` are in the global timeline.
@@ -114,6 +115,14 @@ export const RemotionRoot: React.FC = () => {
         id="BookGenesis50Demo"
         component={MainComposition}
         durationInFrames={TOTAL_FRAMES}
+        fps={FPS}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="BookGenesisInstallDemo"
+        component={InstallDemo}
+        durationInFrames={48 * FPS}
         fps={FPS}
         width={1920}
         height={1080}
