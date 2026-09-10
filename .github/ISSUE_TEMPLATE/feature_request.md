@@ -22,15 +22,21 @@ How do you envision this working? (even a rough sketch helps)
 
 Have you thought of other approaches?
 
-## Area affected
+## Skill Impact
 
-Which part of the current workflow would this improve?
+Which skills would this affect?
 
-- [ ] Guided session or setup
-- [ ] Provider adapter
-- [ ] Planning or chapter prompts
-- [ ] Model-reader feedback or manuscript audit
-- [ ] History and recovery
-- [ ] Local reader or export
-- [ ] Documentation or accessibility
-- [ ] Other (describe above)
+- [ ] book-genesis (orchestrator)
+- [ ] character-forge
+- [ ] theme-weaver
+- [ ] emotion-engineer
+- [ ] hook-crafter
+- [ ] dialogue-master
+- [ ] beta-reader-sim
+- [ ] proofreader
+- [ ] synopsis-writer
+- [ ] cover-brief
+- [ ] book-formatter
+- [ ] query-letter
+- [ ] series-architect
+- [ ] New skill needed

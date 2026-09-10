@@ -71,7 +71,7 @@ https://github.com/felipelobomotta-blip/book-genesis-v4
 The most interesting files:
 
 - docs/book-gallery.md
-- skills/book-genesis-codex/
+- skills/book-genesis/
 - docs/portability.md
 - docs/book-genesis-codex.md
 - SHOWCASE.md
@@ -149,7 +149,7 @@ https://github.com/felipelobomotta-blip/book-genesis-v4
 
 Useful files:
 - docs/book-gallery.md
-- skills/book-genesis-codex/
+- skills/book-genesis/
 - docs/portability.md
 - docs/book-genesis-codex.md
 - SHOWCASE.md

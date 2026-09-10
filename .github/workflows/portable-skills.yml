@@ -1,0 +1,26 @@
+name: Portable skills
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.10', '3.12']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python runner/cli.py verify-suite
+      - run: python -m unittest discover -s tests -v
+      - name: PowerShell installer preview
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./install.ps1 -Target hermes -Destination "${{ runner.temp }}/book-genesis/skills" -DryRun
+      - name: Shell installer preview
+        if: runner.os == 'Linux'
+        run: bash install.sh openclaw --dest "$RUNNER_TEMP/book-genesis/skills" --dry-run

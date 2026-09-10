@@ -1,38 +1,114 @@
 # Portability
 
-Book Genesis is a local Python CLI that uses model routes already available to the author. The runner, not an external agent skill, is the supported way to create, resume, audit, review, and export a project.
+Book Genesis is an Agent Skills package, not a hosted model wrapper. Claude Code, Codex, Kimi Code, OpenClaw, and Hermes Agent install the same canonical skill folders and execute them with their own accounts, models, permissions, and quotas.
 
-## Runtime requirements
+## Canonical Package
 
-- Python 3.10 or later.
-- Windows, macOS, or Linux with a supported provider route.
-- A writable local project directory.
+`skills/book-genesis/` is the universal core. `distribution/portable-suite.json` lists every skill required by the portable Bestseller Studio profile. Specialist agent ownership lives in `skills/book-bestseller-studio/references/agent-registry.yaml`.
 
-Install a source checkout with `python -m pip install -e .`, then run `book-genesis setup` and `book-genesis doctor`. The wheel bundles the runner’s prompt resources and can run outside the source checkout.
+`skills/book-genesis-codex/` and `skills/book-genesis-full/` remain compatibility packages. They are excluded from default portable installs.
 
-## Provider routes
+Do not copy only `SKILL.md`. Phase prompts, scoring rules, and evaluator protocol live under `references/`.
 
-| Route | Status | Notes |
+## Verify Before Installing
+
+```bash
+python runner/cli.py verify-suite
+```
+
+Validation checks skill frontmatter, dependency closure, phase prompts, mandatory adversarial audit, Literary Barrier loop, evaluator protocol, and target definitions.
+
+## Runtime Installers
+
+macOS/Linux:
+
+```bash
+bash install.sh claude
+bash install.sh codex
+bash install.sh kimi
+bash install.sh openclaw
+bash install.sh hermes
+bash install.sh shared
+```
+
+Windows PowerShell:
+
+```powershell
+.\install.ps1 -Target claude
+.\install.ps1 -Target codex
+.\install.ps1 -Target kimi
+.\install.ps1 -Target openclaw
+.\install.ps1 -Target hermes
+.\install.ps1 -Target shared
+```
+
+Default user locations:
+
+| Target | Skills directory | Invocation |
 |---|---|---|
-| Claude Code CLI | Supported | Uses the author’s logged-in CLI session. Claude is invoked with tools disabled in safe mode. |
-| Codex CLI | Supported | Uses an ephemeral session, a temporary directory, and a read-only sandbox. This is not a claim that every host-level tool is disabled. |
-| OpenAI-compatible or Anthropic-compatible endpoint | Supported through `setup` | The author configures and pays the chosen provider. |
-| Ollama or LM Studio | Supported through compatible local-server setup | Model availability and quality depend on the local installation. |
-| Declared command adapter | Supported contract | Add a command template and optional `requires` list in `~/.book-genesis/adapters.yaml`; the command determines its own capabilities. |
-| Manual copy/paste | Supported | `--manual` writes local prompt files and waits for pasted responses. |
+| Claude Code | `~/.claude/skills/` | `/book-genesis` |
+| Codex | `$CODEX_HOME/skills/` or `~/.codex/skills/` | ask Codex to use `book-genesis` |
+| Kimi Code | `$KIMI_CODE_HOME/skills/` or `~/.kimi-code/skills/` | `/skill:book-genesis` |
+| OpenClaw | `$OPENCLAW_STATE_DIR/skills/` or `~/.openclaw/skills/` | ask OpenClaw to use `book-genesis` |
+| Hermes Agent | `$HERMES_HOME/skills/` or `~/.hermes/skills/` | `/book-genesis`, or ask Hermes to use it |
+| Shared | `~/.agents/skills/` | runtime-dependent |
 
-The default role plan prefers different model families for writer and judge. When that is not possible, a single-family run is allowed and recorded as a warning. No route makes model feedback equivalent to human editorial validation.
+Use `--dest PATH` with the Python command for an isolated or project-specific skills directory:
 
-## Platform evidence
+```bash
+python runner/cli.py install kimi --dest ./sandbox/skills --dry-run
+```
 
-The current beta was verified locally on Windows with Python 3.11: 279 offline tests passed in the September 2026 quality verification, including recovery, history integrity, the audit gate, reader/export flows, and wheel installation outside the checkout. The GitHub Actions matrix also passed on Ubuntu and Windows with Python 3.10 and 3.12 for commit `4ba8ce2`. See the [recorded CI run](https://github.com/felipelobomotta-blip/book-genesis-v4/actions/runs/33947757174). This verifies software checks and wheel builds; it does not verify every live provider route.
+## Conflict Safety
 
-Provider behavior also varies by installed CLI version, operating system, account access, context window, and network conditions. The repository contains deterministic tests and limited real-provider probes; it does not claim that every advertised route has been live-tested on every platform.
+- unchanged skills are skipped
+- changed destination skills block installation by default
+- `--force` or `-Force` moves changed skills into `.book-genesis-backups/<timestamp>/` before replacement
+- `.book-genesis-install.json` records installed skill checksums
+- `--include-legacy` adds compatibility skills; for Claude it also installs native V4 agents and knowledge files. Default remains portable-only.
 
-## What ports and what does not
+## Agent Dispatch
 
-The project directory format, Markdown prompts, YAML state, review HTML, Markdown export, and EPUB export are local files. They can be inspected, copied, and backed up without a hosted service.
+Portable agents are roles, packets, and gates rather than duplicated platform prompts.
 
-The legacy `skills/book-genesis-codex/` folder contains phase references bundled into the runner. It is not an installation recipe for every agent host. Do not rely on obsolete skill-installer paths or chat-only commands as the current product interface. Use the CLI and the operational [runner reference](runner.md).
+```bash
+python runner/cli.py prepare-agent-packet my-book prose_writer
+python runner/cli.py prepare-agent-packet my-book adversarial_auditor
+python runner/cli.py prepare-agent-packet my-book scorekeeper
+```
 
-Long manuscripts may exceed a selected provider’s context window during the full-manuscript audit. The beta does not yet provide a chunked audit design with equivalent guarantees. This is a current limit, not a portability failure hidden by a fallback.
+Give each packet to a fresh runtime-native subagent. Claude Code may use custom or general-purpose subagents, Codex may dispatch isolated subagents, and Kimi Code may dispatch its built-in subagents. When isolation is unavailable, run roles sequentially and record Evaluation Independence Grade C.
+
+## Generic Agents
+
+Minimum runtime capabilities:
+
+- read a directory of Markdown files
+- follow YAML phase manifest
+- create and update project files
+- preserve state across turns
+- isolate drafting, revision, and evaluation when possible
+
+Generic instruction:
+
+```text
+Run Book Genesis as a file-backed book-production pipeline. Read AGENTS.md and skills/book-genesis/SKILL.md. Follow skills/book-genesis/references/pipeline/manifest.yaml exactly. Load only the active phase prompt. Persist decisions to files. Never score before adversarial audit. Apply the independent evaluator protocol before any final quality claim.
+```
+
+## Runtime Boundary
+
+Runner scaffolds projects, validates files, prepares phase packets, advances mechanical gates, and prepares specialist packets. It never calls a model, writes literary prose, or certifies literary quality. Runtime performs creative and critical work using user's own account.
+
+## OpenClaw and Hermes details
+
+These targets copy the complete portable suite into the host's skill directory. They do not install the host, modify permissions, add credentials, enable tools, or start a model. Start a new host session after installing, and ask it to locate `book-genesis` before beginning a book. Use `--dest` for a specific remote/container/profile directory; run the installer in the environment where the agent reads files.
+
+OpenClaw can use workspace-local skills instead of shared state skills:
+
+```bash
+python runner/cli.py install openclaw --dest /path/to/openclaw-workspace/skills --dry-run
+```
+
+Remove `--dry-run` after reviewing the destination. Keep the host's normal permission and tool-approval settings. For Hermes profiles, select the matching `HERMES_HOME` or an explicit skills destination. The folder paths follow [OpenClaw's skill-loading documentation](https://docs.openclaw.ai/tools/skills) and [Hermes's skills documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills), checked September 10, 2026.
+
+Installer tests establish copied-file integrity and conflict handling. They do not establish a complete-book run inside each host. See [restoration verification](restoration-20260910.md).

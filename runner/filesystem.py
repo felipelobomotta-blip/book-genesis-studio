@@ -3,15 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 import json
-import re
 from pathlib import Path
 from typing import Dict, List
 
 
-from runner.resources import resource_root
-
-REPO_ROOT = resource_root()
-SKILL_ROOT = REPO_ROOT / "skills" / "book-genesis-codex"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SKILL_ROOT = REPO_ROOT / "skills" / "book-genesis"
 MANIFEST_PATH = SKILL_ROOT / "references" / "pipeline" / "manifest.yaml"
 
 
@@ -20,6 +17,7 @@ class Phase:
     key: str
     label: str
     prompt: str
+    references: List[str]
     gate: str
     outputs: List[str]
     next: str
@@ -36,6 +34,7 @@ class AgentSpec:
     outputs: List[str]
     gates: List[str]
     score_floor: str
+    blind: bool
 
 
 ARTIFACT_HEADINGS: Dict[str, str] = {
@@ -63,6 +62,7 @@ def load_manifest() -> List[Phase]:
             key=key,
             label=str(entry.get("label", "")),
             prompt=str(entry.get("prompt", "")),
+            references=list(entry.get("references", [])),
             gate=str(entry.get("gate", "")),
             outputs=list(entry.get("outputs", [])),
             next=str(entry.get("next", "")),
@@ -84,6 +84,7 @@ def load_agent_registry() -> List[AgentSpec]:
             outputs=list(entry.get("outputs", [])),
             gates=list(entry.get("gates", [])),
             score_floor=str(entry.get("score_floor", "")),
+            blind=str(entry.get("blind", "false")).lower() == "true",
         )
         for key, entry in entries.items()
     ]
@@ -161,15 +162,10 @@ def load_state_summary(target: Path) -> Dict[str, str]:
     text = (target / "PROJECT_STATE.yaml").read_text(encoding="utf-8")
     return {
         "title": _extract_scalar(text, "title"),
-        "idea": _extract_scalar(text, "idea"),
-        "language": _extract_scalar(text, "language"),
-        "genre": _extract_scalar(text, "genre"),
-        "audience": _extract_scalar(text, "audience"),
         "adapter": _extract_scalar(text, "adapter"),
         "model_name": _extract_scalar(text, "model_name"),
         "current_phase": _extract_scalar(text, "current_phase"),
         "status": _extract_scalar(text, "status"),
-        "human_checkpoint_required": _extract_scalar(text, "human_checkpoint_required"),
     }
 
 
@@ -178,6 +174,13 @@ def prepare_phase(target: Path) -> Path:
     prompt_path = SKILL_ROOT / phase.prompt
     prompt_text = prompt_path.read_text(encoding="utf-8")
     output_list = "\n".join(f"- {item}" for item in phase.outputs)
+    reference_sections = []
+    for reference in phase.references:
+        reference_path = SKILL_ROOT / reference
+        reference_text = reference_path.read_text(encoding="utf-8").rstrip()
+        reference_sections.append(f"## Required Reference: {reference}\n\n{reference_text}\n")
+    references_text = "\n".join(reference_sections)
+    reference_appendix = f"\n{references_text}" if references_text else ""
 
     packet = (
         f"# Current Phase\n\n"
@@ -187,6 +190,7 @@ def prepare_phase(target: Path) -> Path:
         f"- Required outputs:\n{output_list}\n\n"
         f"## Phase Prompt\n\n"
         f"{prompt_text.rstrip()}\n"
+        f"{reference_appendix}"
     )
 
     work_dir = target / "work"
@@ -289,6 +293,19 @@ def prepare_agent_packet(target: Path, agent_key: str) -> Path:
     input_lines = _path_status_lines(target, agent.inputs)
     output_lines = "\n".join(f"- `{item}`" for item in agent.outputs) or "- No required outputs listed."
     gate_lines = "\n".join(f"- {item}" for item in agent.gates) or "- No gates listed."
+    score_floor = "withheld from blind evaluator" if agent.blind else (agent.score_floor or "project default")
+    blind_rule = (
+        "- Blind evaluation: yes\n"
+        "- Do not request or infer the target score, previous scores, writer self-report, or revision rationale.\n"
+        if agent.blind
+        else "- Blind evaluation: no\n"
+    )
+    operating_rule = (
+        "Produce a raw evidence-backed evaluation only. Do not approve readiness, apply a pass threshold, or edit the manuscript."
+        if agent.blind
+        else "Produce durable files only. Do not claim market-ready, viral-ready, or 8.5+ readiness unless every listed gate passes with evidence. "
+        "When a gate fails, write blockers and revision tickets instead of inflating scores."
+    )
 
     skill_path = REPO_ROOT / agent.skill
     skill_excerpt = ""
@@ -301,8 +318,9 @@ def prepare_agent_packet(target: Path, agent_key: str) -> Path:
         f"# Agent Packet: {agent.label}\n\n"
         f"- Agent key: `{agent.key}`\n"
         f"- Timing: {agent.timing}\n"
-        f"- Score floor: {agent.score_floor or 'project default'}\n"
+        f"- Score floor: {score_floor}\n"
         f"- Skill: `{agent.skill}`\n\n"
+        f"{blind_rule}\n"
         "## Mission\n\n"
         f"{agent.mission}\n\n"
         "## Input Status\n\n"
@@ -312,8 +330,7 @@ def prepare_agent_packet(target: Path, agent_key: str) -> Path:
         "## Gates\n\n"
         f"{gate_lines}\n\n"
         "## Operating Rule\n\n"
-        "Produce durable files only. Passing internal gates is not evidence of market success, virality, or a calibrated literary score. "
-        "When a gate fails, write blockers and revision tickets instead of inflating scores.\n\n"
+        f"{operating_rule}\n\n"
         "## Skill Prompt\n\n"
         f"{skill_excerpt}\n"
     )
@@ -328,20 +345,6 @@ def advance_phase(target: Path) -> Dict[str, object]:
     pending = pending_outputs(target, phase.outputs)
     if pending:
         return {"ok": False, "pending": pending, "next_phase": phase.label}
-
-    if phase.label == "Phase 4: Adversarial Audit":
-        from runner.audit import audit_status
-        try:
-            status = audit_status((target / "artifacts" / "08-adversarial-audit.md").read_text(encoding="utf-8"))
-        except ValueError as exc:
-            return {"ok": False, "pending": [str(exc)], "next_phase": phase.label}
-        if status != "pass":
-            state = target / "PROJECT_STATE.yaml"
-            _update_state_value(state, phase.gate, "blocked")
-            _update_state_value(state, "current_phase", phase.label)
-            _update_state_value(state, "current_gate", phase.gate)
-            _update_state_value(state, "status", "awaiting_revision")
-            return {"ok": False, "pending": [f"audit_status: {status}"], "next_phase": phase.label}
 
     state = target / "PROJECT_STATE.yaml"
     _update_state_value(state, phase.gate, "passed")
@@ -399,11 +402,8 @@ def pending_outputs(target: Path, outputs: List[str]) -> List[str]:
     for output in outputs:
         path = target / output
         if output == "manuscript/chapters":
-            chapters = list(path.glob("chapter-*.md")) if path.exists() else []
-            outline = target / "artifacts" / "05-outline.md"
-            expected = _outline_chapter_numbers(outline.read_text(encoding="utf-8")) if outline.exists() else []
-            actual = sorted(int(match.group(1)) for item in chapters if (match := re.fullmatch(r"chapter-(\d+)\.md", item.name)))
-            if not expected or actual != expected:
+            chapters = list(path.glob("*.md")) if path.exists() else []
+            if not chapters:
                 pending.append(output)
             continue
         if not path.exists():
@@ -413,13 +413,6 @@ def pending_outputs(target: Path, outputs: List[str]) -> List[str]:
         if not text or "BOOK_GENESIS_TEMPLATE" in text or text == template_for_output(output).strip():
             pending.append(output)
     return pending
-
-
-def _outline_chapter_numbers(outline: str) -> List[int]:
-    marker = re.compile(r"^\s*(?:#{1,6}\s*|\*\*\s*)(?:chapter|cap[ií]tulo|cap\.?)\s*0*(\d+)\b", re.IGNORECASE)
-    numbers = [int(match.group(1)) for line in outline.splitlines() if (match := marker.match(line))]
-    expected = list(range(1, max(numbers) + 1)) if numbers else []
-    return expected if sorted(numbers) == expected else []
 
 
 def fill_outputs_for_demo(target: Path, phase: Phase) -> None:
@@ -434,20 +427,6 @@ def fill_outputs_for_demo(target: Path, phase: Phase) -> None:
             )
             (chapters_dir / "chapter-02.md").write_text(
                 "# Chapter 2\n\nBy dawn, the audit log had started correcting him back.\n",
-                encoding="utf-8",
-            )
-            continue
-        if output == "artifacts/05-outline.md":
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                "# Demo Outline\n\n## Chapter 1: The Archive\n\nA beginning.\n\n## Chapter 2: The Audit\n\nAn ending.\n",
-                encoding="utf-8",
-            )
-            continue
-        if output == "artifacts/08-adversarial-audit.md":
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                "# Demo Audit\n\nMechanical demonstration only; no literary assessment.\n\naudit_status: pass\n",
                 encoding="utf-8",
             )
             continue
@@ -539,7 +518,10 @@ def _project_state_template(
         f"  language: \"{_escape_yaml(language)}\"\n"
         "  genre: \"\"\n"
         "  audience: \"\"\n"
-        "  target_length: \"\"\n\n"
+        "  positioning: \"\"\n"
+        "  target_range_words: \"\"\n"
+        "  target_floor_words: 0\n"
+        "  target_ceiling_words: 0\n\n"
         "runtime:\n"
         f"  adapter: \"{_escape_yaml(adapter)}\"\n"
         f"  model_family: \"{_infer_family(model_name)}\"\n"
@@ -548,46 +530,20 @@ def _project_state_template(
         f"  current_phase: \"{first_phase}\"\n"
         "  current_gate: \"\"\n"
         "  status: \"not_started\"\n"
-        "  human_checkpoint_required: \"false\"\n"
         "  revision_iteration: 0\n\n"
         "artifacts:\n"
         "  generated: []\n\n"
         "manuscript:\n"
         "  chapter_count: 0\n"
+        "  chapter_count_planned: 0\n"
+        "  average_words_per_chapter_planned: 0\n"
+        "  word_count_actual: 0\n"
         "  completed_chapters: []\n"
+        "  length_gate: \"pending\"\n"
         "  status: \"not_started\"\n\n"
         "gates:\n"
         f"{gates}\n"
     )
-
-
-def update_state_value(path: Path, key: str, value: str) -> None:
-    """Public entry point: set the first ``key:`` scalar found in PROJECT_STATE.yaml."""
-    _update_state_value(path, key, value.replace('"', "'"))
-
-
-def set_human_checkpoint_required(target: Path, required: bool) -> None:
-    """Persist the optional checkpoint, adding its field to pre-v5 project state."""
-    path = target / "PROJECT_STATE.yaml"
-    text = path.read_text(encoding="utf-8")
-    value = "true" if required else "false"
-    if _extract_scalar(text, "human_checkpoint_required"):
-        update_state_value(path, "human_checkpoint_required", value)
-        return
-
-    lines = text.splitlines()
-    for index, line in enumerate(lines):
-        if line.strip() != "pipeline:":
-            continue
-        for cursor in range(index + 1, len(lines)):
-            if lines[cursor] and not lines[cursor].startswith((" ", "\t")):
-                break
-            if lines[cursor].strip().startswith("status:"):
-                indent = lines[cursor][: len(lines[cursor]) - len(lines[cursor].lstrip())]
-                lines.insert(cursor + 1, f'{indent}human_checkpoint_required: "{value}"')
-                path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-                return
-    raise KeyError(f"Could not add human checkpoint state in {path}")
 
 
 def _update_state_value(path: Path, key: str, value: str) -> None:
@@ -613,7 +569,7 @@ def _extract_scalar(text: str, key: str) -> str:
 
 
 def _unquote(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+    if len(value) >= 2 and value[0] == value[-1] == '"':
         return value[1:-1]
     return value
 
@@ -635,44 +591,28 @@ def _infer_family(model_name: str) -> str:
     return "unknown"
 
 
-def load_simple_yaml_map(path: Path) -> Dict[str, Dict[str, object]]:
-    """Public entry point for the two-level YAML subset used by manifests and config."""
-    return _load_simple_yaml_map(path)
-
-
 def _load_simple_yaml_map(path: Path) -> Dict[str, Dict[str, object]]:
     raw = path.read_text(encoding="utf-8").splitlines()
     entries: Dict[str, Dict[str, object]] = {}
     current_key = ""
     current_list_key = ""
-    last_scalar_key = ""
-    last_scalar_indent = -1
 
     for line in raw:
         if not line.strip() or line.lstrip().startswith("#"):
             continue
-        indent = len(line) - len(line.lstrip(" "))
-        if indent == 0:
+        if not line.startswith(" "):
             current_key = line.split(":", 1)[0].strip()
             entries[current_key] = {}
             current_list_key = ""
-            last_scalar_key = ""
-            last_scalar_indent = -1
             continue
         if not current_key:
             raise ValueError(f"Value before top-level key in {path}: {line}")
         stripped = line.strip()
-        if last_scalar_key and indent > last_scalar_indent:
-            # A YAML plain-scalar folded onto a continuation line (deeper indent, no key of
-            # its own): a real YAML writer wraps long values this way; join it back with a space.
-            entries[current_key][last_scalar_key] = f"{entries[current_key][last_scalar_key]} {stripped}".strip()  # type: ignore[index]
-            continue
         if stripped.startswith("- "):
             if not current_list_key:
                 raise ValueError(f"List item without list key in {path}: {line}")
             entries[current_key].setdefault(current_list_key, [])
             entries[current_key][current_list_key].append(_unquote(stripped[2:].strip()))  # type: ignore[index]
-            last_scalar_key = ""
             continue
         key, value = stripped.split(":", 1)
         key = key.strip()
@@ -680,12 +620,9 @@ def _load_simple_yaml_map(path: Path) -> Dict[str, Dict[str, object]]:
         if value == "":
             entries[current_key][key] = []
             current_list_key = key
-            last_scalar_key = ""
         else:
             entries[current_key][key] = _unquote(value)
             current_list_key = ""
-            last_scalar_key = key
-            last_scalar_indent = indent
 
     return entries
 
