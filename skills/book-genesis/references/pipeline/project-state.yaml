@@ -1,0 +1,44 @@
+project:
+  id: ""
+  title: ""
+  idea: ""
+  language: ""
+  genre: ""
+  audience: ""
+  positioning: ""
+  target_range_words: ""
+  target_floor_words: 0
+  target_ceiling_words: 0
+
+runtime:
+  adapter: "host-native"
+  model_family: "unknown"
+  model_name: ""
+
+pipeline:
+  current_phase: "Phase 0: Intake"
+  current_gate: ""
+  status: "not_started"
+  revision_iteration: 0
+
+artifacts:
+  generated: []
+
+manuscript:
+  chapter_count: 0
+  chapter_count_planned: 0
+  average_words_per_chapter_planned: 0
+  word_count_actual: 0
+  completed_chapters: []
+  length_gate: "pending"
+  status: "not_started"
+
+gates:
+  intake: "pending"
+  foundation: "pending"
+  architecture: "pending"
+  drafting: "pending"
+  adversarial_audit: "pending"
+  literary_barrier_loop: "pending"
+  final_score: "pending"
+  editorial_package: "pending"

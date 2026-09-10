@@ -16,6 +16,8 @@ from runner.distribution import (  # type: ignore  # noqa: E402
     resolve_install_root,
     selected_skills,
     validate_suite,
+    verify_install,
+    supported_targets,
 )
 
 
@@ -76,7 +78,7 @@ class DistributionTests(unittest.TestCase):
                 self.assertFalse(home.exists())
 
     def test_new_targets_cli_install_reinstall_and_reference_integrity(self) -> None:
-        for target in ("openclaw", "hermes"):
+        for target in supported_targets():
             with self.subTest(target=target):
                 destination = self.tempdir / target / "skills with spaces"
                 command = [sys.executable, str(REPO_ROOT / "runner/cli.py"),
@@ -110,7 +112,7 @@ class DistributionTests(unittest.TestCase):
 
     def test_install_copies_same_portable_suite_for_every_runtime(self) -> None:
         expected = set(selected_skills())
-        for target in ("claude", "codex", "kimi", "openclaw", "hermes", "shared"):
+        for target in supported_targets():
             destination = self.tempdir / target / "skills"
             result = install_suite(target, destination=destination)
             self.assertTrue(result["ok"], msg=str(result["errors"]))

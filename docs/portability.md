@@ -1,6 +1,6 @@
 # Portability
 
-Book Genesis is an Agent Skills package, not a hosted model wrapper. Claude Code, Codex, Kimi Code, OpenClaw, and Hermes Agent install the same canonical skill folders and execute them with their own accounts, models, permissions, and quotas.
+Book Genesis is an Agent Skills package, not a hosted model wrapper. Claude Code, Codex, OpenCode, Antigravity, Gemini CLI, Kimi Code, OpenClaw, and Hermes Agent install the same canonical skill folders and execute them with their own accounts, models, permissions, and quotas.
 
 ## Canonical Package
 
@@ -28,6 +28,9 @@ bash install.sh codex
 bash install.sh kimi
 bash install.sh openclaw
 bash install.sh hermes
+bash install.sh opencode
+bash install.sh antigravity
+bash install.sh gemini
 bash install.sh shared
 ```
 
@@ -39,6 +42,9 @@ Windows PowerShell:
 .\install.ps1 -Target kimi
 .\install.ps1 -Target openclaw
 .\install.ps1 -Target hermes
+.\install.ps1 -Target opencode
+.\install.ps1 -Target antigravity
+.\install.ps1 -Target gemini
 .\install.ps1 -Target shared
 ```
 
@@ -51,6 +57,9 @@ Default user locations:
 | Kimi Code | `$KIMI_CODE_HOME/skills/` or `~/.kimi-code/skills/` | `/skill:book-genesis` |
 | OpenClaw | `$OPENCLAW_STATE_DIR/skills/` or `~/.openclaw/skills/` | ask OpenClaw to use `book-genesis` |
 | Hermes Agent | `$HERMES_HOME/skills/` or `~/.hermes/skills/` | `/book-genesis`, or ask Hermes to use it |
+| OpenCode | `$OPENCODE_CONFIG_DIR/skills/`, otherwise `$XDG_CONFIG_HOME/opencode/skills/` or `~/.config/opencode/skills/` | ask OpenCode to load `book-genesis` |
+| Antigravity | `~/.gemini/config/skills/` | ask Antigravity to use `book-genesis` |
+| Gemini CLI | `$GEMINI_CLI_HOME/.gemini/skills/` or `~/.gemini/skills/` | ask Gemini to activate `book-genesis` |
 | Shared | `~/.agents/skills/` | runtime-dependent |
 
 Use `--dest PATH` with the Python command for an isolated or project-specific skills directory:
@@ -112,3 +121,21 @@ python runner/cli.py install openclaw --dest /path/to/openclaw-workspace/skills 
 Remove `--dry-run` after reviewing the destination. Keep the host's normal permission and tool-approval settings. For Hermes profiles, select the matching `HERMES_HOME` or an explicit skills destination. The folder paths follow [OpenClaw's skill-loading documentation](https://docs.openclaw.ai/tools/skills) and [Hermes's skills documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills), checked September 10, 2026.
 
 Installer tests establish copied-file integrity and conflict handling. They do not establish a complete-book run inside each host. See [restoration verification](restoration-20260910.md).
+
+## OpenCode, Antigravity, and Gemini CLI
+
+These are directory bundles with the original references, not platform-specific rewrites. Host permissions and skill enablement still apply. Current discovery conventions: [OpenCode skills](https://opencode.ai/docs/skills/), [OpenCode configuration](https://opencode.ai/docs/config/), [Antigravity skills](https://antigravity.google/docs/skills), and [Gemini CLI skills](https://geminicli.com/docs/cli/skills/).
+
+For a workspace install, specify the host's actual directory:
+
+```bash
+python runner/cli.py install opencode --dest /path/to/book/.opencode/skills
+python runner/cli.py install antigravity --dest /path/to/book/.agents/skills
+python runner/cli.py install gemini --dest /path/to/book/.gemini/skills
+```
+
+Antigravity's current global directory is `~/.gemini/config/skills`. Older editions used `~/.gemini/antigravity/skills`; use `--dest` only if your installed edition expects that legacy path. Do not install duplicate copies into every historical path. Gemini CLI is a separate target with a different global directory.
+
+After installing, run `python runner/cli.py verify-install TARGET` with the same `--dest`, if any. A changed checkout or locally edited skill will be reported as different; inspect before replacing it. This command performs no model calls. The host must still discover and activate the skill. [Compatibility evidence](compatibility.md) separates those checks.
+
+A skills-only installation contains the startup/recovery contract and initial state template under `book-genesis/references/pipeline/`. Native agents can initialize and resume a book without the repository Python helper. Optional external marketing or image skills are not required to write.

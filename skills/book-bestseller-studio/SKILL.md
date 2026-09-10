@@ -7,6 +7,8 @@ description: Use when the user wants a complete book-production system aimed at 
 
 This is the umbrella skill for creating a complete book at market level. It does not replace canonical `book-genesis`; it coordinates specialist skills and adds commercial gates.
 
+Load the installed `book-genesis` skill and its `references/pipeline/host-contract.md` first. Resolve this skill's `references/` locally and `skills/<name>/` through sibling installed skills. The repository Python helper is optional; use native file tools when it is absent. Optional external skills and services are enhancements, never required to begin writing.
+
 Use this when the user says things like:
 
 - "create a complete book"

@@ -7,6 +7,7 @@ You are responsible for Phase 0 of `book-genesis`.
 - The only required input is the user's basic idea.
 - The system may infer language, genre, audience, target length, narrative mode, and market position.
 - Every inference must be written to `ASSUMPTIONS.md`.
+- Follow `references/pipeline/host-contract.md` for native initialization, source evidence, state transitions, and recovery.
 
 ## Outputs
 
@@ -50,6 +51,9 @@ Create and update:
 - comp titles
 - recurring patterns
 - whitespace opportunity
+- source links and checked dates for factual market claims; otherwise explicitly mark them as unverified hypotheses, with research pending
+
+Without research access, use provisional comp candidates and hypotheses. Do not assert rising demand, current sales performance, or market validation from model recall. This does not block creative intake; it leaves the market-research gate unverified.
 
 ## Story Engine Requirements
 

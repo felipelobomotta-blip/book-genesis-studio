@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ['3.10', '3.12']
     runs-on: ${{ matrix.os }}
     steps:
@@ -20,7 +20,14 @@ jobs:
       - name: PowerShell installer preview
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./install.ps1 -Target hermes -Destination "${{ runner.temp }}/book-genesis/skills" -DryRun
+        run: |
+          foreach ($target in @('claude', 'codex', 'kimi', 'openclaw', 'hermes', 'opencode', 'antigravity', 'gemini', 'shared')) {
+            ./install.ps1 -Target $target -Destination "${{ runner.temp }}/book-genesis/$target/skills" -DryRun
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
       - name: Shell installer preview
-        if: runner.os == 'Linux'
-        run: bash install.sh openclaw --dest "$RUNNER_TEMP/book-genesis/skills" --dry-run
+        if: runner.os != 'Windows'
+        run: |
+          for target in claude codex kimi openclaw hermes opencode antigravity gemini shared; do
+            bash install.sh "$target" --dest "$RUNNER_TEMP/book-genesis/$target/skills" --dry-run
+          done

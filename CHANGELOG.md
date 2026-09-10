@@ -1,3 +1,12 @@
+
+## 2026-09-10 — More native hosts and recovery checks
+
+- Add OpenCode, Antigravity, and Gemini CLI installer targets; handle OpenCode custom/XDG configuration and Gemini substitute home correctly.
+- Add `verify-install` for installed bundle and reference integrity.
+- Reject empty chapters, unmet recorded length plans, skipped prerequisites, and installer/source overlap; replace project state atomically with section-aware updates.
+- Bundle native startup/recovery instructions and initial state; require evidence labels for offline market planning.
+- Test nine installation targets and add macOS to Windows/Linux CI. [Compatibility observations](docs/compatibility.md) and [architecture audit](docs/architecture-audit-20260910.md) record measured results and limitations.
+
 # Agent-native restoration — 2026-09-10
 
 Restored the portable-skills foundation from `c974486` as the public product. Added OpenClaw and Hermes installation targets to the existing installer, kept skill references and conflict backups, and added portable-install CI. The standalone app remains in Git history. See [verification and limitations](docs/restoration-20260910.md).

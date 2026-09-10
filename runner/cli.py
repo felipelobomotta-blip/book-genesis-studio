@@ -21,6 +21,7 @@ from runner.distribution import (  # noqa: E402
     install_suite,
     supported_targets,
     validate_suite,
+    verify_install,
 )
 
 
@@ -32,8 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("path")
     init_parser.add_argument("--idea", default="")
     init_parser.add_argument("--language", default="")
-    init_parser.add_argument("--adapter", default="codex")
-    init_parser.add_argument("--model", default="gpt-5.5")
+    init_parser.add_argument("--adapter", default="host-native")
+    init_parser.add_argument("--model", default="", help="Record the actual host model, if known; does not select a model")
     init_parser.add_argument("--force", action="store_true")
 
     status_parser = subparsers.add_parser("status", help="Print project status")
@@ -70,6 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument("--dry-run", action="store_true")
 
     subparsers.add_parser("verify-suite", help="Validate portable skills, agent registry, and phase contracts")
+    verify_parser = subparsers.add_parser("verify-install", help="Check installed skills and reference integrity")
+    verify_parser.add_argument("target", choices=supported_targets())
+    verify_parser.add_argument("--dest", default=None)
 
     return parser
 
@@ -77,6 +81,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.command == "verify-install":
+        result = verify_install(args.target, destination=args.dest)
+        print(f"Checking installed skills: {result['destination']}")
+        for error in result["errors"]:
+            print(error)
+        if result["ok"]:
+            print("Installed files verified. Start a new host session and confirm skill discovery; no model was tested.")
+        return 0 if result["ok"] else 1
 
     if args.command == "verify-suite":
         result = validate_suite()

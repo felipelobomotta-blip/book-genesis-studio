@@ -36,6 +36,8 @@ Loop back from any gate failure to the smallest responsible specialist. Do not r
 
 ## Packet Command
 
+These commands apply only when the repository helper is available. In a skills-only installation, read this folder's `agent-registry.yaml`, load the specialist skill through the host, and create the same packet with native file tools. Follow the core host contract's ownership, recovery, and evaluation-independence rules.
+
 ```bash
 python runner/cli.py prepare-agent-packet my-book market_researcher
 python runner/cli.py prepare-agent-packet my-book prose_writer
