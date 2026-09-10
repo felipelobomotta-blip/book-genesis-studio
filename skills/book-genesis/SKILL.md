@@ -76,6 +76,8 @@ Before any independent or final score, read `references/scoring/evaluator-protoc
 
 ## Operating Loop
 
+Read `references/pipeline/host-contract.md` at start and resume. It defines installed-path resolution, native-host capabilities, progress, checkpoint recovery, and bounded retries. Use the bundled `references/pipeline/project-state.yaml` when initializing without the optional Python helper.
+
 1. Identify or create the project directory.
 2. Read `PROJECT_STATE.yaml` if it exists. If not, initialize it from the manifest phases and user idea.
 3. Read `ASSUMPTIONS.md` if it exists. If not, create it and mark inferred assumptions clearly.
@@ -94,7 +96,7 @@ Before any independent or final score, read `references/scoring/evaluator-protoc
 7. Do not skip Phase 4. Audit before final scoring.
 8. When drafting, write in chapter files under `manuscript/chapters/` and keep the state synchronized.
 9. When user feedback changes direction, record it in project files before continuing.
-10. If the user asks to break a quality threshold such as 8.5, activate the Literary Barrier loop after the adversarial audit and keep iterating until the calibrated critical score clears the threshold or the blocker is documented as requiring human/editorial input.
+10. If the user asks to break a quality threshold such as 8.5, activate the Literary Barrier loop after the adversarial audit. Respect the host contract's retry and no-progress bounds; stop at a saved checkpoint when the threshold cannot be supported, rather than looping until an evaluator agrees.
 11. If the manuscript is below `target_floor_words`, run expansion/re-architecture before any final score or editorial package claims publication readiness.
 
 ## Quality Policy

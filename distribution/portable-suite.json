@@ -29,6 +29,23 @@
     "knowledge_dir": "knowledge"
   },
   "targets": {
+    "opencode": {
+      "home_env": "OPENCODE_CONFIG_DIR",
+      "default_home": ".config/opencode",
+      "xdg_config_subdir": "opencode",
+      "skills_dir": "skills"
+    },
+    "antigravity": {
+      "home_env": "",
+      "default_home": ".gemini/config",
+      "skills_dir": "skills"
+    },
+    "gemini": {
+      "home_env": "GEMINI_CLI_HOME",
+      "configured_home_subdir": ".gemini",
+      "default_home": ".gemini",
+      "skills_dir": "skills"
+    },
     "claude": {
       "home_env": "CLAUDE_CONFIG_DIR",
       "default_home": ".claude",

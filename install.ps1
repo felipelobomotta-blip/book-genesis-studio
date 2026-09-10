@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("claude", "codex", "kimi", "openclaw", "hermes", "shared")]
+    [ValidateSet("claude", "codex", "kimi", "openclaw", "hermes", "shared", "opencode", "antigravity", "gemini")]
     [string]$Target = "claude",
     [string]$Destination = "",
     [switch]$Force,

@@ -55,9 +55,13 @@ def resolve_install_root(
     environment = os.environ if environ is None else environ
     home_env = str(spec.get("home_env", ""))
     configured_home = environment.get(home_env, "") if home_env else ""
-    runtime_home = Path(configured_home).expanduser() if configured_home else (home or Path.home()) / str(
-        spec["default_home"]
-    )
+    xdg_home = environment.get("XDG_CONFIG_HOME", "")
+    if configured_home:
+        runtime_home = Path(configured_home).expanduser() / str(spec.get("configured_home_subdir", ""))
+    elif xdg_home and spec.get("xdg_config_subdir"):
+        runtime_home = Path(xdg_home).expanduser() / str(spec["xdg_config_subdir"])
+    else:
+        runtime_home = (home or Path.home()) / str(spec["default_home"])
     return (runtime_home / str(spec["skills_dir"])).resolve()
 
 
@@ -90,10 +94,12 @@ def validate_suite() -> dict[str, object]:
             errors.append(f"missing skill entrypoint: {skill_file.relative_to(REPO_ROOT).as_posix()}")
             continue
         frontmatter = _read_frontmatter(skill_file)
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill_name) or len(skill_name) > 64:
+            errors.append(f"invalid portable skill name: {skill_name}")
         if frontmatter.get("name") != skill_name:
             errors.append(f"skill name mismatch in {skill_file.relative_to(REPO_ROOT).as_posix()}")
-        if not frontmatter.get("description"):
-            errors.append(f"skill description missing in {skill_file.relative_to(REPO_ROOT).as_posix()}")
+        if not 1 <= len(frontmatter.get("description", "")) <= 1024:
+            errors.append(f"skill description must be 1-1024 characters: {skill_name}")
 
     registry_value = str(manifest.get("agent_registry", ""))
     registry_path = REPO_ROOT / registry_value
@@ -111,8 +117,17 @@ def validate_suite() -> dict[str, object]:
                     errors.append(f"agent registry dependency is not packaged: {dependency}")
 
     canonical_root = REPO_ROOT / "skills" / canonical_skill
+    for reference in ("references/pipeline/host-contract.md", "references/pipeline/project-state.yaml"):
+        if not (canonical_root / reference).is_file():
+            errors.append(f"native startup reference missing: {reference}")
     phases = load_manifest()
     labels = {phase.label for phase in phases}
+    if len(labels) != len(phases):
+        errors.append("canonical pipeline contains duplicate phase labels")
+    for index, phase in enumerate(phases):
+        expected_next = phases[index + 1].label if index + 1 < len(phases) else ""
+        if phase.next != expected_next:
+            errors.append(f"canonical phase order broken at {phase.label}")
     gates = [phase.gate for phase in phases]
     if len(gates) != len(set(gates)):
         errors.append("canonical pipeline contains duplicate gates")
@@ -135,7 +150,7 @@ def validate_suite() -> dict[str, object]:
     if not evaluator_protocol.exists():
         errors.append("independent evaluator protocol is missing")
 
-    required_targets = {"claude", "codex", "kimi", "openclaw", "hermes", "shared"}
+    required_targets = {"claude", "codex", "kimi", "openclaw", "hermes", "shared", "opencode", "antigravity", "gemini"}
     target_names = set(supported_targets())
     missing_targets = sorted(required_targets - target_names)
     if missing_targets:
@@ -156,6 +171,29 @@ def validate_suite() -> dict[str, object]:
                 errors.append(f"legacy Claude source directory missing: {source_dir.name}")
 
     return {"ok": not errors, "errors": errors, "warnings": warnings}
+
+
+def verify_install(target: str, *, destination: str | Path | None = None) -> dict[str, object]:
+    """Compare installed bundles with this checkout; never launch a host or model."""
+    root = resolve_install_root(target, destination=destination)
+    errors: list[str] = []
+    for name in selected_skills():
+        installed = root / name
+        if not (installed / "SKILL.md").is_file():
+            errors.append(f"missing skill: {name}")
+        elif _tree_digest(installed) != _tree_digest(REPO_ROOT / "skills" / name):
+            errors.append(f"changed or incomplete skill: {name}; compare with this checkout before reinstalling")
+    record = root / INSTALL_RECORD
+    try:
+        data = json.loads(record.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or data.get("schema_version") != 1 or not isinstance(data.get("skills"), dict):
+            raise ValueError("invalid install record")
+        for name in selected_skills():
+            if data["skills"].get(name) != _tree_digest(root / name):
+                errors.append(f"install record mismatch: {name}")
+    except (OSError, ValueError):
+        errors.append("missing or invalid install record; this directory is not a verified installer-managed suite")
+    return {"ok": not errors, "destination": str(root), "errors": errors}
 
 
 def install_suite(
@@ -186,14 +224,14 @@ def install_suite(
         environ=environ,
     )
     source_root = (REPO_ROOT / "skills").resolve()
-    if destination_root == source_root:
+    if destination_root == source_root or destination_root.is_relative_to(source_root) or source_root.is_relative_to(destination_root):
         return {
             "ok": False,
             "destination": str(destination_root),
             "actions": [],
             "legacy_actions": [],
             "conflicts": [],
-            "errors": ["installation destination cannot be repository source skills directory"],
+            "errors": ["installation destination cannot overlap repository source skills directory"],
         }
     if destination_root.exists() and not destination_root.is_dir():
         return {
@@ -353,13 +391,24 @@ def _read_frontmatter(path: Path) -> dict[str, str]:
     if not lines or lines[0].strip() != "---":
         return {}
     values: dict[str, str] = {}
+    block_key = ""
     for line in lines[1:]:
         if line.strip() == "---":
             return values
+        if line.startswith(" "):
+            if block_key:
+                values[block_key] = (values[block_key] + " " + line.strip()).strip()
+            continue
+        block_key = ""
         if ":" not in line:
             continue
         key, value = line.split(":", 1)
-        values[key.strip()] = value.strip().strip('"')
+        key, value = key.strip(), value.strip()
+        if value in {"|", ">", "|-", ">-"}:
+            block_key = key
+            values[key] = ""
+        else:
+            values[key] = value.strip('"').strip("'")
     return {}
 
 

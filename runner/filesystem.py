@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 import json
+import os
 from pathlib import Path
+import tempfile
 from typing import Dict, List
 
 
@@ -161,11 +163,11 @@ def validate_project(target: Path) -> Dict[str, object]:
 def load_state_summary(target: Path) -> Dict[str, str]:
     text = (target / "PROJECT_STATE.yaml").read_text(encoding="utf-8")
     return {
-        "title": _extract_scalar(text, "title"),
-        "adapter": _extract_scalar(text, "adapter"),
-        "model_name": _extract_scalar(text, "model_name"),
-        "current_phase": _extract_scalar(text, "current_phase"),
-        "status": _extract_scalar(text, "status"),
+        "title": _extract_section_scalar(text, "project", "title"),
+        "adapter": _extract_section_scalar(text, "runtime", "adapter"),
+        "model_name": _extract_section_scalar(text, "runtime", "model_name"),
+        "current_phase": _extract_section_scalar(text, "pipeline", "current_phase"),
+        "status": _extract_section_scalar(text, "pipeline", "status"),
     }
 
 
@@ -197,8 +199,10 @@ def prepare_phase(target: Path) -> Path:
     work_dir.mkdir(exist_ok=True)
     packet_path = work_dir / "current-phase.md"
     packet_path.write_text(packet, encoding="utf-8")
-    _update_state_value(target / "PROJECT_STATE.yaml", "current_gate", phase.gate)
-    _update_state_value(target / "PROJECT_STATE.yaml", "status", "in_progress")
+    _update_state_values(target / "PROJECT_STATE.yaml", {
+        ("pipeline", "current_gate"): phase.gate,
+        ("pipeline", "status"): "in_progress",
+    })
     return packet_path
 
 
@@ -343,19 +347,41 @@ def prepare_agent_packet(target: Path, agent_key: str) -> Path:
 def advance_phase(target: Path) -> Dict[str, object]:
     phase = current_phase(target)
     pending = pending_outputs(target, phase.outputs)
-    if pending:
-        return {"ok": False, "pending": pending, "next_phase": phase.label}
-
+    phases = load_manifest()
     state = target / "PROJECT_STATE.yaml"
-    _update_state_value(state, phase.gate, "passed")
-
+    state_text = state.read_text(encoding="utf-8")
+    phase_index = phases.index(phase)
+    for previous in phases[:phase_index]:
+        if _extract_section_scalar(state_text, "gates", previous.gate) != "passed":
+            pending.append(f"prerequisite gate: {previous.gate}")
+    if phase_index >= 3:
+        pending.extend(pending_outputs(target, ["manuscript/chapters"]))
+        chapters = list((target / "manuscript/chapters").glob("*.md"))
+        try:
+            planned = int(_extract_section_scalar(state_text, "manuscript", "chapter_count_planned") or "0")
+            floor = int(_extract_section_scalar(state_text, "project", "target_floor_words") or "0")
+            if planned < 0 or floor < 0:
+                raise ValueError("negative length contract")
+        except ValueError:
+            pending.append("invalid manuscript length contract")
+        else:
+            if len(chapters) < planned:
+                pending.append(f"chapters: {len(chapters)} of {planned} planned")
+            words = sum(len(_prose_body(p.read_text(encoding="utf-8")).split()) for p in chapters if p.is_file())
+            if words < floor:
+                pending.append(f"manuscript words: {words} below recorded floor {floor}")
+    if phase_index >= 5:
+        pending.extend(pending_outputs(target, ["artifacts/08-adversarial-audit.md"]))
+    if pending:
+        return {"ok": False, "pending": list(dict.fromkeys(pending)), "next_phase": phase.label}
+    changes = {
+        ("gates", phase.gate): "passed",
+        ("pipeline", "current_gate"): "",
+        ("pipeline", "status"): "ready" if phase.next else "completed",
+    }
     if phase.next:
-        _update_state_value(state, "current_phase", phase.next)
-        _update_state_value(state, "current_gate", "")
-        _update_state_value(state, "status", "ready")
-    else:
-        _update_state_value(state, "status", "completed")
-        _update_state_value(state, "current_gate", "")
+        changes[("pipeline", "current_phase")] = phase.next
+    _update_state_values(state, changes)
 
     return {"ok": True, "pending": [], "next_phase": phase.next or "completed"}
 
@@ -405,8 +431,15 @@ def pending_outputs(target: Path, outputs: List[str]) -> List[str]:
             chapters = list(path.glob("*.md")) if path.exists() else []
             if not chapters:
                 pending.append(output)
+            for chapter in chapters:
+                if not chapter.is_file():
+                    pending.append(chapter.relative_to(target).as_posix())
+                    continue
+                text = chapter.read_text(encoding="utf-8").strip()
+                if not _prose_body(text) or "BOOK_GENESIS_TEMPLATE" in text:
+                    pending.append(chapter.relative_to(target).as_posix())
             continue
-        if not path.exists():
+        if not path.is_file():
             pending.append(output)
             continue
         text = path.read_text(encoding="utf-8").strip()
@@ -546,17 +579,50 @@ def _project_state_template(
     )
 
 
-def _update_state_value(path: Path, key: str, value: str) -> None:
+def _prose_body(text: str) -> str:
+    return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#")).strip()
+
+
+def _update_state_values(path: Path, changes: dict[tuple[str, str], str]) -> None:
+    """Replace one state snapshot atomically; update only explicitly named sections."""
     lines = path.read_text(encoding="utf-8").splitlines()
-    prefix = f"{key}:"
+    section = ""
+    found: set[tuple[str, str]] = set()
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith(prefix):
+        if line and not line.startswith(" ") and stripped.endswith(":"):
+            section = stripped[:-1]
+        key = stripped.split(":", 1)[0]
+        address = (section, key)
+        if line.startswith("  ") and not line.startswith("   ") and address in changes:
+            if address in found:
+                raise ValueError(f"Duplicate state key: {section}.{key}")
+            found.add(address)
             indent = line[: len(line) - len(line.lstrip())]
-            lines[index] = f'{indent}{key}: "{value}"'
-            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            return
-    raise KeyError(f"Could not update key {key!r} in {path}")
+            lines[index] = f'{indent}{key}: {json.dumps(changes[address], ensure_ascii=False)}'
+    if found != set(changes):
+        raise KeyError(f"Missing state keys: {sorted(set(changes) - found)}")
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write("\n".join(lines) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def _extract_section_scalar(text: str, section: str, key: str) -> str:
+    active = ""
+    for line in text.splitlines():
+        if line and not line.startswith(" ") and line.endswith(":"):
+            active = line[:-1]
+        elif active == section and line.startswith(f"  {key}:"):
+            return _unquote(line.split(":", 1)[1].strip())
+    return ""
 
 
 def _extract_scalar(text: str, key: str) -> str:
@@ -570,12 +636,14 @@ def _extract_scalar(text: str, key: str) -> str:
 
 def _unquote(value: str) -> str:
     if len(value) >= 2 and value[0] == value[-1] == '"':
-        return value[1:-1]
+        return json.loads(value)
+    if len(value) >= 2 and value[0] == value[-1] == "'":
+        return value[1:-1].replace("''", "'")
     return value
 
 
 def _escape_yaml(value: str) -> str:
-    return value.replace("\\", "\\\\").replace('"', '\\"')
+    return json.dumps(value, ensure_ascii=False)[1:-1]
 
 
 def _infer_family(model_name: str) -> str:

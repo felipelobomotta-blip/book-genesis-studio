@@ -10,7 +10,7 @@ When asked to create, plan, draft, audit, score, revise, or package a book, use 
 skills/book-genesis/SKILL.md
 ```
 
-Treat this as the current universal pipeline for Claude Code, Codex, Kimi Code, OpenClaw, Hermes Agent, Antigravity, and other file-aware agents. `skills/book-genesis-codex/` remains only as a compatibility package.
+Treat this as the current universal pipeline for Claude Code, Codex, OpenCode, Gemini CLI, Kimi Code, OpenClaw, Hermes Agent, Antigravity, and other file-aware agents. `skills/book-genesis-codex/` remains only as a compatibility package.
 
 When the user asks for bestseller-level, market-ready, agent/editor-ready, or launch-ready work, layer the market umbrella skill on top of the universal core:
 

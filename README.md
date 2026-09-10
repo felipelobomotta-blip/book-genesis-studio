@@ -2,7 +2,7 @@
 
 **Your creativity. Your agent. Your book.**
 
-An open-source collection of writing skills that runs inside the AI agent you already use: Claude Code, Codex, Kimi Code, OpenClaw, Hermes Agent, or another file-aware agent.
+An open-source collection of writing skills that runs inside the AI agent you already use: Claude Code, Codex, OpenCode, Antigravity, Gemini CLI, Kimi Code, OpenClaw, Hermes Agent, or another file-aware agent.
 
 Bring an idea. Book Genesis gives your agent a workflow for developing it into a manuscript: direction, characters, outline, chapters, editorial review, revision, and a publishing package. You keep the project files and creative decisions.
 
@@ -32,6 +32,9 @@ python runner/cli.py install codex
 python runner/cli.py install kimi
 python runner/cli.py install openclaw
 python runner/cli.py install hermes
+python runner/cli.py install opencode
+python runner/cli.py install antigravity
+python runner/cli.py install gemini
 ```
 
 PowerShell and shell shortcuts are also included:
@@ -45,6 +48,14 @@ bash install.sh openclaw
 ```
 
 Use `--dry-run` to preview an installation. Existing modified skills block replacement; an explicit `--force` backs them up first. See the [installation guide](docs/portability.md) for profiles, custom destinations, remote agents, and updates. Copying just `SKILL.md` is insufficient: the reference folders are part of the workflow.
+
+Check the installed package before starting (use your chosen target):
+
+```bash
+python runner/cli.py verify-install opencode
+```
+
+This checks every skill and reference against your checkout. Confirm discovery in the host too: OpenCode exposes `opencode debug skill`; Gemini CLI exposes `gemini skills list`; Hermes exposes `hermes skills list`. See the [compatibility evidence and host checks](docs/compatibility.md).
 
 ## Give it an idea
 
@@ -77,15 +88,20 @@ The same [15-skill suite](distribution/portable-suite.json) goes to every suppor
 | Kimi Code | `~/.kimi-code/skills/` |
 | OpenClaw | `~/.openclaw/skills/` |
 | Hermes Agent | `~/.hermes/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| Antigravity | `~/.gemini/config/skills/` |
+| Gemini CLI | `~/.gemini/skills/` |
 | Shared Agent Skills | `~/.agents/skills/` via `install shared` |
 
-Host-specific home variables and `--dest` override these locations. The OpenClaw and Hermes destinations follow their official [OpenClaw](https://docs.openclaw.ai/tools/skills) and [Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) skill-directory conventions. Installer compatibility is tested separately from live writing in those hosts.
+Host-specific home variables and `--dest` override these locations. OpenCode also respects `XDG_CONFIG_HOME`; its explicit `OPENCODE_CONFIG_DIR` takes priority. The OpenClaw and Hermes destinations follow their official [OpenClaw](https://docs.openclaw.ai/tools/skills) and [Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) skill-directory conventions. Installer compatibility is tested separately from live writing in those hosts.
 
 ## The work behind it
 
 The [casebook](SHOWCASE.md) preserves earlier experiments, including *The Source Code*, *Protocolo Não Encontrado*, and *Age of Aquarius*. Case notes distinguish planned work, reported manuscript progress, and public artifacts. Private manuscripts and historical model scores are not independent product benchmarks.
 
 The idea is simple: creativity should be the starting point. People should be able to explore a book with the tools they already have. Writing quality still depends on the idea, model, direction, and editorial work; a literal bestseller cannot be guaranteed.
+
+The [architecture audit](docs/architecture-audit-20260910.md) records the reliability fixes and remaining limits.
 
 ## Development
 

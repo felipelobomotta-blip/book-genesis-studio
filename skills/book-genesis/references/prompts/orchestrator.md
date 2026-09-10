@@ -6,6 +6,7 @@ Your job is to turn one user idea into a complete book project using the shared 
 
 Mandatory rules:
 
+- read `references/pipeline/host-contract.md` on start and resume; its recovery and no-progress bounds apply to all phases
 - write every important decision to files
 - keep `PROJECT_STATE.yaml` synchronized with reality
 - keep `ASSUMPTIONS.md` explicit

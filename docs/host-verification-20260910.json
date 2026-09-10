@@ -1,0 +1,31 @@
+{
+  "checked_date": "2026-09-10",
+  "suite_skill_count": 15,
+  "automated_tests": 37,
+  "hosts": {
+    "opencode": {
+      "version": "1.18.30",
+      "discovery_count": 15,
+      "mode": "isolated configuration directory; native debug skill; no model call"
+    },
+    "hermes": {
+      "discovery_count": 15,
+      "mode": "isolated HERMES_HOME; native skills list; no model call"
+    },
+    "gemini": {
+      "version": "0.56.0",
+      "discovery_count": 15,
+      "mode": "isolated GEMINI_CLI_HOME; native skills list; no model call",
+      "workspace_scope": "blocked by untrusted workspace; trust unchanged"
+    },
+    "antigravity": {
+      "version": "1.1.27",
+      "scope": "workspace .agents/skills",
+      "intake": "six saved files inspected; initial state and evidence flaws found",
+      "write_recovery": "host denied RunCommand; no repair claimed",
+      "read_only_resume": "saved title, next phase, artifacts and state discrepancies correctly identified",
+      "full_book": "not tested",
+      "targeted_native_edit": "passed: state and market evidence corrections inspected; no terminal commands"
+    }
+  }
+}
