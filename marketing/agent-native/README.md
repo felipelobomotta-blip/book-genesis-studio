@@ -11,8 +11,9 @@ Book Genesis gives the AI agent you already use a structured writing workflow. T
 1. Read the [launch plan](launch-plan.md), especially the evidence gates.
 2. Record a real installation, saved chapter, and fresh-session resume using the [demo scripts](demo-scripts.md).
 3. Adapt the [platform copy](platform-copy.md) in your own voice and review it against the current compatibility table.
-4. Work through the [30-day calendar](calendar.csv). Day 1 starts when you choose; nothing is scheduled automatically.
-5. Record aggregate outcomes in the [metrics template](metrics.csv). The [baseline](baseline.json) separates observed repository attention from unknown product adoption.
+4. Use the [all-platform playbook](all-platform-playbook.md) to adapt one evidence packet for X/Twitter, Threads, LinkedIn, Instagram, TikTok, YouTube, Reddit, developer communities, and launch directories.
+5. Work through the [30-day calendar](calendar.csv). Day 1 starts when you choose; nothing is scheduled automatically.
+6. Record aggregate outcomes in the [metrics template](metrics.csv). The [baseline](baseline.json) separates observed repository attention from unknown product adoption.
 
 ## The public promise
 
