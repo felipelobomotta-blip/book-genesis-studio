@@ -12,6 +12,11 @@ Bring an idea. Book Genesis gives your agent a workflow for developing it into a
 
 [MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
 
+> ⭐ **Star** this if you want to find it again.
+> 👁 **Watch → Releases** if you want to know when the next version ships.
+>
+> This went from 4.2 to 5.0 in ten weeks, and a star will not tell you when that happens — Watch will. Cloned this before September? Start with [what changed in 5.0](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.0.0) or the [changelog](CHANGELOG.md).
+
 ## See it work
 
 Watch the [48-second installation and host walkthrough](video-demo/out/install-demo.mp4) or download it from the [latest release](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/latest). It shows a real local installer run, file verification, the prompt to use inside Claude Code/OpenCode/Codex, and a fresh-session resume from `PROJECT_STATE.yaml`.
@@ -130,6 +135,8 @@ DeepSeek Harness respects `DSH_HOME`; Pi respects `PI_CODING_AGENT_DIR`. See [th
 ## The work behind it
 
 The [casebook](SHOWCASE.md) preserves earlier experiments, including *The Source Code*, *Protocolo Não Encontrado*, and *Age of Aquarius*. Case notes distinguish planned work, reported manuscript progress, and public artifacts. Private manuscripts and historical model scores are not independent product benchmarks.
+
+**Wrote something with this?** The casebook is open to community entries — add yours through [issue #13](https://github.com/felipelobomotta-blip/book-genesis-studio/issues/13). Every case so far is my own, which is the single biggest gap in this repository. A note about what worked and what did not is worth more here than a star.
 
 The idea is simple: creativity should be the starting point. People should be able to explore a book with the tools they already have. Writing quality still depends on the idea, model, direction, and editorial work; a literal bestseller cannot be guaranteed.
 
