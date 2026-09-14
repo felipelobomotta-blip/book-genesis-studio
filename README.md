@@ -12,8 +12,8 @@ Bring an idea. Book Genesis gives your agent a workflow for developing it into a
 
 [MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
 
-> ⭐ **Star** this if you want to find it again.
-> 👁 **Watch → Releases** if you want to know when the next version ships.
+> ⭐ **Star** this if you want to find it again.  
+> 🔔 **Watch → Releases** if you want to know when the next version ships.
 >
 > This went from 4.2 to 5.0 in ten weeks, and a star will not tell you when that happens — Watch will. Cloned this before September? Start with [what changed in 5.0](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.0.0) or the [changelog](CHANGELOG.md).
 
