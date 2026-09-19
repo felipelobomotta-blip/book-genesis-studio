@@ -1,6 +1,8 @@
 # Book Genesis Casebook
 
-This showcase documents 10 book projects used to stress-test Book Genesis across genres, languages, and pipeline versions. Some cases have public artifacts in this repository. Others are local production cases summarized without private manuscript text.
+This showcase documents 11 book projects used to stress-test Book Genesis across genres, languages, and pipeline versions. Some cases have public artifacts in this repository. Others are local production cases summarized without private manuscript text.
+
+Case 11 (Vicente) is the only one that ran to the end of the pipeline and produced a complete publication package. Its score is still system self-assessment, and no external reader has evaluated it — see the limits section in that case file.
 
 See the visual proof layer in [docs/book-gallery.md](docs/book-gallery.md).
 
@@ -18,6 +20,7 @@ See the visual proof layer in [docs/book-gallery.md](docs/book-gallery.md).
 | 8 | The Saltwater Loaf | cozy mystery | EN | V5 production | fair-play cluing can be designed as a testable system |
 | 9 | Agenda 2030 | apocalyptic sci-fi/fantasy | EN | portable-agent foundation | large-scale concept needs RAG/foundation calibration before drafting |
 | 10 | The Source Code | literary sci-fi thriller | EN | V4/V5 production | long revision loops revealed diminishing returns |
+| 11 | Vicente — O Lago das Mensagens | spiritist fiction | PT-BR | V5 production, Phase 6 complete | a floor that moves on counted defects (8.2 -> 8.6) is a different claim than one that moves on re-reading |
 
 ## Public Artifact Sets
 
@@ -51,6 +54,7 @@ The newer production cases are summarized in [examples/cases/](examples/cases/):
 - [Iron Core](examples/cases/iron-core.md)
 - [The Saltwater Loaf](examples/cases/saltwater-loaf.md)
 - [Agenda 2030](examples/cases/agenda-2030.md)
+- [Vicente — O Lago das Mensagens](examples/cases/vicente-mensagens.md) — the only case delivered through Phase 6
 
 ## What The Cases Changed
 
