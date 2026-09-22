@@ -1,155 +1,89 @@
-# Book Genesis 5.0
+# Book Genesis
 
 **Your creativity. Your agent. Your book.**
 
-**Version 5.0.0 · Agent-native edition · MIT licensed**
+Give your AI agent an idea, even a one-line one, and Book Genesis takes it to a complete book: planned, written chapter by chapter in one voice, read blind by simulated readers, audited like a skeptical editor would, revised, and packaged with a logline, blurb, synopsis, query letter and cover brief. You agree at each step, or tell it to run to the end.
 
-![Book Genesis workflow: an idea moving through files, skills, and an open book](assets/brand/book-genesis-workflow.png)
+**Read a book it made:** [Vicente, O Lago das Mensagens](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/case-vicente-v1) · 32 chapters · 51,945 words · EPUB and PDF · Brazilian Portuguese. Made with an earlier version; its score is self-assessed and no outside reader has reviewed it yet. Judge it yourself.
 
-An open-source collection of writing skills for the AI agent you already use. Book Genesis 5.0 installs into Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf, Antigravity, Gemini CLI, Kimi Code, OpenClaw, or Hermes Agent. A shared directory target is also available.
+![An idea moving through files and writing skills into an open book](assets/brand/book-genesis-workflow.png)
 
-Bring an idea. Book Genesis gives your agent a workflow for developing it into a manuscript: direction, characters, outline, chapters, editorial review, revision, and a publishing package. You keep the project files and creative decisions.
+Version 6.0.0-beta.1 · MIT licensed · free · runs on your own agent and account.
 
-[MIT license](LICENSE) · [Installation guide](docs/portability.md) · [Compatibility evidence](docs/compatibility.md) · [Launch kit](marketing/agent-native/README.md) · [Project casebook](SHOWCASE.md)
+## The goal
 
-> ⭐ **Star** this if you want to find it again.  
-> 🔔 **Watch → Releases** if you want to know when the next version ships.
->
-> This went from 4.2 to 5.0 in ten weeks, and a star will not tell you when that happens — Watch will. Cloned this before September? Start with [what changed in 5.0](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.0.0) or the [changelog](CHANGELOG.md).
+A book written with the measured patterns of books readers finish, criticized by readers who cannot see the plan, and packaged to sell. That is the goal every part of the workflow is built around. It is not a promise: no workflow can guarantee a bestseller, and this one says so in every report.
 
-## See it work
+## How it works
 
-Watch the [48-second installation and host walkthrough](video-demo/out/install-demo.mp4) or download it from the [latest release](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/latest). It shows a real local installer run, file verification, the prompt to use inside Claude Code/OpenCode/Codex, and a fresh-session resume from `PROJECT_STATE.yaml`.
+1. **Intake.** Your idea becomes a brief: genre, reader, length, comparable books in your idea's language, and four simulated readers built for this book.
+2. **Foundation and architecture.** Characters with wounds and contradictions, a theme asked as a question, a voice with a rhythm anchored to real books, a chapter plan, and a ledger that keeps facts straight.
+3. **Drafting.** Every chapter saved as a file. Chapter 1 goes to the four readers before the rest is written; every fifth chapter gets a continuity check and another read.
+4. **Audit and revision.** A read-only auditor quotes exact passages. Revision runs against two gates, the readers' and a ten-part rubric, at most three passes each. A revised chapter is kept only if the blind readers prefer it.
+5. **Score and package.** A plain report of where the book stands, plus the editorial package, a hook test of alternative titles and blurbs, and EPUB and PDF when your machine can make them.
 
-![Installing the Book Genesis skills with the maintainer installer](assets/screenshots/install-cli.png)
+Everything lives in a folder you own. Close the session, come back tomorrow in any supported agent, and it picks up from the files.
 
-![Using the installed workflow inside a native host](assets/screenshots/claude-session.png)
+## Install
 
-![Resuming the same project in a new session](assets/screenshots/resume-state.png)
-
-The terminal installation and verification panels use output captured from the local 5.0 installer. The host conversation panels are an English usage example; model output depends on the host account, model, permissions, and quota.
-
-**5.0 adds six host targets and removes the interactive book generator from the public product.** DeepSeek Harness, Cursor, GitHub Copilot, Qwen Code, Pi, and Windsurf receive the same 15-skill bundle. There are now **15 installation targets: 14 named hosts plus Shared**. Installation and file integrity are tested; native writing acceptance is tracked separately in the compatibility table.
-
-## Back to the skills
-
-The host agent handles models, authentication, tools, progress, and permissions. Book Genesis supplies the writing workflow and reference material. There is no hosted service, model API gateway, background agent farm, or interactive book-generation CLI in this release.
-
-Earlier standalone-app experiments remain in Git history for provenance and are not part of the 5.0 product. Existing folders from those experiments are not automatically migrated.
-
-## Install into your agent
-
-You need Git and Python 3.10+ for this installer, plus the agent you want to use. The installer only copies skills and their references. It does not start a model, install the host agent, or collect API keys.
+You need Python 3.10 or newer, Git, and an agent that can read and write files.
 
 ```bash
 git clone https://github.com/felipelobomotta-blip/book-genesis-studio.git
 cd book-genesis-studio
-python runner/installer.py verify-suite
-```
-
-Choose **one** target:
-
-```bash
 python runner/installer.py install claude
-python runner/installer.py install codex
-python runner/installer.py install kimi
-python runner/installer.py install openclaw
-python runner/installer.py install hermes
-python runner/installer.py install opencode
-python runner/installer.py install antigravity
-python runner/installer.py install gemini
-python runner/installer.py install deepseek
-python runner/installer.py install cursor
-python runner/installer.py install copilot
-python runner/installer.py install qwen
-python runner/installer.py install pi
-python runner/installer.py install windsurf
 ```
 
-PowerShell and shell shortcuts are also included:
+Replace `claude` with your agent. `python runner/installer.py targets` lists them all; `--dry-run` shows what would change first; `verify-install` checks the result. Upgrading from 5.x retires the old skills automatically when they are unchanged. Details: [installation guide](docs/portability.md).
 
-```powershell
-.\install.ps1 -Target hermes
-```
+| Agent | Target | Status |
+|---|---|---|
+| Claude Code | `claude` | first class; blind readers run as read-only subagents |
+| Codex | `codex` | first class; subagent isolation checked on the first run |
+| OpenCode | `opencode` | first class; subagent isolation checked on the first run |
+| Hermes Agent | `hermes` | first class; isolated subagents |
+| OpenClaw | `openclaw` | first class; isolated subagents on request |
+| Kimi Code, Cursor, GitHub Copilot, Antigravity (app and CLI), Gemini CLI, DeepSeek Harness, Qwen Code, Pi, Windsurf, a shared folder | see `targets` | installs; not yet tested with a full book |
 
-```bash
-bash install.sh openclaw
-```
+What has actually been run where is tracked in [compatibility](docs/compatibility.md). A full 6.0 book in each first-class agent is part of the release plan, not a claim yet.
 
-Use `--dry-run` to preview an installation. Existing modified skills block replacement; an explicit `--force` backs them up first. See the [installation guide](docs/portability.md) for profiles, custom destinations, remote agents, and updates. Copying just `SKILL.md` is insufficient: the reference folders are part of the workflow.
+## Start a book
 
-Check the installed package before starting (use your chosen target):
+Open your agent in an empty folder for the book and say:
 
-```bash
-python runner/installer.py verify-install opencode
-```
+> Use book-genesis. My idea: a retired train dispatcher finds a farewell letter inside a station clock.
 
-This checks every skill and reference against your checkout. Confirm discovery in the host too: OpenCode exposes `opencode debug skill`; Gemini CLI exposes `gemini skills list`; Hermes exposes `hermes skills list`. See the [compatibility evidence and host checks](docs/compatibility.md).
-
-## Give it an idea
-
-Open a new session in your agent with a writable folder for your book, then say:
-
-> Use the book-genesis skill. My idea is a mystery about a retired train dispatcher who finds a farewell letter inside a station clock. Help me choose the direction, then develop the outline and write the book. Save the chapters and project state so we can continue later. Write in English.
-
-In hosts that expose skill commands, use `/book-genesis`. You can also ask for `book-bestseller-studio` when you want the broader research, editorial, positioning, and launch workflow.
-
-The agent asks for missing creative decisions and works within its own context and quota limits. If interrupted, return to the same project folder and ask it to read `PROJECT_STATE.yaml`, inspect the saved chapters, and continue from the unfinished step.
-
-## How it works
-
-1. **Direction:** clarify the reader, premise, language, form, and intended length.
-2. **Foundation and outline:** develop the characters or argument, voice, and chapter structure.
-3. **Writing:** draft chapter blocks and preserve progress in files.
-4. **Editorial review:** audit the manuscript, identify specific weaknesses, and revise their responsible sections.
-5. **Delivery:** prepare the synopsis, positioning, cover brief, and editorial handoff.
-
-The original core includes audit, revision, and scoring references. Scores are internal editorial signals. A strong score does not establish human preference, publication readiness, or sales. Specialist skills are available when relevant; installation does not launch a team of background processes.
+In agents with skill commands, `/book-genesis` works too. The agent writes in the language you use. To let it finish without stopping, say "go to the end" at any check-in.
 
 ## What you install
 
-The same [15-skill suite](distribution/portable-suite.json) goes to every supported target. It includes the universal core, narrative foundation, prose craft, book research, editing, reader simulations, manuscript management, series planning, and editorial packaging.
+- **book-genesis**: the full workflow, with its phase prompts, the three critic roles, the rubric, the patterns library and the specialists for research, character, prose, continuity, revision, production and series.
+- **beta-reader**: three very different test readers for any draft.
+- **editorial-package**: logline, blurb, synopsis, query letter and cover brief for any finished manuscript.
+- **literary-agent-panel**: simulated agents, an acquiring editor, a bookseller and target readers judge market fit.
 
-| Host | Default destination |
-| --- | --- |
-| Claude Code | `~/.claude/skills/` |
-| Codex | `~/.codex/skills/` |
-| Kimi Code | `~/.kimi-code/skills/` |
-| OpenClaw | `~/.openclaw/skills/` |
-| Hermes Agent | `~/.hermes/skills/` |
-| OpenCode | `~/.config/opencode/skills/` |
-| Antigravity | `~/.gemini/config/skills/` |
-| Gemini CLI | `~/.gemini/skills/` |
-| DeepSeek Harness | `~/.dsh/skills/` |
-| Cursor | `~/.cursor/skills/` |
-| GitHub Copilot | `~/.copilot/skills/` |
-| Qwen Code | `~/.qwen/skills/` |
-| Pi | `~/.pi/agent/skills/` |
-| Windsurf / Cascade | `~/.codeium/windsurf/skills/` |
-| Shared Agent Skills | `~/.agents/skills/` via `install shared` |
+The three smaller skills work on their own, on any manuscript.
 
-Host-specific home variables and `--dest` override these locations. OpenCode also respects `XDG_CONFIG_HOME`; its explicit `OPENCODE_CONFIG_DIR` takes priority. The OpenClaw and Hermes destinations follow their official [OpenClaw](https://docs.openclaw.ai/tools/skills) and [Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) skill-directory conventions. Installer compatibility is tested separately from live writing in those hosts.
+## Why the criticism is worth reading
 
-DeepSeek Harness respects `DSH_HOME`; Pi respects `PI_CODING_AGENT_DIR`. See [the six new host setup notes and official sources](docs/portability.md#deepseek-harness-cursor-copilot-qwen-pi-and-windsurf). The package is MIT licensed. Model usage may have a cost or quota under your host account.
+- The writer never sees the rubric or the target; the readers never see the plan or earlier scores.
+- Critics run in isolated subagents, or in a second AI tool from another company when you have one installed, and every verdict prints how independent it was.
+- Four readers with different stakes decide, not one: the genre fan, the reader who did not want to like it, a reader from the next shelf over, and one who gives any book ten pages at an airport.
+- Revision stops after three passes per gate and says exactly what is still missing, instead of polishing until a critic agrees.
 
-## The work behind it
+It is simulated reading, and the reports say so. Architecture: [docs/architecture.md](docs/architecture.md). Questions: [FAQ](docs/faq.md).
 
-The [casebook](SHOWCASE.md) preserves earlier experiments, including *The Source Code*, *Protocolo Não Encontrado*, and *Age of Aquarius*. Case notes distinguish planned work, reported manuscript progress, and public artifacts. Private manuscripts and historical model scores are not independent product benchmarks.
+## The casebook
 
-**Wrote something with this?** The casebook is open to community entries — add yours through [issue #13](https://github.com/felipelobomotta-blip/book-genesis-studio/issues/13). Every case so far is my own, which is the single biggest gap in this repository. A note about what worked and what did not is worth more here than a star.
-
-The idea is simple: creativity should be the starting point. People should be able to explore a book with the tools they already have. Writing quality still depends on the idea, model, direction, and editorial work; a literal bestseller cannot be guaranteed.
-
-The [architecture audit](docs/architecture-audit-20260910.md) records the reliability fixes and remaining limits.
+[Eleven projects](SHOWCASE.md) across genres and languages, with what each one taught the system. Every case so far is the maintainer's, which is the biggest gap in this repository. **Wrote a book with it?** Add it through [issue #13](https://github.com/felipelobomotta-blip/book-genesis-studio/issues/13); an honest note about what worked and what did not is worth more than a star.
 
 ## Development
 
-The repository includes a small installer/verifier for maintainers and scripted environments. It does not call a model, generate a book, or run in the background. Your chosen host does the writing.
-
 ```bash
+python runner/installer.py verify-suite
 python -m unittest discover -s tests -v
 ```
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/felipelobomotta-blip/book-genesis-studio/issues)
+The suite check refuses any skill that points outside itself, names a retired skill, or breaks the pipeline order. Edit role files under `skills/book-genesis/references/roles/`, then run `python runner/installer.py generate-agents`. See [contributing](CONTRIBUTING.md), [roadmap](ROADMAP.md), [security](SECURITY.md) and the [changelog](CHANGELOG.md).
 
 Created by [Felipe Lobo](https://github.com/felipelobomotta-blip). MIT licensed.

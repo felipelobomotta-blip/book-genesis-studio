@@ -10,50 +10,43 @@ desktop.ini
 *.swo
 *~
 
-# Node (if any tooling added later)
-node_modules/
-package-lock.json
-
-# Local runner / demos
-.tmp*/
-book-genesis-demo/
-book-genesis-audit-temp*/
+# Python and Node tooling
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
+node_modules/
+package-lock.json
+video-demo/out/
 
-# Output
-output/
-manuscript/
-evaluations/
-delivery/
-voice-bank/
+# Books written in a checkout of this repository. Keep them out of commits;
+# examples/ may hold complete sample projects.
+/books/
+/manuscript/
+/evaluations/
+/delivery/
+/artifacts/
+/work/
+/PROJECT_STATE.yaml
+/ASSUMPTIONS.md
+/RUN_REPORT.md
 *.epub
-*.pdf
-!marketing/carousel/assets/*.pdf
 *.docx
 
-# State files (user-specific)
-STATE.yaml
-PROJECT_STATE.yaml
+# Local run output at the repository root
+/*.log
+/*.tmp
 
-# Claude
+# Agent and installer state
 .claude/
+.hermes/
+.openclaw/
+.book-genesis/
+.book-genesis-stage-*/
 
-# Never commit browser profiles or accidental platform caches
+# Never commit browser profiles or platform caches
 AppData/
 **/AppData/
 **/Chrome/User Data/
 **/Google/Chrome/User Data/
-scripts/distribution/C*/
-
-*.egg-info/
-
-build/
-dist/
-
-.book-genesis/
-
-# Native agent state and local installer output
-.hermes/
-.openclaw/
-.book-genesis-stage-*/

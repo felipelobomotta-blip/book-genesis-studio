@@ -1,56 +1,36 @@
-# Book Genesis Release Checklist
+# Release checklist
 
-Steps to cut a new Book Genesis release. The public runtime is the native agent skill bundle; the maintainer installer is not a book-generation product. Copy this into a GitHub Issue when preparing a release, tick items as you go.
+Copy into an issue when preparing a release and tick as you go.
 
-## Pre-flight (T-2 days)
+## Checks
 
-- [ ] CHANGELOG entry drafted with V[X.Y] header + sections: Added / Changed / Fixed / Deprecated / Removed
-- [ ] All agents in `/agents/` reflect the new behavior; diffs reviewed
-- [ ] README `Quick start` still works from a clean clone on macOS + Linux + Windows
-- [ ] `install.sh` and `install.ps1` execute without errors
-- [ ] Example book runs end-to-end from a fresh brief (spot-check one)
-- [ ] All 8.5 gate tests pass (`tests/` folder, if applicable to the change)
-- [ ] Any renamed agents/skills flagged in migration notes for existing users
+- [ ] `python runner/installer.py verify-suite` passes
+- [ ] `python -m unittest discover -s tests -v` passes, and CI is green on Windows, Linux and macOS
+- [ ] `python runner/installer.py generate-agents` leaves `agents/` unchanged
+- [ ] A real install into each first-class host, then `verify-install`, then the host lists `book-genesis`
+- [ ] Upgrading over a 5.x install retires the old skills and warns about anything changed
 
-## Docs
+## Evidence
 
-- [ ] `docs/architecture.md` updated if the pipeline diagram changed
-- [ ] `docs/genesis-score.md` updated if scoring rules changed
-- [ ] `docs/portability.md` updated if agent-agnostic assumptions changed
-- [ ] `SHOWCASE.md` updated if a new book was shipped
-- [ ] `README.md` Quality Gate badge reflects the current floor
+- [ ] Every complete book claimed for this release is in the casebook with host, model families, independence grade, time and cost
+- [ ] `docs/compatibility.md` states exactly what ran where, and nothing more
+- [ ] README and landing numbers (phases, readers, dimensions, targets) match the code
 
-## Version bump
+Release bars:
 
-- [ ] Version bumped in any manifest files
-- [ ] CHANGELOG entry finalized with date
-- [ ] Migration notes added if users need to adjust `~/.claude/agents/*.md`
+| Release | Needs |
+|---|---|
+| 6.0.0-beta.1 | the structure in this branch, and one complete book by the maintainer in Claude Code |
+| 6.0.0 | one complete book by someone else in any first-class host, and one by the maintainer in each other first-class host |
 
-## Tag + release
+## Docs and version
 
-- [ ] Clean working tree (`git status`)
-- [ ] Merge to `master`
-- [ ] `git tag -a vX.Y.Z -m "vX.Y.Z"`
-- [ ] `git push origin master --tags`
-- [ ] `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
-- [ ] Manually edit release notes to lead with the *headline* change, not the auto-generated commit list
-- [ ] Attach any new assets (demo GIF, updated architecture diagram)
+- [ ] `VERSION` and the README version line
+- [ ] `CHANGELOG.md` entry with Added, Changed, Removed and Migration
+- [ ] `docs/architecture.md` if the pipeline or roles changed; a new ADR for any decision a contributor would need to know
 
-## Post-release
+## Tag and publish
 
-- [ ] Pin release on GitHub
-- [ ] Post release announcement in [Discussions](https://github.com/felipelobomotta-blip/book-genesis-studio/discussions/categories/announcements) (if category exists)
-- [ ] Update social preview banner if the version number is on it
-- [ ] Twitter/X + LinkedIn post linking the release
-- [ ] Show HN or Reddit r/ClaudeAI post if the release is significant (major features, not patch)
-- [ ] Update any downstream examples in `examples/` folder
-- [ ] Close the release-tracking issue with the checklist
-
-## Rollback plan
-
-If a critical bug ships:
-
-1. `gh release edit vX.Y.Z --draft` (unpublish without deleting)
-2. Post a Discussion pinning "Known Issue: rolled back to vX.Y.(Z-1)"
-3. Instruct users: `git checkout vX.Y.(Z-1) && cp agents/*.md ~/.claude/agents/`
-4. Hotfix + release vX.Y.(Z+1) as fast as possible
+- [ ] Tag `vX.Y.Z` on `master`
+- [ ] GitHub release with the changelog entry and links to the casebook runs
+- [ ] Landing page redeployed (Pages builds `web/` on push to `master`)

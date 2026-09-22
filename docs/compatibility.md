@@ -1,53 +1,57 @@
 # Host compatibility and evidence
 
-Checked September 10, 2026. Every installer target receives the same 15 writing skills and complete references. Model behavior, permissions, context limits, and quotas belong to the host. A target name means a supported installation destination; it is not a full-book certification.
+What has actually been exercised, per host. A supported install target means the files land where the host looks for them; it is not a claim that a full book was written there.
 
-| Target | Actual isolated installation and integrity tests | Native host check in this change |
-| --- | --- | --- |
-| Claude Code | Passed | No fresh native writing run |
-| Codex | Passed | No fresh native writing run |
-| Kimi Code | Passed | CLI unavailable in the test environment |
-| OpenClaw | Passed | No fresh native writing run |
-| Hermes Agent | Passed | Native `hermes skills list`: all 15 enabled |
-| OpenCode | Passed | v1.18.30 `opencode --pure debug skill`: all 15 discovered from the isolated config directory |
-| Antigravity | Passed | CLI v1.1.27: real intake wrote six files; fresh read-only session recovered the next phase; targeted native edits corrected state and evidence labels |
-| Gemini CLI | Passed | v0.56.0 `gemini skills list`: all 15 enabled from isolated user home |
-| Shared Agent Skills | Passed | Generic directory export; discovery depends on the consuming host |
-| DeepSeek Harness | Passed | Official paths/source checked; no fresh native run |
-| Cursor | Passed | Official paths checked; no fresh native run |
-| GitHub Copilot | Passed | Official paths checked; no fresh native run |
-| Qwen Code | Passed | Official paths checked; no fresh native run |
-| Pi | Passed | Official paths/source checked; no fresh native run |
-| Windsurf / Cascade | Passed | Official paths checked; no fresh native run |
+Updated 2026-09-22 for 6.0.0-beta.1.
 
-The regression suite verifies all 15 targets through the Python CLI: preview, actual copying, reference integrity, and reinstall. CI runs the suite on Windows, Linux, and macOS with Python 3.10 and 3.12, plus installer wrapper previews. CI tests do not start commercial models. See the [recorded earlier host observations](host-verification-20260910.json) and [new host setup sources](portability.md#deepseek-harness-cursor-copilot-qwen-pi-and-windsurf). The historical JSON predates the six-target expansion; it is not evidence of live runs in the new hosts.
+## Full-book runs on 6.0
 
-## Antigravity findings
+| Host | Complete book, idea to package | Independence reached | Time and cost |
+|---|---|---|---|
+| Claude Code | pending: required for 6.0.0-beta.1 | | |
+| Codex | pending: required for 6.0.0 | | |
+| OpenCode | pending: required for 6.0.0 | | |
+| Hermes Agent | pending: required for 6.0.0 | | |
+| OpenClaw | pending: required for 6.0.0 | | |
+| Any host, by someone other than the maintainer | pending: required for 6.0.0 | | |
 
-The real intake used the installed bundle and native file tools, without the repository Python helper. It saved `PROJECT_STATE.yaml`, `ASSUMPTIONS.md`, `RUN_REPORT.md`, the brief, market map, and story engine. File inspection found unsupported market assertions and inconsistent state fields. The current intake and host contract now explicitly require evidence labels, directory creation, and consistent state transitions.
+Each run is recorded in the [casebook](../SHOWCASE.md) with its independence grade, wall-clock time and cost, and those numbers become the "what a book costs" line in the README. Until then, this table stays empty rather than estimated.
 
-A subsequent write-recovery attempt encountered a host-denied terminal command. Its response envelope said `SUCCESS`, but contained no final response and a denied action; no repair is counted as completed. A fresh read-only probe then correctly recovered the title, Foundation phase, three required artifacts, and inconsistent gate/status fields from disk. A subsequent targeted native-file-edit probe succeeded: direct inspection confirmed cleared `current_gate`, pipeline status `ready`, unchanged Foundation phase/manuscript facts, and unverified-hypothesis labels on the market claims. This verifies reading and explicitly directed repair, not unattended full-book production. The tightened creation instructions still need another complete intake acceptance run.
+## Installation
 
-## Check your installation
+The test suite installs every target into a temporary folder through the real command line, checks every copied file byte for byte, reinstalls to confirm nothing changes, and runs on Windows, Linux and macOS with Python 3.10 and 3.12. It never starts a model. It covers all sixteen targets listed by `python runner/installer.py targets`.
+
+## Headless tools for cross-family critics
+
+Flags checked against installed tools on 2026-09-22; details in `skills/book-genesis/references/hosts.md`.
+
+| Tool | Version checked | Status |
+|---|---|---|
+| Claude Code (`claude -p`) | 2.1.272 | flags present; drove real chapter runs in the archived CLI line |
+| Codex (`codex exec`) | 0.155.1 | flags present; drove real chapter runs in the archived CLI line |
+| Hermes Agent (`hermes chat --query-file -`) | 0.21.1 | flags present |
+| Antigravity CLI (`agy`) | 1.2.7 | flags present; an earlier run hit the individual quota and returned exit 0 with an error status |
+| OpenCode (`opencode run --format json`) | 1.18.31 | flags present; output parsing not verified end to end |
+
+## Observations carried over from 5.0 (2026-09-10)
+
+These were made with the 5.0 bundle and remain useful facts about the hosts:
+
+- **Hermes** listed all installed skills as enabled; **OpenCode** 1.18.30 discovered them from an isolated config folder; **Gemini CLI** 0.56.0 listed them from an isolated home.
+- **Antigravity** CLI 1.1.27 ran a real intake with native file tools and wrote six files; a fresh read-only session recovered the next phase from disk. One response envelope said `SUCCESS` while containing a denied action and no answer: check the content, not the envelope.
+- **Gemini** loads workspace skills only in a trusted workspace; user-scope discovery works without changing trust. `GEMINI_CLI_HOME` is a substitute home, so skills live under `$GEMINI_CLI_HOME/.gemini/skills`.
+
+## Check your own install
 
 ```bash
 python runner/installer.py verify-suite
-python runner/installer.py install opencode --dry-run
 python runner/installer.py install opencode
 python runner/installer.py verify-install opencode
 opencode debug skill
 ```
 
-Replace the target and host command as appropriate. Pass the same `--dest` to install and verify-install when using a custom directory. `verify-install` compares all installed skill files with the current checkout and installation record. If your checkout or locally edited skills differ, inspect the differences before replacement.
+Then open a new host session, ask it to use `book-genesis`, start a small project, and list the files it saved. A chat message is not proof that a file exists.
 
-Then open a new host session and ask it to locate `book-genesis`, read its phase manifest and host contract, initialize a small project, and list the actual saved files. Start another session to read those files and identify the next step. Do not count a chat message alone as proof of a written artifact.
+## Not yet established
 
-For Gemini, workspace-local skill discovery requires a trusted workspace. Our untrusted-workspace probe correctly refused to load project skills. User-scope discovery worked without changing trust. `GEMINI_CLI_HOME` is a substitute home directory, so its skills live under `$GEMINI_CLI_HOME/.gemini/skills`; it is not the skills directory itself.
-
-For Antigravity, current global skills live under `~/.gemini/config/skills`. The tested CLI read workspace `.agents/skills`. If your edition uses a legacy global path, use an explicit destination after checking its documentation. Install into the environment where the agent actually runs, including containers and remote hosts.
-
-## Evidence still needed
-
-Repeated complete manuscripts, context-limit recovery, quota recovery, controlled cost/latency measurements, and independent human reading across hosts are not established by these checks. No comparative benchmark supports calling this system the best architecture or guaranteeing bestseller sales.
-
-Sources: [OpenCode skills](https://opencode.ai/docs/skills/), [OpenCode configuration](https://opencode.ai/docs/config/), [Antigravity skills](https://antigravity.google/docs/skills), [Gemini CLI skills](https://geminicli.com/docs/cli/skills/), [OpenClaw skills](https://docs.openclaw.ai/tools/skills), [Hermes skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills).
+Repeated complete manuscripts per host, recovery after context limits and quota exhaustion, measured cost and latency, and reading by independent humans. No benchmark supports calling this the best book workflow, and nothing here guarantees sales.

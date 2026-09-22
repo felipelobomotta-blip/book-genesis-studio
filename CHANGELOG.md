@@ -1,3 +1,44 @@
+# Changelog
+
+## 6.0.0-beta.1 (2026-09-22)
+
+One skill, blind critics, bounded gates. Decisions in [ADR 0012](docs/adr/0012-book-genesis-6-one-skill-blind-critics.md).
+
+### Added
+
+- Blind reader, read-only auditor and a four-persona reader panel (primary, hostile, adjacent-genre, casual), with fixed verdict formats.
+- Independence levels and grades for every verdict: a second tool from another model family, an isolated subagent, or the same context; a canary check where hosts do not document isolation; tested headless recipes for Claude Code, Codex, Hermes, Antigravity CLI and OpenCode.
+- Two gates in the revision loop, the panel's and the rubric's, three passes each, with draft comparison: a revision is kept only when blind readers prefer it.
+- Check-in with the author at every phase boundary, after chapter 1 and every fifth chapter; "go to the end" for autonomous mode.
+- Patterns library inside the skill (`references/patterns/`), sourced, with machine-prose tells and ceilings in English and Brazilian Portuguese.
+- Rhythm contract with one owner (resolves #35) and language-aware research (from #14, by Thinh Hoang).
+- Continuity ledger with checks every five chapters and targeted repairs.
+- Hook test in the editorial package; EPUB and PDF export when pandoc is present.
+- Installer: `targets` and `generate-agents` commands; Claude Code subagents generated from role files and checked for drift; `--agents-dest`; copy-then-swap installs that leave the previous version intact on failure; backups that no host can load; automatic retirement of unchanged 5.x skills and V4 agents; clear errors instead of tracebacks; `antigravity-cli` target.
+- Suite check that refuses skills pointing outside themselves, missing references, or naming retired skills.
+
+### Changed
+
+- The core now ships specialists as references instead of sibling skills, so one folder is enough in any host.
+- One `PROJECT_STATE.yaml` schema (`schema_version: 6`) and a renumbered artifact layout; the host contract migrates 5.x projects.
+- Phase 5 is the Revision Loop; the unbounded Literary Barrier loop is gone.
+- The writer never sees the rubric; critics never see targets or earlier scores.
+- Home variables must be absolute; blank values fall back to the default for every target.
+- README, landing page and docs rewritten around the goal, not a promise; the finished Vicente book is on the first screen.
+- License holder aligned with the README: Felipe Lobo.
+
+### Removed
+
+- `book-genesis-full`, `book-genesis-codex`, `optional/`, `deprecated/`, the eight V4 agents and `knowledge/` (content folded into the core).
+- `humanizer` and `copy-editing`, which were third-party copies without attribution.
+- `book-bestseller-studio`, `book-swarm-panel`, `book-researcher`, `book-editor`, `narrative-foundation`, `prose-craft`, `production-prep`, `series-architect`, `manuscript-manager` as separate skills (now references).
+- The unreachable phase runner in `runner/filesystem.py` and its tests; `--include-legacy`.
+- Launch and marketing material, the social-posting scripts and sixteen outdated documents. Git history and the tag `archive/imagination-edition-2026-09-22` keep everything.
+
+### Migration
+
+- Reinstall with `python runner/installer.py install <target>`. Unchanged 5.x skills and V4 agents are moved to the backup folder; anything you changed is left in place with a warning.
+- Open a 5.x book in a new session: Book Genesis renames the old state to `PROJECT_STATE.v5.yaml`, maps the artifacts to the new numbers, and shows you the mapping before continuing.
 
 ## 2026-09-10 — DeepSeek Harness and wider agent distribution
 

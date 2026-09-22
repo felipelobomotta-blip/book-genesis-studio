@@ -4,7 +4,7 @@ This showcase documents 11 book projects used to stress-test Book Genesis across
 
 Case 11 (Vicente) is the only one that ran to the end of the pipeline and produced a complete publication package. Its score is still system self-assessment, and no external reader has evaluated it — see the limits section in that case file.
 
-See the visual proof layer in [docs/book-gallery.md](docs/book-gallery.md).
+Read the one finished book yourself: the EPUB and PDF of case 11 are in the [case-vicente-v1 release](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/case-vicente-v1). Every case so far is the maintainer's own; community cases are welcome through [issue #13](https://github.com/felipelobomotta-blip/book-genesis-studio/issues/13).
 
 ## Summary
 
@@ -67,4 +67,4 @@ The newer production cases are summarized in [examples/cases/](examples/cases/):
 
 ## Manuscript Policy
 
-Full manuscripts are intentionally not included. The repository documents process, architecture, scoring, and representative artifacts without publishing private IP.
+Manuscripts are not stored in the repository, which documents process, scoring and representative artifacts. The exception is case 11, published as a release so the result can be read and judged, not only described.

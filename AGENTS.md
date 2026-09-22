@@ -1,68 +1,20 @@
-# Agent Instructions
+# Agent instructions
 
-This repository contains Book Genesis, an agent-agnostic book-production workflow made of markdown skills, manifests, prompts, scoring rules, and reference files.
+This repository contains Book Genesis, a set of Agent Skills for writing complete books inside an agent host.
 
-## Default Behavior
+## Writing a book from this checkout
 
-When asked to create, plan, draft, audit, score, revise, or package a book, use the Universal Book Genesis Core unless the user explicitly asks for legacy V4/V5:
+When asked to create, plan, draft, audit, revise, score or package a book, use the installed `book-genesis` skill. If it is not installed, read `skills/book-genesis/SKILL.md` and follow it, resolving `references/...` paths from `skills/book-genesis/`.
 
-```text
-skills/book-genesis/SKILL.md
-```
+- Start with `skills/book-genesis/references/pipeline/host-contract.md`, then `references/prompts/orchestrator.md`.
+- Write the book in a folder outside this repository, or under `books/`, which git ignores.
+- Never skip Phase 4, and never score before it.
+- Critics never see targets or earlier scores; the writer never sees the rubric.
+- Write the book and every message to the author in the book's language.
 
-Treat this as the current universal pipeline for Claude Code, Codex, DeepSeek Harness, OpenCode, Cursor, GitHub Copilot, Qwen Code, Pi, Windsurf/Cascade, Gemini CLI, Kimi Code, OpenClaw, Hermes Agent, Antigravity, and other file-aware agents. `skills/book-genesis-codex/` remains only as a compatibility package. A supported installer target does not establish complete-book acceptance; consult `docs/compatibility.md` for evidence.
+## Working on the repository
 
-When the user asks for bestseller-level, market-ready, agent/editor-ready, or launch-ready work, layer the market umbrella skill on top of the universal core:
-
-```text
-skills/book-bestseller-studio/SKILL.md
-```
-
-When the user asks for MiroFish-style reader swarms, public-opinion simulation, niche-risk scouting, or many simulated readers, use:
-
-```text
-skills/book-swarm-panel/SKILL.md
-```
-
-Load the manifest before advancing phases:
-
-```text
-skills/book-genesis/references/pipeline/manifest.yaml
-```
-
-## Rules
-
-- Persist important decisions to files.
-- Keep `PROJECT_STATE.yaml` synchronized with reality.
-- Keep `ASSUMPTIONS.md` explicit.
-- Load only the prompt for the active phase.
-- Do not skip Phase 4: Adversarial Audit.
-- Do not run final scoring before the adversarial audit.
-- Write Portuguese artifacts and prose in Portuguese when the book is in Portuguese.
-- Treat legacy V4 material as historical reference unless the user asks for it.
-
-## Agent-Specific Notes
-
-- Claude Code can run `/book-genesis` after installing the portable suite.
-- Codex can use this repo directly through `AGENTS.md` and the skill folder.
-- Antigravity can use this file as the repo-level playbook.
-- Kimi Code can run `/skill:book-genesis` after installing the portable suite.
-- The maintainer-only installer/verifier in `runner/installer.py` can validate the package and prepare files; it does not call a model or write literary output. Book Genesis 5.0 has no interactive book-generation CLI.
-
-- OpenClaw and Hermes Agent load the same installed skills; ask the host to use `book-genesis` in a writable book-project workspace.
-
-## Commands
-
-- `/book-genesis`: canonical portable pipeline.
-- `/book-genesis-full`: full legacy production pipeline.
-- `/book-genesis-codex`: historical portable command kept for compatibility.
-
-## Public Documentation
-
-- `README.md`: public overview and commercial positioning.
-- `docs/book-genesis-codex.md`: universal core architecture.
-- `docs/runner.md`: local runner and mechanical demo.
-- `docs/portability.md`: Claude Code, Codex, Antigravity, Kimi, and generic agent usage notes.
-- `docs/book-gallery.md`: 10-book proof gallery.
-- `SHOWCASE.md`: casebook summary.
-- `examples/cases/`: case studies.
+- Product instructions live in `skills/book-genesis/`. The three standalone skills live beside it and must not depend on it.
+- `agents/` is generated. Edit `skills/book-genesis/references/roles/`, then run `python runner/installer.py generate-agents`.
+- Before committing, run `python runner/installer.py verify-suite` and `python -m unittest discover -s tests -v`.
+- See `CONTRIBUTING.md` for the rules and `docs/architecture.md` for the design.

@@ -1,3 +1,5 @@
+schema_version: 6
+
 project:
   id: ""
   title: ""
@@ -6,30 +8,37 @@ project:
   genre: ""
   audience: ""
   positioning: ""
+  series: false
   target_range_words: ""
   target_floor_words: 0
   target_ceiling_words: 0
+  quality_target: 8.5
 
-runtime:
-  adapter: "host-native"
-  model_family: "unknown"
-  model_name: ""
+collaboration:
+  mode: "check-in"
+  waiting_for_author: false
+  pending_checkpoint: ""
+
+independence:
+  level: ""
+  grade: ""
+  writer_model: ""
+  reader_model: ""
+  isolation_check: "not_run"
+  notes: ""
 
 pipeline:
   current_phase: "Phase 0: Intake"
   current_gate: ""
   status: "not_started"
-  revision_iteration: 0
-
-artifacts:
-  generated: []
+  panel_passes: 0
+  rubric_passes: 0
 
 manuscript:
-  chapter_count: 0
   chapter_count_planned: 0
   average_words_per_chapter_planned: 0
-  word_count_actual: 0
   completed_chapters: []
+  word_count_actual: 0
   length_gate: "pending"
   status: "not_started"
 
@@ -39,6 +48,9 @@ gates:
   architecture: "pending"
   drafting: "pending"
   adversarial_audit: "pending"
-  literary_barrier_loop: "pending"
+  revision_loop: "pending"
   final_score: "pending"
   editorial_package: "pending"
+
+decisions: []
+open_questions: []

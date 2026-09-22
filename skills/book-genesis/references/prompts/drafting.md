@@ -1,66 +1,50 @@
-# Drafting Prompt
+# Phase 3: Drafting
 
-You are responsible for Phase 3 of `book-genesis`.
+Write the manuscript chapter by chapter, in the book's voice, saving each chapter before starting the next.
 
-## Goal
+When to load: Phase 3. Roles: writer drafts; orchestrator runs the checks and the panel.
 
-Draft the manuscript in chapter blocks while preserving voice, momentum, and structural variation.
+## Before each chapter: the chapter brief
 
-## Drafting Rules
+Assemble `work/briefs/chapter-NN.md` for the writer from files, never from memory:
 
-- write in chapter blocks, not as disconnected scenes
-- each block must have a clear narrative function
-- use structural variation so consecutive blocks do not feel templated
-- keep the emotional curve active
-- keep character behavior consistent with wound, desire, need, and lie
-- keep the opening promise and ending pressure alive
-- do not run line-level anti-AI compliance while drafting; that belongs to audit and revision
-- do not explain the craft move inside the prose; trust scene, image, pressure, and voice
+- the chapter's entry in `artifacts/07-outline.md`, including its scene pressure and planned length;
+- the chapter's row in `artifacts/06-emotional-curve.md`: start and end emotion, peak moment, and the anchor the reader should carry away;
+- the characters present, from `artifacts/03-characters.md`, with their voice cards;
+- the rhythm contract and narrative voice from `artifacts/05-voice.md`;
+- the ledger entries the chapter touches, from `artifacts/09-continuity-ledger.md`;
+- the last 300 words or so of the previous chapter.
 
-## Block Standard
+The brief never contains the rubric, the quality target, panel verdicts or audit findings. The writer writes for readers, not for a score.
 
-Each chapter block should accomplish enough work to justify its existence. Common functions include:
+## Writing
 
-- advance plot
-- deepen character
-- shift emotion
-- sharpen theme
-- intensify atmosphere or surreal texture
+Follow `references/specialists/prose-craft.md` for openings, chapter endings and dialogue, and `references/patterns/prose.md` for the measured ranges. While drafting:
 
-Not every block needs the same combination, but every block needs a reason to exist.
+- Hold the rhythm baseline and move inside the envelope only where the outline marks scene pressure.
+- Give every chapter at least one thing a reader could still recall tomorrow: a concrete image, a choice that changes how we see someone, or pressure between what a scene says and what it means.
+- Trust scene and image. Do not explain the craft move inside the prose.
+- Do not run machine-prose checks while writing. Draft first; the tells are for revision.
 
-## Post-Block Check
+## After each chapter
 
-After each block, step out of drafting and verify:
+1. Save the draft to `work/attempts/chapter-NN/attempt-1.md`, read it back, then copy it to `manuscript/chapters/chapter-NN.md`.
+2. Count its words and update `manuscript.completed_chapters`, `manuscript.word_count_actual` and the running comparison with the plan.
+3. Check: the chapter's function is clear, names and facts match the ledger, the voice is recognizable, the ending pulls forward, and the chapter adds something the previous one did not.
 
-- narrative function is clear
-- names and world facts are consistent
-- voice remains recognizable
-- ending pressure is intact
-- the block adds something the previous one did not
+## Chapter 1 checkpoint
 
-Do this check after the block exists. Do not interrupt the writing itself with checklist thinking.
+Run the reader panel on chapter 1 (`references/roles/panel.md`, chapter read). Save `evaluations/panel-chapter-01.md`. If the panel does not reach a majority to turn the page, revise chapter 1 once against the two-vote defects, run the panel again in compare mode, keep the preferred draft, and report both results. Then check in.
 
-## Literary Barrier Draft Standard
+## Every fifth chapter
 
-When the target is a critical literary score above 8.5, every chapter block also needs at least one of the following:
+After chapters 5, 10, 15 and so on:
 
-- a concrete image that could remain in the reader's memory tomorrow
-- a choice or failure that changes how the reader understands a character
-- pressure between what the scene says and what the scene means
-- a sentence-level risk that is specific to this book's voice
-- unresolved moral, emotional, or intellectual residue
+1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Send any finding to the revision editor as a targeted ticket and fix it before continuing.
+2. Run the panel on the latest chapter (chapter read).
+3. Compare the running word count with the plan. If the book is heading more than 15 percent under the floor, propose where to expand (a missing turn, a thin subplot) before writing on.
+4. Check in.
 
-Avoid polished generality. The chapter can be rough, abrupt, or asymmetrical if that makes it more alive.
+## Finishing the draft
 
-## Checkpoints
-
-- after the opening block
-- around 25 percent
-- around 50 percent
-- before the final movement
-
-## Output
-
-- manuscript chapters in `manuscript/chapters/`
-- state updates in `PROJECT_STATE.yaml`
+The phase ends when every planned chapter exists and has been read back. Set `manuscript.length_gate` to `PASS` (at or above the floor), `FLAG` (within 10 percent under it) or `BLOCK` (further under). A book under its floor goes to expansion before Phase 6 can call it complete, unless the intake declared a short form.

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Book Swarm Panel"
-  short_description: "Simulated reader swarm for books"
-  default_prompt: "Use $book-swarm-panel to simulate niche readers, public opinion, and revision risks for this manuscript."

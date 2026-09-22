@@ -36,15 +36,16 @@ If you find a vulnerability — in the agent prompts, the install scripts, the f
 ## What is in scope
 
 - Agent instructions that could be prompt-injected into performing destructive filesystem or shell actions
-- Install scripts (`install.sh`, `install.ps1`) that could compromise a user's system
+- Install scripts (`install.sh`, `install.ps1`) and the installer (`runner/`) moving, overwriting or deleting files outside the skills and agents folders it manages
+- Instructions that make an agent run a second tool (the cross-family critic recipes) with more access than reading the packet it is given
 - File I/O contracts that could leak the user's OS-level secrets or credentials
-- Third-party dependencies (Remotion demo, video tools) if they introduce supply-chain risk
+- Third-party dependencies (the Remotion demo, the landing page's CDN script) if they introduce supply-chain risk
 
 ## What is out of scope
 
 - Model behavior of Claude/Codex/Kimi/Antigravity itself (report to the respective vendor)
 - User-reported "the book was bad" — that is a quality issue, not security
-- Cost overruns from long generation loops (mitigated by the 8.5 gate exit criteria, not a security bug)
+- Cost of long runs (bounded by three revision passes per gate; a quality issue, not a security bug)
 
 ## Hall of fame
 

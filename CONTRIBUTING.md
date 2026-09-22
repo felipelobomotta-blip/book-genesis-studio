@@ -1,6 +1,6 @@
 # Contributing
 
-Book Genesis accepts improvements to editorial contracts, portable skills, deterministic runner behavior, tests, examples, and documentation.
+Book Genesis welcomes improvements to the skill's instructions, the patterns library, the installer, tests, casebook entries and documentation.
 
 ## Setup
 
@@ -11,40 +11,34 @@ python runner/installer.py verify-suite
 python -m unittest discover -s tests -v
 ```
 
-No provider API key is needed for repository tests. Runner never calls a model.
+No API key is needed. Nothing in this repository calls a model.
 
-## Canonical Rules
+## Where things live
 
-- `skills/book-genesis/` is canonical portable core.
-- Keep Claude Code, Codex, and Kimi Code on same editorial contracts.
-- Keep platform-specific behavior in installer or dispatch adapters.
-- Never skip adversarial audit before final scoring.
-- Keep raw blind evaluators unaware of target and previous scores.
-- Preserve commercial-length gate and Literary Barrier loop.
-- Do not add literal bestseller guarantees.
+- `skills/book-genesis/` is the product. Edit instructions there.
+- `skills/book-genesis/references/roles/` is the only source for the blind reader and auditor. After editing a role file, run `python runner/installer.py generate-agents` and commit the regenerated `agents/` files. Never edit `agents/` by hand; CI fails when it drifts.
+- `skills/book-genesis/references/patterns/` holds the measured patterns. Every new rule names its comparable book, author or study.
+- `skills/beta-reader/`, `skills/editorial-package/` and `skills/literary-agent-panel/` must stay standalone: no reference to the core, its phases or its files.
+- `runner/` is the installer. Standard library only unless a dependency earns its cost.
 
-## Skill Changes
+## Rules the suite check enforces
 
-- Keep `SKILL.md` concise and put detailed contracts under `references/`.
-- Preserve `name` and `description` frontmatter.
-- Add referenced specialist skills to `distribution/portable-suite.json`.
-- Run `python runner/installer.py verify-suite` after changing manifests, registries, prompts, or skill packaging.
+- Every `references/...` path a skill mentions exists inside that skill.
+- No shipped skill points outside itself (`skills/<other>/`, `knowledge/`, desktop paths, scripts that do not ship).
+- No shipped skill names a retired skill as something to run.
+- The pipeline keeps its order, its adversarial audit and its revision loop.
+- `name` matches the folder and `description` is 1 to 1,024 characters.
 
-## Runner Changes
+## Rules reviewers enforce
 
-- Use Python standard library unless dependency earns its installation cost.
-- Add tests for filesystem mutations, failure states, and cross-platform paths.
-- Do not overwrite user-modified skills silently.
-- Keep forced replacement recoverable through backups.
+- Never skip the adversarial audit before scoring.
+- Critics never see targets or earlier scores; the writer never sees the rubric.
+- Revision stays bounded: three passes per gate.
+- No promise of sales or bestseller status.
+- Book and author-facing messages follow the book's language; the skill's own files stay in English.
 
-## Pull Requests
+## Pull requests
 
-Include:
+Include the problem, the behavior change, the phases or roles affected, and test evidence. For changes to instructions, a short before and after from a real run is the best evidence; say which host and model produced it.
 
-- problem being solved
-- behavioral change
-- affected skills or phases
-- test evidence
-- migration note when file contracts change
-
-Keep manuscripts, API keys, session logs, and private reader data out of commits.
+Keep manuscripts, API keys, session logs and private reader data out of commits.

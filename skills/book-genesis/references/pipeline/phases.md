@@ -1,49 +1,18 @@
-# Book Genesis Codex Pipeline
+# Phases at a glance
 
-## Phase 0: Intake
+A one-screen map of the eight phases, what each produces, and where the author is asked to agree.
 
-- receive the user's basic idea
-- infer assumptions
-- persist assumptions and brief
+When to load: when you need an overview without loading every prompt. Role: orchestrator.
 
-## Phase 1: Foundation
+| Phase | Produces | Check-in |
+|---|---|---|
+| Phase 0: Intake | assumptions, brief with panel personas, market map, story engine, independence setup | yes |
+| Phase 1: Foundation | characters, theme, voice with rhythm contract, emotional curve | yes |
+| Phase 2: Architecture | outline with scene pressure and beats, opening strategy, continuity ledger | yes |
+| Phase 3: Drafting | chapters, panel read of chapter 1, continuity and panel every five chapters | after chapter 1, every fifth chapter, and at the end |
+| Phase 4: Adversarial Audit | read-only audit with quoted tickets and `audit_status` | yes; always on `major_rewrite` |
+| Phase 5: Revision Loop | panel gate and rubric gate, at most three passes each, draft comparison | yes; always when a gate fails its third pass in check-in mode |
+| Phase 6: Final Score | completeness, panel, rubric, gates and independence in one report | yes |
+| Phase 7: Editorial Package | package, hook test, positioning, proofread manuscript, exports | final inventory |
 
-- premise expansion
-- theme
-- characters
-- market framing
-
-## Phase 2: Architecture
-
-- outline
-- emotional curve
-- opening strategy
-- ending promise
-
-## Phase 3: Drafting
-
-- write in chapter blocks
-- preserve structural variation
-- update state after each block
-
-## Phase 4: Adversarial Audit
-
-- run structural criticism before score
-- cut, merge, reorder, or rewrite when needed
-
-## Phase 5: Literary Barrier Revision Loop
-
-- activate when the user sets a quality target such as 8.5
-- score calibrated literary lenses
-- revise weakest lens until approved or blocked
-
-## Phase 6: Final Score
-
-- run Genesis Score Codex
-- record gate verdict and next action
-
-## Phase 7: Editorial Package
-
-- synopses
-- cover brief
-- formatting package
+Order is fixed. Phase 4 is never skipped. Scores come after the audit. In autonomous mode the check-ins are written to `RUN_REPORT.md` instead of stopping, except `major_rewrite`.
