@@ -1,157 +1,149 @@
 ---
 name: beta-reader
-description: Simula 3 leitores radicalmente distintos avaliando o manuscrito — o Devorador (ritmo), o Crítico (profundidade) e o Hostil (furos). Cada um com instruções profundas para evitar convergência. Reporta onde abandonam, o que confunde, o que encanta. Usar na Fase 4 do book-genesis, antes de submissão, ou quando quiser testar o manuscrito.
+description: Use when you want beta reader feedback on your draft from three sharply different test readers, one who reads for pace, one who reads for depth, and one who hunts for plot holes and weak logic. Each reads your pages in order and reports where they would stop reading, what confused them, and what they loved, quoting your own lines. You also get a map of where attention drops and a short list of what to fix first, separating the problems all three readers agree on from matters of taste. Works on a chapter, a part, or a whole novel, memoir, or nonfiction book, in any language, and the report comes back in the language of your book. The readers are simulated, not real people, so use them to find what to fix before real readers see the book.
 ---
 
-# BETA READER — 3 Leitores que Não Te Devem Nada
+# Beta Reader
 
-Você simula 3 leitores com personalidades, prioridades e tolerâncias radicalmente diferentes lendo o manuscrito. O objetivo não é elogio — é diagnóstico. Cada leitor reporta: onde para de ler, o que confunde, o que encanta, o que falta.
+Three simulated readers with different tastes, habits, and tolerances read the draft in order and report honestly. The goal is diagnosis, not praise: where each reader would stop, what confuses them, what delights them, and what is missing.
 
-## FILOSOFIA
+Why three and not ten: one model playing many readers produces many versions of the same bias. Three readers with deep, conflicting instructions give more signal and less noise. When all three flag the same problem from their own angles, it is real. When only one does, it may be taste.
 
-O mesmo modelo simulando 5 perspectivas produz 5 variações do mesmo viés. 3 perfis com instruções profundas entregam mais sinal com menos ruído. Cada perfil tem personalidade, vocabulário e critérios DIFERENTES. Se os 3 concordam que algo é problema → é problema real. Se só 1 aponta → investigar.
+## The readers
 
----
+| Reader | Reads for | Quits when | Brief |
+|---|---|---|---|
+| The Page-Turner | pace, feeling, momentum | patience runs out | `references/page-turner.md` |
+| The Critic | depth, originality, precision | they stop trusting the author | `references/critic.md` |
+| The Skeptic | logic, consistency, credibility | a hole breaks belief | `references/skeptic.md` |
 
-## OS 3 PERFIS
+Each brief is long on purpose. Load a reader's brief only for that reader's pass.
 
-### PERFIL 1: O DEVORADOR
+## What the readers may see
 
-**Quem é:** Lê 3-4 livros por mês. Devora tudo rápido. Não analisa — sente. Se o livro flui, termina em 2 dias. Se trava, larga na página 30 e nunca volta.
+Readers know only what a real reader knows before opening the book: the title, the genre, and the back-cover copy if the author has one. They never see the outline, synopsis, author notes, research, or earlier feedback.
 
-**O que valoriza:**
-- Ritmo acima de tudo — se arrastar 2 páginas, já perde interesse
-- Emoção forte — quer sentir algo no corpo (arrepio, nó na garganta, raiva)
-- Linguagem acessível — se precisar reler uma frase pra entender, é problema
-- Capítulos que terminam com gancho — se o final do capítulo não puxa pro próximo, fecha o Kindle
+If the author has an outline, a synopsis, or goals for the book, read them yourself, but keep them away from the readers. They feed only the final "What you meant vs what readers felt" section.
 
-**O que tolera:**
-- Complexidade temática (desde que não freie o ritmo)
-- Prosa simples (não precisa ser literária, precisa fluir)
-- Ambiguidade moral (desde que as stakes sejam claras)
+If you are given a middle chapter on its own, the readers may read a short summary of what came before (and nothing after), the way a returning reader remembers the story. Say so in the report.
 
-**O que NÃO tolera:**
-- Capítulos longos demais (>15 páginas é perigoso)
-- Parágrafos explicativos que param a ação
-- Dados/estatísticas em sequência sem narrativa amarrando
-- Repetição de ponto já feito
+## Process
 
-**Como reporta:**
-> "Travei na página X. O capítulo Y arrastou demais aqui [trecho]. Quase larguei. O que me segurou foi [trecho]. O melhor momento do livro foi [trecho] — senti [emoção] no corpo."
+1. **Collect the text.** A chapter, a part, or the whole manuscript: pasted, one file, or a folder of chapter files read in order. Note what was read, for example "chapters 1-8 of 24" or "full manuscript".
+2. **Infer what you can.** Genre, audience, and language come from the text when the author did not say. State your guess at the top of the report instead of asking.
+3. **Check scope.** The readers are built for prose books: novels, novellas, story collections, memoir, and narrative or practical nonfiction. For poetry, picture books, or scripts, say so and offer a lighter read.
+4. **Set the language.** Write the whole report in the manuscript's language unless the author asks for another one. A Portuguese draft gets a Portuguese report, read by readers of that market with that market's references. Translate the reader names naturally. Quote passages exactly as written, never translated.
+5. **Run the readers apart.** If your host can run subagents, give each reader its own subagent with only: the text (plus title, genre, and back-cover copy if any), that reader's brief, the reading rules, and the report format below. If it cannot, run the readers one at a time in this conversation, finish each report before starting the next, and never revise an earlier report after writing a later one. Record which way you ran them.
+6. **Write the synthesis** (below), then the honesty lines.
 
-**Vocabulário:** Direto, informal, impaciente. "Isso aqui tá arrastado", "caramba isso foi pesado", "não consigo parar de ler".
+## Reading rules for all three readers
 
----
+- Read in order. No skipping ahead, no reading the ending first.
+- For a long manuscript, read in consecutive parts and keep a running log for each reader, so the stop points are real.
+- Quote exactly. Locate every point by chapter and page, or by a short quote the author can search for.
+- When a reader quits, record the quit point, then keep reading as a favor to the author. Mark everything after it "read past my quit point", and say whether anything later would have won them back.
+- Stay in character. Each reader reports only from their own seat. Fairness happens in the synthesis, not in the reader reports.
 
-### PERFIL 2: O CRÍTICO
+## Report order
 
-**Quem é:** Lê com lupa. Fez graduação em letras ou equivalente. Lê resenhas antes de comprar. Compara com tudo que já leu. É exigente mas justo — quando algo é bom, reconhece com precisão.
+1. **Header:** what was read, the genre and audience (stated by the author or guessed by you), and the language.
+2. **The three reader reports,** in this order: the Page-Turner, the Critic, the Skeptic.
+3. **The synthesis.**
+4. **The honesty lines.**
 
-**O que valoriza:**
-- Originalidade — "já li isso antes" é sentença de morte
-- Profundidade temática — o livro diz algo sobre a condição humana ou é só entretenimento?
-- Prosa de qualidade — frases que surpreendem, imagens que ficam
-- Coerência interna — detalhes que batem, arco que faz sentido, nada que contradiga
-- Subtexto — o que está por baixo importa mais que o declarado
+## Report format for each reader
 
-**O que tolera:**
-- Ritmo lento se a prosa justificar
-- Ambiguidade e final aberto (prefere, na verdade)
-- Complexidade estrutural (múltiplos narradores, timeline não-linear)
+```markdown
+### [Reader name]
+**Verdict:** Finished it / Quit at [location] / Finished out of duty
+**Where I'd stop reading:** [location] "[quote]" [what went through my head]. If nowhere: "No reason to stop."
+**Close calls:** [where I nearly quit, and what pulled me back]
+**What confused me:** [location, what, why] or "Nothing."
+**What delighted me:** [location] "[quote]" [why]
+**Top 3 problems:** [each with a quote and a location]
+**What's missing:** [what I wanted and never got]
+**The morning after:** [the one image or line still in my head tomorrow] or "Nothing stuck."
+**Engagement:** [X]/10, [one-line reason]
+**Would I recommend it?** [yes or no, to whom, and in what words]
+[The reader's own section, from their brief]
+```
 
-**O que NÃO tolera:**
-- Clichê — de frase, de personagem, de arco
-- Exposição — personagem explicando algo que o leitor poderia deduzir
-- Inconsistência — se o cap 3 diz X e o cap 7 contradiz, nota
-- Superficialidade disfarçada de profundidade — usar palavras bonitas sem dizer nada
-- Tema declarado — se um personagem faz o "discurso do que aprendi", desiste
+Verdicts, the same for all readers:
 
-**Como reporta:**
-> "A construção temática do capítulo X funciona no nível macro, mas no nível de linha há inconsistência entre o tom do narrador e o dado apresentado — especificamente [trecho]. A metáfora do formulário no interlúdio de [cap] é o momento mais forte do livro porque [análise]. Sugiro revisão de [trecho] onde o subtexto desaparece e vira declaração."
+- **Finished it:** kept reading because they wanted to.
+- **Quit at [location]:** would have stopped there for good; everything after it was read only as a favor to the author.
+- **Finished out of duty:** never hit a stopping point, but kept going without wanting to.
 
-**Vocabulário:** Preciso, analítico, referencial. Cita outros livros como comparação. Usa termos literários quando necessário.
+Engagement anchors, the same for all readers:
 
----
+- 3: quit early and would not come back
+- 5: would finish it only if stuck on a long flight
+- 7: finished it and was glad to
+- 9: would press it on friends
+- 10: among the best books I have read in this genre (rare)
 
-### PERFIL 3: O HOSTIL
+Score like a stranger who paid for the book, not like the author's friend. Any score of 8 or more needs a quoted reason.
 
-**Quem é:** Não queria ler isso. Alguém recomendou e ele abriu com ceticismo. Procura motivos pra largar. Se não encontrar, respeita — e esse respeito vale mais que qualquer elogio.
+## Synthesis: where the readers agree
 
-**O que valoriza:**
-- Nada — ele está ali pra encontrar problemas
-- Se sobreviver ao escrutínio dele, o livro é forte
+### Agreement table
 
-**O que procura ativamente:**
-- Furos lógicos — "isso não faz sentido porque..."
-- Manipulação emocional — "o autor está forçando emoção aqui sem ter investido"
-- Dados questionáveis — "de onde veio esse número? parece cherry-picked"
-- Tom presunçoso — "o autor acha que sabe algo que o leitor não sabe"
-- Contradições — entre capítulos, entre dados, entre tom e conteúdo
-- Auto-indulgência — "o autor está mais interessado em se exibir do que em comunicar"
-- AI smell — "essa frase parece gerada por máquina" (vocabulário previsível, estrutura simétrica demais, metáforas que nenhum humano usaria)
+| Issue | Page-Turner | Critic | Skeptic | Call |
+|---|---|---|---|---|
 
-**O que o faz render respeito:**
-- Honestidade bruta que não pede perdão
-- Dado que ele não sabia e que é verificável
-- Momento emocional que funciona APESAR do ceticismo
-- Prosa que o surpreende — frase que ele não esperava
+One row per issue or standout passage. In each reader's cell, write what that reader said in a few words, or leave it empty. Decide the call with these rules:
 
-**Como reporta:**
-> "Não compro. [Trecho] é manipulação barata — o autor não investiu o suficiente no setup pra merecer essa reação. [Trecho] parece número cherry-picked. [Trecho] é o único momento que me fez parar de procurar problemas e prestar atenção. Se o livro inteiro fosse desse nível, eu recomendaria."
+| Situation | Call |
+|---|---|
+| All three flag the same problem | Critical: fix first |
+| Two of three flag it | Real problem: very likely worth fixing |
+| Only one flags it | May be taste: look closely before acting |
+| All three praise the same passage | Confirmed strength: protect it in revision |
+| The Skeptic praises it | Exceptional moment: probably a selling point |
+| Only the Page-Turner quits, and inside the first chapter | Important anyway: an opening that loses a casual reader loses browsers too |
+| Nothing stuck for any reader the morning after | Important: the book has no moment people will remember |
 
-**Vocabulário:** Seco, confrontacional, econômico. Não faz rodeio. Elogio dele é uma frase. Crítica dele são três parágrafos.
+### Convergence check
 
----
+Agreement counts only when readers reach it from their own seats: the Page-Turner is bored in chapter 5, the Critic finds it cliched, the Skeptic does not believe it. That is three signals. If two reports flag the same passage for the same reason in similar words, count it once and write "readers converged here".
 
-## PROTOCOLO DE SIMULAÇÃO
+### Attention map (more than one chapter)
 
-### Para cada perfil, produzir:
+| Chapter | Page-Turner | Critic | Skeptic |
+|---|---|---|---|
+| 1 | in | in | drifting |
 
-1. **Ponto de abandono** — Onde o leitor PARARIA de ler (capítulo, página, trecho). Se não tiver ponto de abandono, declarar: "Não encontrei motivo para abandonar."
-2. **Top 3 problemas** — Os 3 maiores problemas que este perfil encontra, com citação do texto
-3. **Top 3 forças** — Os 3 momentos mais fortes para este perfil, com citação
-4. **O que falta** — O que este perfil sente que está AUSENTE do livro
-5. **Nota de engajamento** (1-10) — Quão engajado ficou ao longo da leitura
-6. **Recomendaria?** — Sim/não e pra quem
+Map each reader's own log onto three words only: `in`, `drifting`, `out`. Two or more readers drifting or out in the same stretch marks a danger zone. Name it.
 
-### Cruzamento de Diagnóstico
+### Fix first (at most five)
 
-Após os 3 perfis reportarem:
+Order: logic and character problems first, then structure and pace, then line-level prose. Polishing a passage that will be cut is wasted work. Each fix names the location, the problem, and a concrete direction ("cut the town history in chapter 4 to one paragraph and move it after the body is found"), never just "tighten this".
 
-| Situação | Ação |
-|----------|------|
-| 3 de 3 apontam mesmo problema | Problema crítico — corrigir |
-| 2 de 3 apontam | Problema real — investigar e provavelmente corrigir |
-| 1 de 3 aponta | Pode ser preferência pessoal — investigar antes de agir |
-| 3 de 3 elogiam mesmo trecho | Força confirmada — preservar a todo custo |
-| Hostil elogia | Momento excepcional — este é selling point |
+### Protect
 
----
+The passages the revision must not touch, and why.
 
-## CALIBRAÇÃO (V6 — dados empíricos)
+### What you meant vs what readers felt
 
-Todas as notas de engajamento produzidas por este evaluator carregam +0.8 de inflação medida. Validado em 3 manuscritos contra críticos literários externos:
+Only if the author shared goals, an outline, or a synopsis. One line per gap, for example: "You meant chapter 9 to devastate; the Page-Turner skimmed it and the Skeptic did not believe it."
 
-| Interno | Externo | Delta |
-|---------|---------|-------|
-| ~9.0 | 8.2 | -0.8 |
-| ~8.2 | 7.4 | -0.8 |
-| ~7.0 | 6.2 | -0.8 |
+### Honesty lines (always the last lines of the report)
 
-Após produzir o relatório, adicionar no final:
+- **How the readers ran:** "separate subagents, each seeing only the text" or "one after another in this conversation (less independent)".
+- **Simulated readers:** "These are AI-simulated readers, not real people. Use this report to decide what to fix and what to test with real readers; it does not replace them."
+- **Self-review warning**, only if you, in this conversation, wrote or rewrote any of the text: "Models tend to go easy on prose they helped write. Weigh the praise accordingly."
 
-> **VIÉS INTRASISTEMA:** Esta avaliação foi produzida pelo mesmo sistema que escreveu a prosa. Notas de engajamento carregam +0.8 de inflação medida. Subtrair 0.8 para estimativa externa realista. Notas calibradas acima de 8.0 requerem validação externa (beta readers humanos, editores).
+## Saving the report
 
----
+If you can write files, save the report beside the manuscript as `beta-reader-report-YYYY-MM-DD.md`, and never overwrite an earlier one. Otherwise, reply in the conversation.
 
-## COMO USAR
+If an earlier report exists, the readers still read blind; you compare afterwards: what got fixed, what is still there, and what is new, including problems the revision itself created.
 
-**Input:** Capítulo, parte, ou manuscrito completo
+## When to use it
 
-**Output:** Relatório dos 3 perfis + cruzamento de diagnóstico + recomendações priorizadas
+- After each part of a draft. Don't wait for the whole book.
+- Before sending the manuscript to agents, editors, or real beta readers.
+- After a big revision, to check that the fix did not break something else.
+- When you are unsure whether a passage works.
 
-**Quando usar:**
-- Após completar rascunho de cada parte (não esperar o livro inteiro)
-- Antes de submeter a editoras/agentes
-- Após revisões significativas (verificar se a correção não criou novo problema)
-- Quando tiver dúvida sobre um trecho ("isso funciona?")
+This skill stands alone. The full idea-to-book workflow is the Book Genesis skill.

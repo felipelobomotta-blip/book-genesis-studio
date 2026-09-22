@@ -1,6 +1,10 @@
 phase_0_intake:
   label: "Phase 0: Intake"
   prompt: "references/prompts/intake.md"
+  references:
+    - "references/specialists/research.md"
+    - "references/patterns/index.md"
+    - "references/roles/panel.md"
   gate: "intake"
   outputs:
     - "ASSUMPTIONS.md"
@@ -12,63 +16,93 @@ phase_0_intake:
 phase_1_foundation:
   label: "Phase 1: Foundation"
   prompt: "references/prompts/foundation.md"
+  references:
+    - "references/specialists/narrative-foundation.md"
   gate: "foundation"
   outputs:
     - "artifacts/03-characters.md"
     - "artifacts/04-theme.md"
+    - "artifacts/05-voice.md"
     - "artifacts/06-emotional-curve.md"
   next: "Phase 2: Architecture"
 
 phase_2_architecture:
   label: "Phase 2: Architecture"
   prompt: "references/prompts/architecture.md"
+  references:
+    - "references/patterns/structure-and-emotion.md"
+    - "references/specialists/narrative-foundation.md"
+    - "references/specialists/continuity.md"
   gate: "architecture"
   outputs:
-    - "artifacts/05-outline.md"
-    - "artifacts/07-opening-strategy.md"
+    - "artifacts/07-outline.md"
+    - "artifacts/08-opening-strategy.md"
+    - "artifacts/09-continuity-ledger.md"
   next: "Phase 3: Drafting"
 
 phase_3_drafting:
   label: "Phase 3: Drafting"
   prompt: "references/prompts/drafting.md"
+  references:
+    - "references/specialists/prose-craft.md"
+    - "references/patterns/prose.md"
+    - "references/roles/blind-reader.md"
+    - "references/roles/panel.md"
+    - "references/specialists/continuity.md"
+    - "references/specialists/revision-editor.md"
   gate: "drafting"
   outputs:
     - "manuscript/chapters"
+    - "evaluations/panel-chapter-01.md"
   next: "Phase 4: Adversarial Audit"
 
 phase_4_adversarial_audit:
   label: "Phase 4: Adversarial Audit"
   prompt: "references/prompts/adversarial-audit.md"
+  references:
+    - "references/roles/auditor.md"
+    - "references/specialists/continuity.md"
   gate: "adversarial_audit"
   outputs:
-    - "artifacts/08-adversarial-audit.md"
-  next: "Phase 5: Literary Barrier Revision Loop"
+    - "artifacts/10-adversarial-audit.md"
+  next: "Phase 5: Revision Loop"
 
-phase_5_literary_barrier_loop:
-  label: "Phase 5: Literary Barrier Revision Loop"
-  prompt: "references/prompts/literary-barrier-loop.md"
+phase_5_revision_loop:
+  label: "Phase 5: Revision Loop"
+  prompt: "references/prompts/revision-loop.md"
   references:
     - "references/scoring/evaluator-protocol.md"
-  gate: "literary_barrier_loop"
+    - "references/scoring/genesis-score.md"
+    - "references/roles/panel.md"
+    - "references/specialists/revision-editor.md"
+    - "references/specialists/prose-craft.md"
+  gate: "revision_loop"
   outputs:
-    - "evaluations/literary-barrier-loop.md"
+    - "evaluations/revision-loop.md"
     - "evaluations/revision-plan.md"
   next: "Phase 6: Final Score"
 
 phase_6_final_score:
   label: "Phase 6: Final Score"
-  prompt: "references/scoring/genesis-score-codex.md"
+  prompt: "references/scoring/genesis-score.md"
   references:
     - "references/scoring/evaluator-protocol.md"
+    - "references/roles/panel.md"
   gate: "final_score"
   outputs:
-    - "artifacts/09-genesis-score-codex.md"
+    - "artifacts/11-genesis-score.md"
   next: "Phase 7: Editorial Package"
 
 phase_7_editorial_package:
   label: "Phase 7: Editorial Package"
   prompt: "references/prompts/editorial-package.md"
+  references:
+    - "references/specialists/production.md"
+    - "references/specialists/research.md"
+    - "references/roles/panel.md"
   gate: "editorial_package"
   outputs:
-    - "artifacts/10-editorial-package.md"
+    - "artifacts/12-editorial-package.md"
+    - "artifacts/13-positioning.md"
+    - "delivery"
   next: ""

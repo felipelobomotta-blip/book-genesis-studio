@@ -1,3 +1,4 @@
-display_name: Literary Agent Panel
-short_description: Simulate agent, editor, bookseller, and reader review for market readiness.
-default_prompt: Review this book project like a literary agent panel and tell me what blocks market readiness.
+interface:
+  display_name: "Literary Agent Panel"
+  short_description: "Simulated agent, editor, bookseller and reader verdicts"
+  default_prompt: "Use $literary-agent-panel to judge whether my manuscript and query letter are ready to submit, and tell me what to fix first."
