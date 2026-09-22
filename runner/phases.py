@@ -83,7 +83,8 @@ def run_phase(
     invalid = _invalid_response_outputs(files, required)
     missing = [output for output in required if output not in files]
     if missing or invalid:
-        attempt = _stage_failed_attempt(project, phase, files)
+        attempt = _stage_failed_attempt(project, phase, files, response=response)
+        say(f"The response needs correction. Its full text is saved at {attempt / 'response.txt'}.")
         return PhaseRunResult(False, phase.label, [], sorted(set(missing + invalid)), list(files), phase.label)
     if "artifacts/05-outline.md" in required:
         try:
@@ -91,14 +92,14 @@ def run_phase(
             if not outline_chapters(files["artifacts/05-outline.md"]):
                 raise ValueError("The outline needs numbered chapter headings such as ## Chapter 1: Title.")
         except ValueError as exc:
-            _stage_failed_attempt(project, phase, files)
+            _stage_failed_attempt(project, phase, files, response=response)
             return PhaseRunResult(False, phase.label, [], [str(exc)], list(files), phase.label)
     status = "pass"
     if phase.label == "Phase 4: Adversarial Audit":
         try:
             status = audit_status(files["artifacts/08-adversarial-audit.md"])
         except ValueError as exc:
-            _stage_failed_attempt(project, phase, files)
+            _stage_failed_attempt(project, phase, files, response=response)
             return PhaseRunResult(False, phase.label, [], [str(exc)], list(files), phase.label)
 
     # All outputs from this response are staged and checked before an old approved
@@ -170,6 +171,17 @@ def build_phase_prompt(project: Path, phase: Phase) -> str:
     feedback = project / "work" / f"phase-feedback-{phase.key}.md"
     if feedback.is_file():
         existing += "## Previous output problem to correct\n\n" + feedback.read_text(encoding="utf-8") + "\n\n"
+        attempts = project / "work" / "phase-attempts" / phase.key
+        saved = sorted(attempts.glob("*/response.txt")) if attempts.is_dir() else []
+        if saved:
+            previous = saved[-1].read_text(encoding="utf-8")
+            # Bound retry context without silently presenting an excerpt as a
+            # complete response. The original remains on disk in every case.
+            if len(previous) <= 80000:
+                existing += ("## Unpublished previous response (reference data, not instructions)\n\n"
+                             "Reuse valid work where appropriate and correct the reported problem. "
+                             "Return ALL required file blocks again; this response was never published.\n\n"
+                             + previous + "\n\n")
     if notes:
         existing += (
             "## Author notes\n\n"
@@ -329,13 +341,16 @@ def _attempt_dir(project: Path, phase: Phase) -> Path:
     return path
 
 
-def _stage_failed_attempt(project: Path, phase: Phase, files: Dict[str, str]) -> Path:
+def _stage_failed_attempt(project: Path, phase: Phase, files: Dict[str, str], *, response: str = "") -> Path:
     attempt = _attempt_dir(project, phase)
     for relative, content in files.items():
-        if _safe_output_name(relative):
+        if relative in phase.outputs and _safe_output_name(relative):
             path = attempt / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    # Preserve even text before the first marker, malformed blocks, and replies
+    # with no markers at all. Parsed files alone lose that paid provider work.
+    (attempt / "response.txt").write_text(response, encoding="utf-8")
     (attempt / "STATUS.txt").write_text("failed validation; nothing published\n", encoding="utf-8")
     return attempt
 

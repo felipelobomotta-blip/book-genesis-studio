@@ -1,6 +1,6 @@
 ---
 name: editorial-package
-description: Creates the complete market-facing package a finished manuscript needs: logline, back-cover copy, editorial synopsis, query letter, and cover brief. Use in Book Genesis delivery phases or whenever a manuscript is ready for agent, publisher, beta-reader, ARC, or launch preparation.
+description: "Creates the complete market-facing package a finished manuscript needs: logline, back-cover copy, editorial synopsis, query letter, and cover brief. Use in Book Genesis delivery phases or whenever a manuscript is ready for agent, publisher, beta-reader, ARC, or launch preparation."
 ---
 
 # Editorial Package

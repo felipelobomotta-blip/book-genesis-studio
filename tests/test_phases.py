@@ -123,6 +123,33 @@ class RunPhaseTests(unittest.TestCase):
         self.assertIn("Foundation Rules", prompt)
         self.assertEqual("Phase 2: Architecture", load_state_summary(self.project)["current_phase"])
 
+    def test_malformed_response_is_preserved_and_available_on_author_retry(self):
+        from runner.phases import build_phase_prompt
+        from runner.filesystem import current_phase
+        raw = "# Unwrapped outline\n\nPaid prose without any file markers.\n"
+        result = run_phase(self.project, {"architect": FakeAdapter([raw])}, {})
+        self.assertFalse(result.ok)
+        saved = list((self.project / "work/phase-attempts").glob("*/*/response.txt"))
+        self.assertEqual(1, len(saved))
+        self.assertEqual(raw, saved[0].read_text(encoding="utf-8"))
+        phase = current_phase(self.project)
+        self.assertNotIn(raw, build_phase_prompt(self.project, phase))
+        (self.project / "work" / f"phase-feedback-{phase.key}.md").write_text(
+            "Missing file markers; please correct them.", encoding="utf-8")
+        prompt = build_phase_prompt(self.project, phase)
+        self.assertIn(raw, prompt)
+        self.assertIn("Return ALL required file blocks again", prompt)
+        accepted = run_phase(self.project, {"architect": FakeAdapter([INTAKE_RESPONSE])}, {})
+        self.assertTrue(accepted.ok)
+
+    def test_unexpected_response_file_cannot_overwrite_failure_evidence(self):
+        raw = "=== FILE: response.txt ===\npretend evidence\n=== FILE: STATUS.txt ===\npassed\n"
+        result = run_phase(self.project, {"architect": FakeAdapter([raw])}, {})
+        self.assertFalse(result.ok)
+        attempt = next((self.project / "work/phase-attempts").glob("*/*/STATUS.txt")).parent
+        self.assertEqual(raw, (attempt / "response.txt").read_text(encoding="utf-8"))
+        self.assertIn("failed validation", (attempt / "STATUS.txt").read_text(encoding="utf-8"))
+
     def test_drafting_phase_is_not_run_here(self) -> None:
         run_phase(self.project, {"architect": FakeAdapter([INTAKE_RESPONSE])}, {"architect": ""})
         run_phase(self.project, {"architect": FakeAdapter([FOUNDATION_RESPONSE])}, {"architect": ""})

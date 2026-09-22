@@ -1,6 +1,6 @@
 ---
 name: book-genesis-codex
-description: Use when the user wants the portable Book Genesis pipeline for Claude Code, Codex, Antigravity, Kimi, or another file-aware agent: intake, foundation, architecture, drafting, adversarial audit, Genesis Score, and editorial package with durable project files.
+description: "Use when the user wants the portable Book Genesis pipeline for Claude Code, Codex, Antigravity, Kimi, or another file-aware agent: intake, foundation, architecture, drafting, adversarial audit, Genesis Score, and editorial package with durable project files."
 ---
 
 # Book Genesis Universal Core

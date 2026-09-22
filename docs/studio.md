@@ -29,6 +29,8 @@ Files stay local. Prompts and manuscript text go to the selected model provider.
 
 Temporary problems offer a retry. Authentication, allowance, model availability and tool-permission failures require a connection change or provider action. Select another connection or writing model before resuming. The local event journal preserves errors across restarts.
 
+If a phase response cannot be parsed or lacks a required artifact, its full text is retained in the project's `work/phase-attempts/` directory. Agreeing to retry lets the model reuse the rejected response when it fits the retry context limit. Every required artifact must still pass validation before the phase advances. The saved response is never automatically treated as an accepted outline or manuscript.
+
 For APIs or local model servers, expand Connect an API or a local model in Connection settings. Enter model names available in your account. Test and use this setup checks both writing and reader models before accepting the configuration. Leave Remember unchecked for session-only use. Remember stores the key in your local configuration file and replaces the active role setup. Cancelling prevents subsequent probes and saving once the current request returns.
 
 Every repair must pass the checks. Three unsuccessful whole-book repair passes exhaust the saved campaign, including after application restart. Add specific guidance or choose another editing connection before a new campaign.

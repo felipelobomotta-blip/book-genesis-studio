@@ -169,6 +169,13 @@ Book Genesis is MIT licensed. You direct the creative work and retain editable p
 
 Built in public by [Felipe Lobo](https://github.com/felipelobomotta-blip). If this helps an idea become a real work, star the repository, share the workflow with a writer, and show us what you make.
 
+## Support this project
+
+Book Genesis is free and MIT licensed. If it helped you finish a book, consider buying the author a coffee — it funds documentation, new genre profiles, and review tooling.
+
+<!-- TODO: replace SEU-USUARIO-BMC with your real Buy Me a Coffee username (see .github/FUNDING.yml) -->
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow)](https://buymeacoffee.com/SEU-USUARIO-BMC)
+
 ## The Astra-assisted update
 
 Imagination Edition was developed with assistance from **Astra in Codex**, independent review, and recorded software tests. This describes the engineering work; Astra is not a required runtime provider, and the project is not an official OpenAI product. See [what changed](CHANGELOG.md) and the [complete launch kit](marketing/README.md).

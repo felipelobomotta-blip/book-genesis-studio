@@ -9,7 +9,25 @@ let connection = "saved", writingModel = "", requestLimit = 200;
 const connectionName = (name) => ({saved:"Saved connection setup",claude:"Claude Code",codex:"Codex"}[name] || name);
 
 function node(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined) el.textContent = text; return el; }
-function toast(message) { $("toast").textContent = message; $("toast").hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { $("toast").hidden = true; }, 6500); }
+function toast(message) {
+  // A modal makes the rest of the page inert, including the global toast.
+  const dialog = document.querySelector("dialog[open]");
+  if (dialog) {
+    let notice = dialog.querySelector(".dialog-notice");
+    if (!notice) {
+      notice = node("div", "dialog-notice");
+      notice.setAttribute("role", "alert");
+      dialog.append(notice);
+      dialog.addEventListener("close", () => { notice.remove(); }, {once:true});
+    }
+    notice.textContent = message;
+    notice.scrollIntoView({block:"nearest", behavior:"auto"});
+    return;
+  }
+  $("toast").textContent = message; $("toast").hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { $("toast").hidden = true; }, 6500);
+}
 async function api(path, data) {
   const response = await fetch("/api/" + path, {method: data === undefined ? "GET" : "POST", headers: {"X-Studio-Token":token, ...(data === undefined ? {} : {"Content-Type":"application/json"})}, ...(data === undefined ? {} : {body:JSON.stringify(data)})});
   const result = await response.json();
@@ -18,6 +36,7 @@ async function api(path, data) {
 }
 async function act(action, data = {}) {
   if (pending) return false;
+  document.querySelectorAll(".dialog-notice").forEach(notice => { notice.textContent = ""; });
   pending = true; updateControls();
   try { await api(action, data); return true; }
   catch (error) { toast(error.message); return false; }
