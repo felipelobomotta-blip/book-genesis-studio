@@ -1,187 +1,102 @@
-# Portability
+# Installing Book Genesis
 
-Book Genesis 5.0 is an Agent Skills package. All 15 installation targets receive the same canonical skill folders. The consuming host executes them with its own account, models, permissions, and quotas. The target list contains 14 named hosts and one Shared directory export. The old interactive book-generation CLI is not shipped; the repository helper is for installation and verification only.
+Book Genesis 6.0 is a set of Agent Skills. Every target receives the same four skill folders, and the host agent runs them with its own account, models, permissions and quotas. The installer copies and checks files; it never calls a model or writes a book.
 
-## Canonical Package
+## What gets installed
 
-`skills/book-genesis/` is the universal core. `distribution/portable-suite.json` lists every skill required by the portable Bestseller Studio profile. Specialist agent ownership lives in `skills/book-bestseller-studio/references/agent-registry.yaml`.
+| Skill | What it is |
+|---|---|
+| `book-genesis` | The core: idea to complete book in eight phases, with its references, roles, patterns and scoring |
+| `beta-reader` | Standalone: three very different test readers for any draft |
+| `editorial-package` | Standalone: logline, blurb, synopsis, query letter and cover brief for any finished manuscript |
+| `literary-agent-panel` | Standalone: simulated agents, editor, bookseller and readers judge market viability |
 
-`skills/book-genesis-codex/` and `skills/book-genesis-full/` remain compatibility packages. They are excluded from default portable installs.
+For Claude Code only, the installer also adds two subagents, `book-genesis-blind-reader` and `book-genesis-auditor`, generated from the core skill's role files. They let critics run with read-only tools. Other hosts use the same role files through their own subagent features.
 
-Do not copy only `SKILL.md`. Phase prompts, scoring rules, and evaluator protocol live under `references/`.
+Always install the whole folder. `SKILL.md` alone is not enough: the phases, roles and patterns live under `references/`.
 
-## Verify Before Installing
+## Check the checkout first
 
 ```bash
 python runner/installer.py verify-suite
 ```
 
-Validation checks skill frontmatter, dependency closure, phase prompts, mandatory adversarial audit, Literary Barrier loop, evaluator protocol, and target definitions.
+This checks that every shipped skill is self-contained (every `references/...` path exists inside it, no path points outside it, no retired skill is named), that the pipeline order and mandatory phases are intact, and that the Claude Code subagents match their role files.
 
-## Runtime Installers
-
-macOS/Linux:
+## Install
 
 ```bash
-bash install.sh claude
-bash install.sh codex
-bash install.sh kimi
-bash install.sh openclaw
-bash install.sh hermes
-bash install.sh opencode
-bash install.sh antigravity
-bash install.sh gemini
-bash install.sh shared
-bash install.sh deepseek
-bash install.sh cursor
-bash install.sh copilot
-bash install.sh qwen
-bash install.sh pi
-bash install.sh windsurf
+python runner/installer.py targets
+python runner/installer.py install claude --dry-run
+python runner/installer.py install claude
+python runner/installer.py verify-install claude
 ```
 
-Windows PowerShell:
+The shell and PowerShell wrappers pass everything through:
+
+```bash
+bash install.sh codex --dry-run
+```
 
 ```powershell
-.\install.ps1 -Target claude
-.\install.ps1 -Target codex
-.\install.ps1 -Target kimi
-.\install.ps1 -Target openclaw
-.\install.ps1 -Target hermes
-.\install.ps1 -Target opencode
-.\install.ps1 -Target antigravity
-.\install.ps1 -Target gemini
-.\install.ps1 -Target shared
-.\install.ps1 -Target deepseek
-.\install.ps1 -Target cursor
-.\install.ps1 -Target copilot
-.\install.ps1 -Target qwen
-.\install.ps1 -Target pi
-.\install.ps1 -Target windsurf
+.\install.ps1 -Target hermes -DryRun
 ```
 
-Default user locations:
-
-| Target | Skills directory | Invocation |
+| Target | Skills folder | How to start |
 |---|---|---|
-| Claude Code | `~/.claude/skills/` | `/book-genesis` |
-| Codex | `$CODEX_HOME/skills/` or `~/.codex/skills/` | ask Codex to use `book-genesis` |
-| Kimi Code | `$KIMI_CODE_HOME/skills/` or `~/.kimi-code/skills/` | `/skill:book-genesis` |
-| OpenClaw | `$OPENCLAW_STATE_DIR/skills/` or `~/.openclaw/skills/` | ask OpenClaw to use `book-genesis` |
-| Hermes Agent | `$HERMES_HOME/skills/` or `~/.hermes/skills/` | `/book-genesis`, or ask Hermes to use it |
-| OpenCode | `$OPENCODE_CONFIG_DIR/skills/`, otherwise `$XDG_CONFIG_HOME/opencode/skills/` or `~/.config/opencode/skills/` | ask OpenCode to load `book-genesis` |
-| Antigravity | `~/.gemini/config/skills/` | ask Antigravity to use `book-genesis` |
-| Gemini CLI | `$GEMINI_CLI_HOME/.gemini/skills/` or `~/.gemini/skills/` | ask Gemini to activate `book-genesis` |
-| Shared | `~/.agents/skills/` | runtime-dependent |
-| DeepSeek Harness | `$DSH_HOME/skills/` or `~/.dsh/skills/` | ask the harness to load `book-genesis` |
-| Cursor | `~/.cursor/skills/` | ask Agent to use `book-genesis` |
-| GitHub Copilot | `~/.copilot/skills/` | ask Copilot to use `book-genesis` |
-| Qwen Code | `~/.qwen/skills/` | `/book-genesis`, or ask Qwen to use it |
-| Pi | `$PI_CODING_AGENT_DIR/skills/` or `~/.pi/agent/skills/` | `/skill:book-genesis` |
-| Windsurf / Cascade | `~/.codeium/windsurf/skills/` | `@book-genesis`, or ask Cascade to use it |
+| `claude` (Claude Code) | `$CLAUDE_CONFIG_DIR/skills` or `~/.claude/skills`; subagents in `~/.claude/agents` | `/book-genesis` |
+| `codex` | `$CODEX_HOME/skills` or `~/.codex/skills` | ask Codex to use `book-genesis` |
+| `opencode` | `$OPENCODE_CONFIG_DIR/skills`, else `$XDG_CONFIG_HOME/opencode/skills`, else `~/.config/opencode/skills` | ask OpenCode to load `book-genesis` |
+| `hermes` | `$HERMES_HOME/skills` or `~/.hermes/skills` | `/book-genesis`, or ask Hermes |
+| `openclaw` | `$OPENCLAW_STATE_DIR/skills` or `~/.openclaw/skills` | ask OpenClaw to use `book-genesis` |
+| `kimi` | `$KIMI_CODE_HOME/skills` or `~/.kimi-code/skills` | `/skill:book-genesis` |
+| `cursor` | `~/.cursor/skills` | ask Agent to use `book-genesis` |
+| `copilot` | `~/.copilot/skills` | ask Copilot to use `book-genesis` |
+| `antigravity` (app and IDE) | `~/.gemini/config/skills` | ask Antigravity to use `book-genesis` |
+| `antigravity-cli` | `~/.gemini/antigravity-cli/skills` | ask `agy` to use `book-genesis` |
+| `gemini` | `$GEMINI_CLI_HOME/.gemini/skills` or `~/.gemini/skills` | ask Gemini to activate `book-genesis` |
+| `deepseek` (DeepSeek Harness) | `$DSH_HOME/skills` or `~/.dsh/skills` | ask the harness to load `book-genesis` |
+| `qwen` | `~/.qwen/skills` | `/book-genesis`, or ask Qwen |
+| `pi` | `$PI_CODING_AGENT_DIR/skills` or `~/.pi/agent/skills` | `/skill:book-genesis` |
+| `windsurf` (Cascade) | `~/.codeium/windsurf/skills` | `@book-genesis`, or ask Cascade |
+| `shared` | `~/.agents/skills` | depends on the host that reads it |
 
-Use `--dest PATH` with the Python command for an isolated or project-specific skills directory:
+Home variables must be absolute paths. A blank value is ignored and the default is used; a relative value is refused with an error that names the variable.
 
-```bash
-python runner/installer.py install kimi --dest ./sandbox/skills --dry-run
-```
+Gemini CLI stopped serving individual Google AI Pro, Ultra and free Code Assist accounts on 2026-06-18; Standard and Enterprise accounts still work. Its successor for individuals is the Antigravity CLI (`antigravity-cli`).
 
-## Conflict Safety
+## Custom folders
 
-- unchanged skills are skipped
-- changed destination skills block installation by default
-- `--force` or `-Force` moves changed skills into `.book-genesis-backups/<timestamp>/` before replacement
-- `.book-genesis-install.json` records installed skill checksums
-- `--include-legacy` adds compatibility skills; for Claude it also installs native V4 agents and knowledge files. Default remains portable-only.
-
-## Agent Dispatch
-
-Portable agents are roles, packets, and gates rather than duplicated platform prompts.
-
-Give each specialist packet to the native host's own subagent or run it sequentially when that host has no subagent feature. The installer does not create background agents or orchestrate a team.
-
-## Generic Agents
-
-Minimum runtime capabilities:
-
-- read a directory of Markdown files
-- follow YAML phase manifest
-- create and update project files
-- preserve state across turns
-- isolate drafting, revision, and evaluation when possible
-
-Generic instruction:
-
-```text
-Run Book Genesis as a file-backed book-production pipeline. Read AGENTS.md and skills/book-genesis/SKILL.md. Follow skills/book-genesis/references/pipeline/manifest.yaml exactly. Load only the active phase prompt. Persist decisions to files. Never score before adversarial audit. Apply the independent evaluator protocol before any final quality claim.
-```
-
-## Runtime Boundary
-
-Runner scaffolds projects, validates files, prepares phase packets, advances mechanical gates, and prepares specialist packets. It never calls a model, writes literary prose, or certifies literary quality. Runtime performs creative and critical work using user's own account.
-
-## OpenClaw and Hermes details
-
-These targets copy the complete portable suite into the host's skill directory. They do not install the host, modify permissions, add credentials, enable tools, or start a model. Start a new host session after installing, and ask it to locate `book-genesis` before beginning a book. Use `--dest` for a specific remote/container/profile directory; run the installer in the environment where the agent reads files.
-
-OpenClaw can use workspace-local skills instead of shared state skills:
+Use `--dest` for a project, profile, container or remote skills folder. Run the installer where the host reads files.
 
 ```bash
-python runner/installer.py install openclaw --dest /path/to/openclaw-workspace/skills --dry-run
-```
-
-Remove `--dry-run` after reviewing the destination. Keep the host's normal permission and tool-approval settings. For Hermes profiles, select the matching `HERMES_HOME` or an explicit skills destination. The folder paths follow [OpenClaw's skill-loading documentation](https://docs.openclaw.ai/tools/skills) and [Hermes's skills documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills), checked September 10, 2026.
-
-Installer tests establish copied-file integrity and conflict handling. They do not establish a complete-book run inside each host. See [restoration verification](restoration-20260910.md).
-
-## OpenCode, Antigravity, and Gemini CLI
-
-These are directory bundles with the original references, not platform-specific rewrites. Host permissions and skill enablement still apply. Current discovery conventions: [OpenCode skills](https://opencode.ai/docs/skills/), [OpenCode configuration](https://opencode.ai/docs/config/), [Antigravity skills](https://antigravity.google/docs/skills), and [Gemini CLI skills](https://geminicli.com/docs/cli/skills/).
-
-For a workspace install, specify the host's actual directory:
-
-```bash
+python runner/installer.py install openclaw --dest /path/to/workspace/skills --dry-run
 python runner/installer.py install opencode --dest /path/to/book/.opencode/skills
-python runner/installer.py install antigravity --dest /path/to/book/.agents/skills
-python runner/installer.py install gemini --dest /path/to/book/.gemini/skills
+python runner/installer.py install claude --dest /path/to/book/.claude/skills --agents-dest /path/to/book/.claude/agents
 ```
 
-Antigravity's current global directory is `~/.gemini/config/skills`. Older editions used `~/.gemini/antigravity/skills`; use `--dest` only if your installed edition expects that legacy path. Do not install duplicate copies into every historical path. Gemini CLI is a separate target with a different global directory.
+With `--dest`, Claude Code subagents are installed only when `--agents-dest` is also given; the installer says so instead of guessing a folder. Pass the same `--dest` to `verify-install`.
 
-After installing, run `python runner/installer.py verify-install TARGET` with the same `--dest`, if any. A changed checkout or locally edited skill will be reported as different; inspect before replacing it. This command performs no model calls. The host must still discover and activate the skill. [Compatibility evidence](compatibility.md) separates those checks.
+## Safety
 
-A skills-only installation contains the startup/recovery contract and initial state template under `book-genesis/references/pipeline/`. Native agents can initialize and resume a book without the repository Python helper. Optional external marketing or image skills are not required to write.
+- Identical skills are skipped. A skill or subagent this installer put there and nobody changed since is updated, with a backup. One you changed blocks the install until you pass `--force`, which backs it up first.
+- Links are never followed, replaced or moved. If a skill folder is a symlink or a Windows junction, the installer stops and names it.
+- Every folder, skills and subagents alike, is copied before anything is swapped, so a failure while copying (a full disk, a folder where a file is) leaves the previous install untouched. If a swap fails, every swap already made is restored.
+- Backups go to `.book-genesis-backups/<timestamp>/` inside the skills or subagents folder, with `SKILL.md` renamed to `SKILL.md.bak` and agent files ending in `.md.bak`, so no host loads a backup as a live skill. An existing `.bak` of yours is never overwritten.
+- `.book-genesis-install.json` records a checksum for every installed skill and subagent. `verify-install` tells apart a file you changed from an install that is simply older than this checkout.
 
-## DeepSeek Harness, Cursor, Copilot, Qwen, Pi, and Windsurf
+## Upgrading from 5.x
 
-Added September 10, 2026, against official host documentation and source. These are native skill installations. DeepSeek Harness is a separate product from the DeepSeek model API; installing this target does not configure an API provider inside a different agent.
+Version 5.x installed fifteen skills and, with `--include-legacy`, eight V4 agents and five knowledge files. In 6.0 their content lives inside `book-genesis`, and leaving the old folders in place lets them compete for book requests.
 
-```bash
-python runner/installer.py install deepseek --dry-run
-python runner/installer.py install deepseek
-python runner/installer.py verify-install deepseek
-```
+On install, the 6.0 installer moves an earlier Book Genesis skill or V4 file to the backup folder when the old install record proves the 5.x installer put it there and nobody changed it since. Anything changed, or not recorded, is left in place with a warning naming the path, so you can decide. Projects started in 5.x keep their files; their `PROJECT_STATE.yaml` uses an older schema, so start a new 6.0 session and ask Book Genesis to rebuild the state from the files that exist.
 
-Open a fresh DeepSeek Harness session in a writable book folder. Ask it to locate `book-genesis`, read its phase manifest and host contract, and save the intake artifacts before continuing. The same steps apply to the other targets with the appropriate host and target name.
+## Host notes
 
-| Host | Configuration and discovery notes | Official reference |
-| --- | --- | --- |
-| DeepSeek Harness | Default `~/.dsh/skills`; `DSH_HOME` overrides the home. Empty or whitespace-only values use the default. Project `.dsh/skills` and `.agents/skills` are also supported. Explicit harness provider configuration can override the home; use `--dest` to match it. | [Skills subsystem](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.md), [home resolver](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/util/home-paths/src/index.ts) |
-| Cursor | User `.cursor/skills`, project `.cursor/skills`, and Agent Skills directories. Local user skills are not automatically copied into cloud or remote agent environments. | [Cursor skills](https://cursor.com/docs/skills) |
-| GitHub Copilot | User `.copilot/skills`; project `.github/skills` is also supported. `COPILOT_SKILLS_DIRS` is a list of additional search paths, not a replacement home. In Copilot CLI, use `copilot skill list`; `/skills reload` refreshes an active session. | [Copilot skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills) |
-| Qwen Code | User `.qwen/skills` or project `.qwen/skills`; inspect `/skills` in the host. | [Qwen skills](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md) |
-| Pi | User `.pi/agent/skills`; `PI_CODING_AGENT_DIR` replaces `.pi/agent`. Project `.pi/skills` is available. | [Pi skills](https://pi.dev/docs/latest/skills), [configuration source](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/config.ts) |
-| Windsurf / Cascade | User `.codeium/windsurf/skills` or project `.windsurf/skills`. The official documentation redirects to Devin Desktop; this target does not claim compatibility with Devin cloud's separate skill system. | [Cascade skills](https://docs.devin.ai/desktop/cascade/skills) |
+After installing, start a new host session in a writable book folder and ask it to use `book-genesis`. The installer does not install the host, change permissions, add credentials or start a model.
 
-For project or remote installations, pass the actual skills directory to `--dest`, for example:
+- **OpenClaw and Hermes.** Folder conventions follow [OpenClaw's skill loading](https://docs.openclaw.ai/tools/skills) and [Hermes skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills). For Hermes profiles, set the matching `HERMES_HOME` or pass `--dest`.
+- **OpenCode, Antigravity and Gemini CLI.** See [OpenCode skills](https://opencode.ai/docs/skills/), [Antigravity skills](https://antigravity.google/docs/skills) and [Gemini CLI skills](https://geminicli.com/docs/cli/skills/). Install into one global folder per host, not into every historical path.
+- **DeepSeek Harness, Cursor, Copilot, Qwen, Pi and Windsurf.** See [DeepSeek Harness skills](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.md), [Cursor skills](https://cursor.com/docs/skills), [Copilot skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills), [Qwen skills](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md), [Pi skills](https://pi.dev/docs/latest/skills) and [Cascade skills](https://docs.devin.ai/desktop/cascade/skills). DeepSeek Harness is a separate product from the DeepSeek model API.
 
-```bash
-python runner/installer.py install deepseek --dest /path/to/book/.dsh/skills
-python runner/installer.py install cursor --dest /path/to/book/.cursor/skills
-python runner/installer.py install copilot --dest /path/to/book/.github/skills
-python runner/installer.py install qwen --dest /path/to/book/.qwen/skills
-python runner/installer.py install pi --dest /path/to/book/.pi/skills
-python runner/installer.py install windsurf --dest /path/to/book/.windsurf/skills
-```
-
-Run the installer where the host reads files. Avoid installing the same suite into several directories searched by the same host. Check discovery after an update, including possible duplicate skills from custom recursive search configurations. Host commands, trust settings, and release behavior can change; the [compatibility table](compatibility.md) records what was actually exercised.
+How each host isolates the critics is described in `skills/book-genesis/references/hosts.md`. What has actually been exercised per host is in [compatibility](compatibility.md).
