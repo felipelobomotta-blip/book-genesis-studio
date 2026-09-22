@@ -1,11 +1,14 @@
+# Install the Book Genesis skills for one agent.
+# Usage: .\install.ps1 -Target claude [-Destination PATH] [-AgentsDestination PATH] [-DryRun] [-Force]
+# List targets with: python runner\installer.py targets
 [CmdletBinding()]
 param(
-    [ValidateSet("claude", "codex", "kimi", "openclaw", "hermes", "shared", "opencode", "antigravity", "gemini", "deepseek", "cursor", "copilot", "qwen", "pi", "windsurf")]
-    [string]$Target = "claude",
+    [Parameter(Mandatory = $true)]
+    [string]$Target,
     [string]$Destination = "",
+    [string]$AgentsDestination = "",
     [switch]$Force,
-    [switch]$DryRun,
-    [switch]$IncludeLegacy
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,22 +22,14 @@ if (-not $pythonCommand) {
     $launcherArgs = @("-3")
 }
 if (-not $pythonCommand) {
-    throw "Python 3 was not found in PATH."
+    throw "Python 3.10 or newer was not found in PATH."
 }
 
 $cliArgs = @($cliPath, "install", $Target)
-if ($Destination) {
-    $cliArgs += @("--dest", $Destination)
-}
-if ($Force) {
-    $cliArgs += "--force"
-}
-if ($DryRun) {
-    $cliArgs += "--dry-run"
-}
-if ($IncludeLegacy) {
-    $cliArgs += "--include-legacy"
-}
+if ($Destination) { $cliArgs += @("--dest", $Destination) }
+if ($AgentsDestination) { $cliArgs += @("--agents-dest", $AgentsDestination) }
+if ($Force) { $cliArgs += "--force" }
+if ($DryRun) { $cliArgs += "--dry-run" }
 
 & $pythonCommand.Source @launcherArgs @cliArgs
 exit $LASTEXITCODE

@@ -1,51 +1,50 @@
 {
-  "schema_version": 1,
-  "suite_name": "book-genesis-portable",
+  "schema_version": 2,
+  "suite_name": "book-genesis",
   "canonical_skill": "book-genesis",
-  "agent_registry": "skills/book-bestseller-studio/references/agent-registry.yaml",
   "skills": [
-    "beta-reader",
-    "book-bestseller-studio",
-    "book-editor",
     "book-genesis",
-    "book-researcher",
-    "book-swarm-panel",
-    "copy-editing",
+    "beta-reader",
     "editorial-package",
-    "humanizer",
-    "literary-agent-panel",
-    "manuscript-manager",
-    "narrative-foundation",
-    "production-prep",
-    "prose-craft",
-    "series-architect"
+    "literary-agent-panel"
   ],
-  "legacy_skills": [
-    "book-genesis-codex",
-    "book-genesis-full"
-  ],
-  "legacy_claude": {
-    "agents_dir": "agents",
-    "knowledge_dir": "knowledge"
+  "claude_agents": {
+    "targets": ["claude"],
+    "install_subdir": "agents"
+  },
+  "retired": {
+    "skills": [
+      "book-bestseller-studio",
+      "book-editor",
+      "book-genesis-codex",
+      "book-genesis-full",
+      "book-researcher",
+      "book-swarm-panel",
+      "copy-editing",
+      "humanizer",
+      "manuscript-manager",
+      "narrative-foundation",
+      "production-prep",
+      "prose-craft",
+      "series-architect"
+    ],
+    "claude_files": [
+      "agents/book-architect.md",
+      "agents/book-disruptor.md",
+      "agents/book-editor.md",
+      "agents/book-evaluator.md",
+      "agents/book-orchestrator.md",
+      "agents/book-packager.md",
+      "agents/book-researcher.md",
+      "agents/book-writer.md",
+      "knowledge/bestseller-commercial-patterns.md",
+      "knowledge/bestseller-dna.md",
+      "knowledge/bestseller-emotional-patterns.md",
+      "knowledge/bestseller-prose-patterns.md",
+      "knowledge/bestseller-structural-patterns.md"
+    ]
   },
   "targets": {
-    "opencode": {
-      "home_env": "OPENCODE_CONFIG_DIR",
-      "default_home": ".config/opencode",
-      "xdg_config_subdir": "opencode",
-      "skills_dir": "skills"
-    },
-    "antigravity": {
-      "home_env": "",
-      "default_home": ".gemini/config",
-      "skills_dir": "skills"
-    },
-    "gemini": {
-      "home_env": "GEMINI_CLI_HOME",
-      "configured_home_subdir": ".gemini",
-      "default_home": ".gemini",
-      "skills_dir": "skills"
-    },
     "claude": {
       "home_env": "CLAUDE_CONFIG_DIR",
       "default_home": ".claude",
@@ -56,19 +55,10 @@
       "default_home": ".codex",
       "skills_dir": "skills"
     },
-    "kimi": {
-      "home_env": "KIMI_CODE_HOME",
-      "default_home": ".kimi-code",
-      "skills_dir": "skills"
-    },
-    "shared": {
-      "home_env": "",
-      "default_home": ".agents",
-      "skills_dir": "skills"
-    },
-    "openclaw": {
-      "home_env": "OPENCLAW_STATE_DIR",
-      "default_home": ".openclaw",
+    "opencode": {
+      "home_env": "OPENCODE_CONFIG_DIR",
+      "default_home": ".config/opencode",
+      "xdg_config_subdir": "opencode",
       "skills_dir": "skills"
     },
     "hermes": {
@@ -76,10 +66,14 @@
       "default_home": ".hermes",
       "skills_dir": "skills"
     },
-    "deepseek": {
-      "home_env": "DSH_HOME",
-      "ignore_blank_home": true,
-      "default_home": ".dsh",
+    "openclaw": {
+      "home_env": "OPENCLAW_STATE_DIR",
+      "default_home": ".openclaw",
+      "skills_dir": "skills"
+    },
+    "kimi": {
+      "home_env": "KIMI_CODE_HOME",
+      "default_home": ".kimi-code",
       "skills_dir": "skills"
     },
     "cursor": {
@@ -90,6 +84,27 @@
     "copilot": {
       "home_env": "",
       "default_home": ".copilot",
+      "skills_dir": "skills"
+    },
+    "antigravity": {
+      "home_env": "",
+      "default_home": ".gemini/config",
+      "skills_dir": "skills"
+    },
+    "antigravity-cli": {
+      "home_env": "",
+      "default_home": ".gemini/antigravity-cli",
+      "skills_dir": "skills"
+    },
+    "gemini": {
+      "home_env": "GEMINI_CLI_HOME",
+      "configured_home_subdir": ".gemini",
+      "default_home": ".gemini",
+      "skills_dir": "skills"
+    },
+    "deepseek": {
+      "home_env": "DSH_HOME",
+      "default_home": ".dsh",
       "skills_dir": "skills"
     },
     "qwen": {
@@ -105,6 +120,11 @@
     "windsurf": {
       "home_env": "",
       "default_home": ".codeium/windsurf",
+      "skills_dir": "skills"
+    },
+    "shared": {
+      "home_env": "",
+      "default_home": ".agents",
       "skills_dir": "skills"
     }
   }
