@@ -385,8 +385,10 @@ class InstallTests(unittest.TestCase):
             with self.subTest(force=force):
                 result = install_suite("codex", destination=skills, force=force)
                 self.assertFalse(result["ok"])
+                # Resolve only the parent: resolving the link itself would follow it.
+                # (macOS runs temp folders through /private, Windows through 8.3 short names.)
                 self.assertIn(
-                    f"{(skills / 'book-genesis')} is a link; the installer never replaces links, move it aside yourself",
+                    f"{skills.resolve() / 'book-genesis'} is a link; the installer never replaces links, move it aside yourself",
                     result["errors"],
                 )
                 self.assertTrue((outside / "SKILL.md").is_file())
