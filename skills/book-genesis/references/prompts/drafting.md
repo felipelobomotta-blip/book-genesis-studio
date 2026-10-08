@@ -9,6 +9,7 @@ When to load: Phase 3. Roles: writer drafts; orchestrator runs the checks and th
 Assemble `work/briefs/chapter-NN.md` for the writer from files, never from memory:
 
 - the chapter's entry in `artifacts/07-outline.md`, including its scene pressure and planned length;
+- the author's approved premise, reader promise and explicit time/POV constraints from `artifacts/00-brief.md`, plus this chapter's single validated timeline row. Check these against the outline's brief-to-plan contract review before dispatch. If the packet says both "one night" and "Morning 2", stop and repair the plan or packet; never send contradictory instructions to the writer or silently relax the author's constraint;
 - the approved production length contract: this chapter's planned word range and the manuscript floor and ceiling from intake and `PROJECT_STATE.yaml`;
 - the chapter's row in `artifacts/06-emotional-curve.md`: start and end emotion, peak moment, and the anchor the reader should carry away;
 - the characters present, from `artifacts/03-characters.md`, with their voice cards;
@@ -49,4 +50,4 @@ After chapters 5, 10, 15 and so on:
 
 ## Finishing the draft
 
-The phase ends when every planned chapter exists and has been read back. Set `manuscript.length_gate` to `PASS` (at or above the floor), `FLAG` (within 10 percent under it) or `BLOCK` (further under). A book under its floor goes to expansion before Phase 6 can call it complete, unless the intake declared a short form.
+The phase ends when every planned chapter exists and has been read back. Set `manuscript.length_gate` to `PASS` (within the approved floor and ceiling), `FLAG` (within 10 percent under the floor) or `BLOCK` (further under, or above the ceiling). A book outside its approved range needs targeted expansion or compression before Phase 6 can call its length contract complete. A declared short form uses its own approved range; it does not waive that range or permit silently reclassifying an incomplete novel as a novella.

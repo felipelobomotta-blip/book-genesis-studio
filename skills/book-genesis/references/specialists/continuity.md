@@ -61,7 +61,8 @@ Updated after: chapter 10 (check 02)
 
 ### Ledger rules
 
-- **Seed it in Phase 2: Architecture**, before any chapter exists, from `artifacts/02-story-engine.md`, `artifacts/03-characters.md`, `artifacts/04-theme.md` where it fixes facts, `artifacts/07-outline.md` and `artifacts/08-opening-strategy.md`. Every seeded entry is a plan entry. The outline's reveals become Knowledge entries with their planned chapter and who is present; its set-ups become Objects and Threads with their planned payoff.
+- **Seed it in Phase 2: Architecture**, before any chapter exists, from the approved intake contract in `artifacts/00-brief.md`, `artifacts/02-story-engine.md`, `artifacts/03-characters.md`, `artifacts/04-theme.md` where it fixes facts, `artifacts/07-outline.md` and `artifacts/08-opening-strategy.md`. Every seeded entry is a plan entry. Carry the brief's premise, reader promise, declared time window or duration, and point of view into the architecture check; the outline's reveals become Knowledge entries with their planned chapter and who is present; its set-ups become Objects and Threads with their planned payoff.
+- The brief is an approved constraint, not a draft to be silently rewritten by architecture. Before Phase 3, the orchestrator records exact brief quotes and matching outline/ledger references in `artifacts/07-outline.md` under `## Brief contract check`, with `PASS` or `BLOCK` for every planned chapter and every relevant ledger entry, including every timeline and world-rule row. A contradiction is repaired inside the outline and ledger, or returned to the author; in autonomous mode it remains a recorded repair plan until the existing brief is satisfied.
 - **The page becomes canon once written.** A drafted fact that differs from the plan is a finding: either the page or the plan changes, and the decision is recorded in the ledger.
 - **Never overwrite on contradiction.** When an update meets a value that disagrees with an entry, add a Conflict entry with both quotes. The check turns it into a finding.
 - **Legitimate change is history, not conflict.** Dyed hair, a healed limp, a year of aging: record the new value with the scene that changed it, and keep the old one with the chapters in which it held.
@@ -78,7 +79,7 @@ Each chapter brief (`work/briefs/chapter-NN.md`) carries the ledger entries that
 
 | When | Scope | Output |
 |---|---|---|
-| Phase 2: Architecture | the foundation and outline artifacts | the seeded ledger |
+| Phase 2: Architecture | the approved intake brief, foundation and outline artifacts | the seeded ledger and the outline's brief contract check |
 | Phase 3: Drafting, after chapters 5, 10, 15 and so on, and after the last chapter | the new block, read against the ledger and every earlier chapter | the ledger updated, then `evaluations/continuity-check-NN.md` (NN is the block number: 01 for chapters 1 to 5) |
 | Phase 4: Adversarial Audit | every chapter; the auditor's continuity pass applies every check below at full depth, thread payoffs included | tickets in `artifacts/10-adversarial-audit.md`, in the auditor's format |
 | After any revision, in Phase 3: Drafting or Phase 5: Revision Loop | the revised chapter and its neighbors, before the orchestrator promotes it | the ledger updated for the changed chapters; a Recheck section in the check file whose findings it verifies, or a note with the pass in `evaluations/revision-loop.md` |

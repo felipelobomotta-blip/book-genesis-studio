@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Check the approved premise, reader promise, timeline and point of view against the outline and continuity ledger before drafting; repeat the comparison in the final audit. A self-consistent plan must still honor the author's brief.
+- Preserve full blind-reader instructions on retries and reject review evidence obtained by forcing empty defect arrays or positive votes. Structural JSON validity is not sufficient evidence of independent criticism.
 - Guard existing native CLI calls with one active call per book, unique attempt directories, pending response publication and hashed completion receipts. A running call is waited on; it is not retried into the same output file.
 - Add portable Markdown and EPUB export, optional DOCX/PDF reading proofs, deterministic prose counts, and complete-book artifact/length preflight. Exported files do not imply that literary gates or human publication approval passed.
 - Preserve accepted chapters through hash-checked revision promotion and a shared cooperative book lock. Complete technical proofreading before final scoring; later corrections must refresh affected review evidence before export.

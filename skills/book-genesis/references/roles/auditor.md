@@ -23,7 +23,18 @@ Target scores, earlier scores, panel verdicts, and the writer's opinion of the d
 
 ## Passes
 
-Run all ten, in order, and record each result even when it is clean.
+Run the brief contract check first, then all ten passes in order, and record
+each result even when it is clean.
+
+0. **Brief contract.** Quote the approved premise, reader promise, declared time
+window or duration, and point of view from `artifacts/00-brief.md`. Compare each
+constraint against every planned chapter in `artifacts/07-outline.md`, every
+timeline row and world-rule entry in `artifacts/09-continuity-ledger.md`, and
+the corresponding manuscript passages. Record the exact brief quote, the
+matching outline/ledger reference, the manuscript chapter and paragraph, and
+the result. A mismatch is a ticket with class `structural` or `continuity`;
+never repair it by silently changing the brief. The ledger being internally
+consistent does not make a brief contradiction pass.
 
 1. **Existence.** Every chapter has a unique function. Mood alone is not a function. Recommend cut or merge when two chapters do one job.
 2. **Voice.** Points of view and characters sound distinct. Apply the "cover the name" test from `artifacts/05-voice.md`. Check the rhythm contract: narration holds the baseline and moves only inside the declared envelope.
