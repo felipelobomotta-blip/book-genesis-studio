@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Repair architecture dependencies together before reverification. Keep exact schedules and premise triggers strict, while distinguishing chapter spans and ordinary approximate durations from invented event timestamps or exact anniversaries.
 - Reconcile canonical chapter numbers and deterministic prose counts against saved progress before resuming and during complete-book export. A stale state or pending earlier phase blocks the complete-delivery claim while preserving the manuscript; honest failed literary gates remain reportable outcomes.
 - Check the approved premise, reader promise, timeline and point of view against the outline and continuity ledger before drafting; repeat the comparison in the final audit. A self-consistent plan must still honor the author's brief.
 - Keep architecture-verifier packets neutral on retries: current constraints and story facts only, excluding earlier verdicts and repair history; record verification only after the reviewer actually finishes.
