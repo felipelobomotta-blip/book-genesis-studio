@@ -31,6 +31,8 @@ idea
 
 Every book is a folder: `PROJECT_STATE.yaml` (one schema, `schema_version: 6`), `ASSUMPTIONS.md`, `RUN_REPORT.md`, numbered artifacts, chapters, evaluations, delivery and work. A new session in any host resumes from those files. A chapter is written to `work/attempts/` first and replaces the accepted version only after it is read back and accepted, so a failure never leaves a half-written chapter as the canonical one.
 
+The read-only `scripts/check_progress.py` helper compares the canonical chapter set and the exporter's deterministic prose count with the saved schema-6 progress fields. The host runs it before resuming and after checkpoints, reconciles mismatches from the actual saved work, and reruns it before continuing. Complete-pipeline export invokes the same check and requires Phase 7 with earlier phase outcomes recorded. The helper never edits a book, judges prose, or proves that a claimed review ran; saved review evidence still needs verification. It accepts the documented narrow progress-field YAML syntax or JSON state, rather than acting as a general YAML processor.
+
 ## Why the critics are trustworthy enough to listen to
 
 The earlier versions let one context write, judge and approve its own prose, and revise until the judge agreed. 6.0 separates what each role may see:

@@ -27,6 +27,8 @@ from pathlib import Path
 from typing import Iterable
 from xml.etree import ElementTree as ET
 
+from check_progress import reconcile_book
+
 
 class ExportError(ValueError):
     """Raised when the source manuscript or delivery target is unsafe."""
@@ -643,6 +645,19 @@ def _complete_pipeline_preflight(
         min_words=min_words,
         max_words=max_words,
     )
+    progress = reconcile_book(
+        book_root,
+        complete=True,
+        expected_chapters=expected_chapters,
+        min_words=min_words,
+        max_words=max_words,
+    )
+    if not progress["ok"]:
+        details = "; ".join(
+            f"{item['field']}: {item['message']}"
+            for item in progress["mismatches"][:6]
+        )
+        raise ExportError("complete pipeline progress preflight: " + details)
 
 
 def _assert_count_contract(

@@ -205,7 +205,17 @@ python scripts/export_book.py \
   --max-words <approved prose ceiling>
 ```
 
-`--require-complete-pipeline` checks that every canonical `artifacts/00` to
+Before the complete export, run `python scripts/check_progress.py --book-dir
+<book-folder> --complete` from this skill. Reconcile its read-only report with
+the saved work: the state must list the actual complete chapter set and the
+same deterministic prose count, be at Phase 7, and record the earlier phase
+outcomes. Set the editorial-package gate to `in_progress` while export runs;
+do not leave it pending or skipped after its artifacts have been produced.
+Phase 7 may remain in progress until delivery is verified. A failed literary
+gate is a valid recorded outcome; a pending or never-run phase is not.
+The helper never changes the book or turns a failed verdict into a pass.
+
+`--require-complete-pipeline` repeats that progress check and checks that every canonical `artifacts/00` to
 `artifacts/13` file, `ASSUMPTIONS.md`, `RUN_REPORT.md`, `PROJECT_STATE.yaml`,
 `evaluations/panel-chapter-01.md`, `evaluations/proofread.md`,
 `evaluations/revision-loop.md`, `evaluations/revision-plan.md`, and the

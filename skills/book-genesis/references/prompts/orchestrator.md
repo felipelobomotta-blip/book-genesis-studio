@@ -8,7 +8,7 @@ When to load: at the start of every session, after `references/pipeline/host-con
 
 1. Apply `references/pipeline/host-contract.md` (start, resume, reconcile).
 2. Read `pipeline.current_phase` in `PROJECT_STATE.yaml`. Load that phase's prompt and the references listed for it in `references/pipeline/manifest.yaml`, and nothing else.
-3. Produce exactly the outputs the manifest lists for the phase. Save, read back, then update state and gates.
+3. Produce exactly the outputs the manifest lists for the phase. Save, read back, then update state and gates. Run `python scripts/check_progress.py --book-dir <book-folder>` from this skill and reconcile any reported count/state mismatch before advancing. A review's verdict must come from its completed saved report; never mark a pending call as passed.
 4. Check in with the author (host contract), unless the mode is autonomous.
 5. Move `current_phase` to the next label and repeat.
 

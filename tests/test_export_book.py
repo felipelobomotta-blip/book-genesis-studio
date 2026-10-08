@@ -83,7 +83,6 @@ class ExportBookTests(unittest.TestCase):
         for relative in (
             "ASSUMPTIONS.md",
             "RUN_REPORT.md",
-            "PROJECT_STATE.yaml",
             "evaluations/panel-chapter-01.md",
             "evaluations/proofread.md",
             "evaluations/revision-loop.md",
@@ -92,6 +91,31 @@ class ExportBookTests(unittest.TestCase):
             path = self.root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(f"evidence for {relative}\n", encoding="utf-8")
+        (self.root / "PROJECT_STATE.yaml").write_text(
+            """schema_version: 6
+
+pipeline:
+  current_phase: "Phase 7: Editorial Package"
+  status: "in_progress"
+
+manuscript:
+  chapter_count_planned: 1
+  completed_chapters: [1]
+  word_count_actual: 3
+  status: "complete"
+
+gates:
+  intake: "passed"
+  foundation: "passed"
+  architecture: "passed"
+  drafting: "passed"
+  adversarial_audit: "failed"
+  revision_loop: "failed"
+  final_score: "failed"
+  editorial_package: "in_progress"
+""",
+            encoding="utf-8",
+        )
 
     def test_gaps_and_duplicate_numbers_are_rejected(self) -> None:
         self.write_chapter("chapter-01.md", "First", "One.")
@@ -220,6 +244,29 @@ class ExportBookTests(unittest.TestCase):
         )
 
         self.assertTrue(Path(result["receipt"]).is_file())
+
+    def test_complete_pipeline_rejects_skipped_audit_even_with_nonempty_evidence(self) -> None:
+        self.write_chapter("chapter-01.md", "First", "One two three.")
+        self.write_complete_pipeline_evidence()
+        state_path = self.root / "PROJECT_STATE.yaml"
+        state_path.write_text(
+            state_path.read_text(encoding="utf-8").replace('adversarial_audit: "failed"', 'adversarial_audit: "skipped"'),
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ExportError, "gates.adversarial_audit"):
+            export_book(
+                self.root,
+                self.delivery,
+                title="Test Book",
+                author="Test Author",
+                language="en",
+                require_complete_pipeline=True,
+                expected_chapters=1,
+                min_words=1,
+                max_words=10,
+            )
+        self.assertFalse(self.delivery.exists())
 
     def test_complete_pipeline_rejects_chapter_and_word_contract_mismatch(self) -> None:
         self.write_chapter("chapter-01.md", "First", "One two three.")

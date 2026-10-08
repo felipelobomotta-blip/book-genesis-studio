@@ -34,8 +34,16 @@ mode, write the repair plan inside the brief-check section and stay in Phase 2
 until the outline and ledger fit the existing brief.
 
 When the host can isolate a fresh read-only context, have it verify the brief,
-outline and ledger comparison before accepting the outline. Record the context's
-result and evidence in that same section. If isolation is unavailable, record
+outline and ledger comparison before accepting the outline. Build a neutral
+packet from the approved constraints, current chapter plan and canonical ledger
+facts. Exclude the orchestrator's brief-check verdicts, earlier reviewer reports,
+repair history and claims that the plan already passed, including on a retry.
+Those are provenance for the orchestrator, not instructions or evidence for the
+fresh verifier. Request a concise verdict with exact conflicting passages and
+their chapter/ledger references plus a compact coverage list; do not ask for a
+new outline, a recap of the full plan or a general literary critique here.
+Record the context's completed result and evidence in that same section; a
+pending call cannot be recorded as verification. If isolation is unavailable, record
 `verification: degraded (not independent)`; do not invent a passing result.
 
 ## Rules

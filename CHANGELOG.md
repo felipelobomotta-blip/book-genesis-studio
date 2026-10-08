@@ -2,7 +2,9 @@
 
 ## Unreleased
 
+- Reconcile canonical chapter numbers and deterministic prose counts against saved progress before resuming and during complete-book export. A stale state or pending earlier phase blocks the complete-delivery claim while preserving the manuscript; honest failed literary gates remain reportable outcomes.
 - Check the approved premise, reader promise, timeline and point of view against the outline and continuity ledger before drafting; repeat the comparison in the final audit. A self-consistent plan must still honor the author's brief.
+- Keep architecture-verifier packets neutral on retries: current constraints and story facts only, excluding earlier verdicts and repair history; record verification only after the reviewer actually finishes.
 - Preserve full blind-reader instructions on retries and reject review evidence obtained by forcing empty defect arrays or positive votes. Structural JSON validity is not sufficient evidence of independent criticism.
 - Guard existing native CLI calls with one active call per book, unique attempt directories, pending response publication and hashed completion receipts. A running call is waited on; it is not retried into the same output file.
 - Add portable Markdown and EPUB export, optional DOCX/PDF reading proofs, deterministic prose counts, and complete-book artifact/length preflight. Exported files do not imply that literary gates or human publication approval passed.
