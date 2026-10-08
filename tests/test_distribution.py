@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -70,6 +71,20 @@ class SuiteContractTests(unittest.TestCase):
         result = subprocess.run(INSTALLER + ["verify-suite"], capture_output=True, text=True, check=False)
         self.assertEqual(0, result.returncode, msg=result.stdout + result.stderr)
         self.assertIn("Suite check ok", result.stdout)
+
+    def test_rubric_critic_packet_omits_orchestrator_targets_and_gate_policy(self) -> None:
+        scoring = REPO_ROOT / "skills" / "book-genesis" / "references" / "scoring"
+        protocol = (scoring / "evaluator-protocol.md").read_text(encoding="utf-8")
+        rubric = (scoring / "rubric-criteria.md").read_text(encoding="utf-8")
+        score_report = (scoring / "genesis-score.md").read_text(encoding="utf-8")
+        critic_row = next(line for line in protocol.splitlines() if line.startswith("| Rubric evaluator |"))
+
+        self.assertIn("rubric-criteria.md", critic_row)
+        self.assertNotIn("genesis-score.md", critic_row)
+        self.assertNotIn("quality_target", rubric)
+        self.assertNotIn("calibrat", rubric.lower())
+        self.assertNotIn("8.5", rubric)
+        self.assertIn("ORCHESTRATOR ONLY", score_report)
 
     def test_targets_command_lists_every_target(self) -> None:
         result = subprocess.run(INSTALLER + ["targets"], capture_output=True, text=True, check=False)
@@ -408,6 +423,114 @@ class InstallTests(unittest.TestCase):
 
         self.assertIn("my notes", edited.read_text(encoding="utf-8"))
         self.assertFalse((skills / BACKUP_DIRECTORY).exists())
+        self.assertEqual([], list(skills.glob(".book-genesis-stage-*")))
+
+    def test_install_record_promotion_failure_rolls_back_skills_and_record(self) -> None:
+        skills = self.tempdir / "project" / "skills"
+        agents = self.tempdir / "project" / "agents"
+        self.assertTrue(install_suite("claude", destination=skills, agents_destination=agents)["ok"])
+
+        edited = skills / "book-genesis" / "SKILL.md"
+        original_with_local_edit = edited.read_text(encoding="utf-8") + "\nlocal change to preserve\n"
+        edited.write_text(original_with_local_edit, encoding="utf-8")
+        record_path = skills / INSTALL_RECORD
+        previous_record = record_path.read_bytes()
+
+        original_rename = Path.rename
+
+        def fail_record_promotion(path, target):
+            if path.name == INSTALL_RECORD and path.parent.name.startswith(".book-genesis-stage-"):
+                raise OSError("injected install-record promotion failure")
+            return original_rename(path, target)
+
+        with patch.object(Path, "rename", fail_record_promotion):
+            with self.assertRaisesRegex(OSError, "injected install-record promotion failure"):
+                install_suite("claude", destination=skills, agents_destination=agents, force=True)
+
+        self.assertEqual(original_with_local_edit, edited.read_text(encoding="utf-8"))
+        self.assertEqual(previous_record, record_path.read_bytes())
+        self.assertTrue((agents / BLIND_READER).is_file())
+        self.assertEqual([], list(skills.glob(".book-genesis-stage-*")))
+
+    def test_skill_promotion_failure_preserves_the_existing_install_record(self) -> None:
+        skills = self.tempdir / "project" / "skills"
+        agents = self.tempdir / "project" / "agents"
+        self.assertTrue(install_suite("claude", destination=skills, agents_destination=agents)["ok"])
+
+        edited = skills / "book-genesis" / "SKILL.md"
+        original_with_local_edit = edited.read_text(encoding="utf-8") + "\nlocal change to preserve\n"
+        edited.write_text(original_with_local_edit, encoding="utf-8")
+        record_path = skills / INSTALL_RECORD
+        previous_record = record_path.read_bytes()
+
+        original_rename = Path.rename
+
+        def fail_skill_promotion(path, target):
+            if path.name == "book-genesis" and path.parent.name.startswith(".book-genesis-stage-"):
+                raise OSError("injected skill promotion failure")
+            return original_rename(path, target)
+
+        with patch.object(Path, "rename", fail_skill_promotion):
+            with self.assertRaisesRegex(OSError, "injected skill promotion failure"):
+                install_suite("claude", destination=skills, agents_destination=agents, force=True)
+
+        self.assertEqual(original_with_local_edit, edited.read_text(encoding="utf-8"))
+        self.assertEqual(previous_record, record_path.read_bytes())
+        self.assertTrue((agents / BLIND_READER).is_file())
+        self.assertEqual([], list(skills.glob(".book-genesis-stage-*")))
+
+    def test_record_backup_failure_preserves_the_existing_install_record(self) -> None:
+        skills = self.tempdir / "project" / "skills"
+        agents = self.tempdir / "project" / "agents"
+        self.assertTrue(install_suite("claude", destination=skills, agents_destination=agents)["ok"])
+
+        edited = skills / "book-genesis" / "SKILL.md"
+        original_with_local_edit = edited.read_text(encoding="utf-8") + "\nlocal change to preserve\n"
+        edited.write_text(original_with_local_edit, encoding="utf-8")
+        record_path = skills / INSTALL_RECORD
+        previous_record = record_path.read_bytes()
+
+        original_rename = Path.rename
+
+        def fail_record_backup(path, target):
+            if path == record_path:
+                raise OSError("injected record backup failure")
+            return original_rename(path, target)
+
+        with patch.object(Path, "rename", fail_record_backup):
+            with self.assertRaisesRegex(OSError, "injected record backup failure"):
+                install_suite("claude", destination=skills, agents_destination=agents, force=True)
+
+        self.assertEqual(original_with_local_edit, edited.read_text(encoding="utf-8"))
+        self.assertEqual(previous_record, record_path.read_bytes())
+        self.assertTrue((agents / BLIND_READER).is_file())
+        self.assertEqual([], list(skills.glob(".book-genesis-stage-*")))
+
+    def test_record_write_failure_rolls_back_skills_and_preserves_the_record(self) -> None:
+        skills = self.tempdir / "project" / "skills"
+        agents = self.tempdir / "project" / "agents"
+        self.assertTrue(install_suite("claude", destination=skills, agents_destination=agents)["ok"])
+
+        edited = skills / "book-genesis" / "SKILL.md"
+        original_with_local_edit = edited.read_text(encoding="utf-8") + "\nlocal change to preserve\n"
+        edited.write_text(original_with_local_edit, encoding="utf-8")
+        record_path = skills / INSTALL_RECORD
+        previous_record = record_path.read_bytes()
+
+        original_write_bytes = Path.write_bytes
+
+        def fail_record_write(path, data):
+            if path.name == INSTALL_RECORD and path.parent.name.startswith(".book-genesis-stage-"):
+                raise OSError("injected record write failure")
+            return original_write_bytes(path, data)
+
+        with patch.object(Path, "write_bytes", fail_record_write):
+            with self.assertRaisesRegex(OSError, "injected record write failure"):
+                install_suite("claude", destination=skills, agents_destination=agents, force=True)
+
+        self.assertEqual(original_with_local_edit, edited.read_text(encoding="utf-8"))
+        self.assertEqual(previous_record, record_path.read_bytes())
+        self.assertTrue((agents / BLIND_READER).is_file())
         self.assertEqual([], list(skills.glob(".book-genesis-stage-*")))
 
     def test_a_users_own_skill_md_bak_survives_a_forced_replace(self) -> None:

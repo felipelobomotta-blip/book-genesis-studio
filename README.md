@@ -10,6 +10,8 @@ Give your AI agent an idea, even a one-line one, and Book Genesis takes it to a 
 
 Version 6.0.0-beta.1 · MIT licensed · free · runs on your own agent and account.
 
+**Try a small review first:** [Catch a character using a secret before learning it](examples/continuity-review/README.md). Three short excerpts, a consistent control, real recorded AI feedback and unchanged manuscript files. Copy the prompt into your agent to run your own review. The supplied verification script checks the saved evidence; it does not call a model.
+
 ## The goal
 
 A book written with the measured patterns of books readers finish, criticized by readers who cannot see the plan, and packaged to sell. That is the goal every part of the workflow is built around. It is not a promise: no workflow can guarantee a bestseller, and this one says so in every report.

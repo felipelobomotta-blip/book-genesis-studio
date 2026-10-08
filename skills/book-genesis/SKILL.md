@@ -31,6 +31,8 @@ Resolve every `references/...` path from this skill's folder. The author's files
 
 Load only the active phase's prompt and the references `references/pipeline/manifest.yaml` lists for it.
 
+Those references are the orchestrator's working set, not a critic packet. Never forward the whole list to another role. Assemble each role's packet from the allowed material in `references/scoring/evaluator-protocol.md`.
+
 | Phase | Prompt |
 |---|---|
 | Phase 0: Intake | `references/prompts/intake.md` |
@@ -49,7 +51,7 @@ Load only the active phase's prompt and the references `references/pipeline/mani
 - **Critics are blind.** Readers see only prose; the auditor sees the plan but never targets or earlier scores; the writer never sees the rubric. `references/scoring/evaluator-protocol.md` sets who sees what.
 - **Independence is measured and shown.** Critics run in isolated subagents or in a second installed tool from another model family when the host allows it (`references/hosts.md`). Every verdict carries its grade.
 - **Four readers decide, not one.** Primary, hostile, adjacent-genre and casual readers, built per book (`references/roles/panel.md`, `references/roles/blind-reader.md`).
-- **Two gates, bounded.** The panel decides whether the book holds readers; the rubric (`references/scoring/genesis-score.md`) decides what to fix. Three passes per gate, then an honest stop.
+- **Two gates, bounded.** The panel decides whether the book holds readers; the rubric (`references/scoring/rubric-criteria.md`) decides what to fix. The orchestrator alone reads the gate policy in `references/scoring/genesis-score.md`. Three passes per gate, then an honest stop.
 - **Measured patterns, named sources.** `references/patterns/index.md` points to prose, structure and emotion patterns from named books and studies, and to machine-prose tells in English and Brazilian Portuguese.
 
 ## Specialists

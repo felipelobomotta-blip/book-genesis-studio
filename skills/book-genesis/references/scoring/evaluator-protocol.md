@@ -2,7 +2,7 @@
 
 How to get criticism the writer cannot grade for itself: who may read what, how independent each critic is, and how verdicts are aggregated.
 
-When to load: Phase 0 (set up independence), Phases 3 to 6 (every panel, audit and score). Role: orchestrator.
+When to load: Phase 0 (set up independence), Phases 3 to 6 (every panel, audit and score). Role: orchestrator. ORCHESTRATOR ONLY: this protocol contains private gate policy; use it to assemble packets, never give the whole file to a critic.
 
 ## Roles and what each may see
 
@@ -11,11 +11,13 @@ When to load: Phase 0 (set up independence), Phases 3 to 6 (every panel, audit a
 | Writer | brief, foundation, voice, outline, chapter brief | rubric, targets, verdicts | the chapter being drafted |
 | Blind reader | persona card, genre line, previous chapter tail, the text, tells file | plan files, targets, earlier scores and verdicts, writer notes | nothing |
 | Auditor | whole manuscript, plan files, pattern standards | targets, earlier scores, panel verdicts | nothing |
-| Rubric evaluator | manuscript or declared sample, `references/scoring/genesis-score.md`, pattern standards, tells file; the market position only when scoring Market | targets, earlier scores, revision rationale, writer notes | nothing |
+| Rubric evaluator | manuscript or declared sample, `references/scoring/rubric-criteria.md`, pattern standards, tells file; the market position only when scoring Market | targets, earlier scores, revision rationale, writer notes, gate-policy files | nothing |
 | Revision editor | tickets, quoted passages, preserve list, voice file | targets, numeric scores | only the passages in its tickets |
 | Orchestrator | everything | | state and reports |
 
 The orchestrator freezes each critic's report as written before applying any target or threshold.
+
+Supply copies of the allowed material in a separate packet. Do not expose state, score reports, this protocol or `references/scoring/genesis-score.md` through the packet or its links. A rubric evaluator follows the report format in `references/scoring/rubric-criteria.md`; it does not need to open this file.
 
 ## Independence levels
 

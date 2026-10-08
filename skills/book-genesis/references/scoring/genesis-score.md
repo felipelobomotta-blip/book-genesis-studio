@@ -1,8 +1,8 @@
 # Genesis Score
 
-The rubric that tells the revision what to fix, and the final report that tells the author where the book stands.
+ORCHESTRATOR ONLY. This file contains private gate policy and the final-report format. Never include it in a critic's packet.
 
-When to load: Phase 5 (rubric gate) and Phase 6 (final score). Roles: rubric evaluator scores; orchestrator calibrates and reports.
+When to load: Phase 5 (rubric gate) and Phase 6 (final score). Role: orchestrator calibrates and reports. Rubric evaluators receive only `references/scoring/rubric-criteria.md` and their allowed evidence.
 
 ## What it is for
 
@@ -13,34 +13,16 @@ The reader panel decides whether the book holds its audience. This rubric decide
 ## Order
 
 1. Phase 4 audit first. Never score before the adversarial audit.
-2. Rubric evaluators follow `references/scoring/evaluator-protocol.md`: fresh context, no targets, no earlier scores.
+2. Assemble fresh-context critic packets under `references/scoring/evaluator-protocol.md`, using `references/scoring/rubric-criteria.md`. Do not send this file or the protocol itself: both contain private gate policy. Omit targets and earlier scores.
 3. The orchestrator calibrates and applies `project.quality_target` (default 8.5) afterwards.
 
-## Dimensions
+## Criteria and evidence
 
-| # | Dimension | Weight | Measures |
-|---|---|---|---|
-| 1 | Originality | 1.1 | premise, lens and execution beyond stale imitation |
-| 2 | Theme | 1.0 | depth of the central question; resonance beyond plot |
-| 3 | Characters | 1.2 | wound, desire, need, contradiction, memorability |
-| 4 | Prose | 1.0 | precision, texture, rhythm, freedom from cliche and machine tells |
-| 5 | Pacing | 1.0 | tension control, variation, forward pull |
-| 6 | Emotion | 1.1 | whether the intended feeling actually lands |
-| 7 | Coherence | 0.9 | logic, continuity, causality |
-| 8 | Market | 0.8 | comp clarity, audience legibility, packaging viability |
-| 9 | Voice | 1.1 | recognizable, distinct, durable over hundreds of pages |
-| 10 | Opening | 0.8 | first-page grip, first-chapter promise, payoff by the end |
-
-## Scoring rules
-
-- The baseline is competence, not excellence. A clean, forgettable chapter is a 6.
-- Above 8.0 needs quoted evidence; above 9.0 needs at least two pieces.
-- Evidence is textual, structural or reader-impact (from panel verdicts, which the orchestrator may attach to the Emotion and Pacing evidence after scoring, never before).
-- Prose cannot score above 7.5 while any tell in the book's tells file exceeds its ceiling in more than a quarter of the chapters.
-- Market clarity never compensates for literary weakness.
+The ten dimensions, weights and evidence requirements live in `references/scoring/rubric-criteria.md`. Keep a single source for them. The orchestrator may attach panel verdicts to the Emotion and Pacing evidence after scores are frozen, never before.
 
 ## Calculation
 
+- If any dimension is not assessed or required evidence is missing, report the rubric as incomplete. Do not compute a passing gate from the remaining dimensions.
 - Floor: the lowest calibrated dimension.
 - Weighted average: the weighted mean of the ten calibrated dimensions.
 - Calibration: see `references/scoring/evaluator-protocol.md` (default minus 0.8).
