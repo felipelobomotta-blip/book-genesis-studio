@@ -1,8 +1,8 @@
 # Production
 
-Turns the locked manuscript into clean deliverables: a technical proofread for spelling, grammar and consistency, ebook and print formatting, and an EPUB and PDF export when the author's machine has pandoc.
+Turns the locked manuscript into clean deliverables: a technical proofread for spelling, grammar and consistency, ebook and print formatting, and a default portable manuscript-plus-EPUB export. DOCX/PDF are optional when their libraries already exist; pandoc is an optional alternative, never a prerequisite.
 
-When to load: Phase 7: Editorial Package (orchestrator, as the production specialist), after Phase 6: Final Score, once the manuscript text is locked.
+When to load: Part 1 (technical proofread) at the Phase 5 exit, before Phase 6 freezes the final score; Parts 2 and 3 at Phase 7 after Phase 6, once the manuscript text is locked.
 
 ## Principle
 
@@ -49,8 +49,14 @@ Log every error in `evaluations/proofread.md`, one line each. Paragraphs are cou
 ```
 
 - Anything that could be a style choice is marked "ask the author" and is never applied without an answer. Anything larger than a correction is a ticket, and the author decides.
-- Apply the "apply" lines as literal replacements through the same file flow as a revision (`references/specialists/revision-editor.md`): copy the accepted chapter to `work/revisions/chapter-NN.pre-rK.md`, write the corrected text to `work/attempts/chapter-NN/revision-rK.md`, read it back, confirm that only the logged text changed, then copy it to `manuscript/chapters/chapter-NN.md`.
+- Complete this proofread before Phase 6 final scoring. Apply approved "apply" lines through the same staged revision flow (`references/specialists/revision-editor.md`): copy the accepted chapter to `work/revisions/chapter-NN.pre-rK.md`, write the corrected text to `work/attempts/chapter-NN/revision-rK.md`, read it back, confirm that only the logged text changed, and let the orchestrator promote it through the Phase 5 revision protocol. The Phase 7 production specialist never writes a correction directly into a locked canonical chapter after Phase 6.
 - After the corrections, repeat pass 3 on the changed chapters.
+
+If a new factual, continuity or prose defect is discovered after Phase 6, do
+not patch `manuscript/chapters/` in Phase 7. Return the finding to the
+orchestrator as a Phase 5 ticket, stage and promote it through the normal
+revision evidence, rerun the affected reader/audit evidence, refresh Phase 6,
+and only then export. There is no skip-votes path for a production edit.
 
 ## Part 2: formatting
 
@@ -127,80 +133,100 @@ Print
 
 ## Part 3: export
 
-### Detect, never install
+### Portable Book Genesis export helper
 
-Run, do not guess:
-
-1. `pandoc --version`. Exit code 0 means pandoc is usable.
-2. A PDF engine: the first of `xelatex`, `lualatex`, `tectonic`, `typst`, `weasyprint`, `pdflatex` whose `--version` exits 0. A program that is on the PATH but fails `--version` does not count; broken installations do exactly this. pdflatex, pandoc's default engine, comes last because it handles fewer Unicode characters.
-
-Never install pandoc, a PDF engine or anything else without asking the author. If something is missing, say what, and write `delivery/EXPORT.md` so the author can finish later.
-
-### Prepare (always, even without pandoc)
-
-1. **Chapter files.** Each starts with exactly one level-1 heading (`# ...`) and holds only prose: pandoc starts a new chapter, and a contents entry, at every `#` line. If a heading is missing or at another level, correct it as a formatting fix through the same file flow as the proofread corrections, rather than working around it in the command.
-2. **The proofread manuscript.** Write `delivery/<slug>.md`: the title and author on top, then every chapter file in order, separated by blank lines. Reading and joining the files needs no tool.
-3. **Metadata.** Write `work/export/metadata.yaml`, saved as UTF-8 like the chapter files. The title comes from `project.title` in `PROJECT_STATE.yaml`; the language tag is the BCP 47 form of `project.language` (Portuguese (Brazil) is `pt-BR`, English (US) is `en-US`); the author's name is the one the author wants printed. If neither `artifacts/00-brief.md` nor `ASSUMPTIONS.md` records it, ask, and wait for the answer before exporting; never invent a name.
-
-```yaml
-title: "A Casa das Marés"
-author: "Author Name"
-lang: pt-BR
-# Optional lines:
-# subtitle: "..."
-# rights: "Copyright 2026 Author Name. All rights reserved."   # printed on the title page
-# belongs-to-collection: "Series Name"                          # EPUB series metadata
-# group-position: 2                                             # volume number
-```
-
-pandoc uses `lang` for the EPUB's language and for hyphenation in the PDF.
-
-4. **Stylesheet.** Write `work/export/ebook.css`. pandoc's own EPUB stylesheet spaces paragraphs apart with no indent, and `--css` replaces that stylesheet entirely, so this file is complete on its own:
-
-```css
-p { margin: 0; text-indent: 1.25em; widows: 2; orphans: 2; }
-h1 { margin: 3em 0 2em 0; text-indent: 0; page-break-before: always; }
-h1 + p, hr + p { text-indent: 0; }
-hr { width: 30%; margin: 1.5em auto; border: 0; border-top: 1px solid; }
-.titlepage { text-align: center; margin-top: 30%; }
-.titlepage p { text-indent: 0; margin-top: 1em; }
-nav#toc ol { list-style-type: none; padding: 0; margin-left: 1em; }
-```
-
-pandoc turns a `* * *` line into a scene break (`<hr />`), which the `hr` rules center.
-
-5. **File name.** `<slug>` is `project.id` from `PROJECT_STATE.yaml` when it is set, or else the title in lowercase ASCII letters, digits and hyphens: "A Casa das Marés" becomes `a-casa-das-mares`.
-
-### Run (only when pandoc works)
-
-List every chapter file explicitly, in order. PowerShell and cmd do not expand wildcards, and pandoc then fails (pandoc 3.9 reports `withBinaryFile: invalid argument`). In a POSIX shell (macOS, Linux, Git Bash, WSL), `manuscript/chapters/chapter-??.md` expands in the right order because chapter numbers have two digits.
-
-EPUB:
+After the manuscript is locked and the Phase 4, Phase 5 and Phase 6 records are
+complete, reconcile the outline and state to confirm that every planned chapter
+exists. Do not export a contiguous subset as a finished book. Use
+`scripts/export_book.py` from this skill as the default Phase 7 action; the host
+should invoke it rather than asking the author to assemble files by hand:
 
 ```bash
-pandoc --metadata-file=work/export/metadata.yaml --css=work/export/ebook.css --toc -o delivery/<slug>.epub manuscript/chapters/chapter-01.md manuscript/chapters/chapter-02.md
+python scripts/export_book.py \
+  --book-dir <book-folder> \
+  --delivery-dir <book-folder>/delivery \
+  --title "<project title>" \
+  --author "<author name>" \
+  --language <BCP-47 language>
 ```
 
-- `--toc` adds a visible contents page right after the title page; the EPUB's navigation contents are generated either way.
-- Add `--epub-cover-image=<file>` only when the author supplied a cover image.
-- A dedication or an about-the-author page is a short file in `work/export/` (for example `# Dedication {.unlisted}` followed by one line), listed before or after the chapters in the command. `{.unlisted}` keeps it out of the contents.
+Add `--docx` and/or `--pdf` when the host already has `python-docx` and/or
+`reportlab` plus `pypdf` available. The optional files are staged and validated
+with the EPUB in the same transaction. DOCX uses a 5.5 x 8.5 inch serif reader
+layout with chapter page breaks and page numbers; PDF uses an embedded
+accessible serif font and is explicitly a reading proof, not print-certified.
+If an optional dependency or usable font is missing, the helper fails clearly
+without installing anything.
 
-PDF, only with a working engine:
+The helper reads `manuscript/chapters/chapter-NN.md` in numeric order and
+refuses gaps, duplicate numbers, malformed chapter headings and a non-empty
+delivery directory unless the host deliberately passes `--overwrite`. It
+accepts only a simple slug and `book_dir/delivery` as the delivery target, and
+re-reads the canonical chapter set immediately before and after promotion. It
+holds the cooperative `.book-genesis-write.lock` in the chapter directory for the transaction; the chapter
+promotion helper uses the same lock convention. This is a single-writer guard
+for cooperating Book Genesis operations, not an impossible guarantee against a
+separate process that ignores the lock. It stages all artifacts before
+promotion, so a failed export leaves a previous delivery untouched. It writes
+`delivery/manuscript.md`, a generated EPUB 3 with
+navigation and a visible table of contents, optional DOCX/PDF reading proofs,
+`delivery/export-receipt.json` with source/output hashes, chapter count and a
+deterministic per-chapter/total word count, and `delivery/EXPORT.md` with the
+validation result. The receipt's `word_count.method` is
+`whitespace_split_prose_v1`: count every nonblank prose line by whitespace,
+excluding level-one headings, frontmatter and standalone scene/formatting
+separator lines. Use `word_count.total` and its chapter entries in the final
+inventory; do not ask a model to estimate or recalculate it. This is a
+deterministic reporting measure, not a mutable literary target or quality gate.
+
+The receipt always records `quality.status: not_assessed` and
+`quality.quality_gate_passed: false`. The helper is an assembler and format
+validator; it never turns a score, panel verdict or package into a quality or
+publication-readiness claim. The host must keep the gate and human decision
+records separate, and must not call the helper until the author has supplied a
+name for the title page. Never install a missing exporter dependency: the
+manuscript and EPUB path uses only the Python standard library; DOCX and PDF
+are opt-in and use only libraries already present on the host.
+
+For the complete-book Phase 7 path, derive the approved chapter count and
+prose floor/ceiling from the actual intake and approved outline contract, then
+add these assertions before the final inventory:
 
 ```bash
-pandoc --metadata-file=work/export/metadata.yaml --toc --pdf-engine=<engine> -o delivery/<slug>.pdf manuscript/chapters/chapter-01.md manuscript/chapters/chapter-02.md
+python scripts/export_book.py \
+  --book-dir <book-folder> \
+  --delivery-dir <book-folder>/delivery \
+  --title "<project title>" \
+  --author "<author name>" \
+  --language <BCP-47 language> \
+  --require-complete-pipeline \
+  --expected-chapters <approved chapter count> \
+  --min-words <approved prose floor> \
+  --max-words <approved prose ceiling>
 ```
 
-- With a LaTeX engine (xelatex, lualatex, tectonic, pdflatex), a trade-size proof adds `-V documentclass=book -V "geometry:paperwidth=6in,paperheight=9in,inner=1in,outer=0.75in,top=0.75in,bottom=0.875in"`. Each chapter then opens on a right-hand page.
-- This PDF is a reading and proof copy. A printer that requires PDF/X, a CMYK cover or bleed needs a layout tool or the printer's own template.
+`--require-complete-pipeline` checks that every canonical `artifacts/00` to
+`artifacts/13` file, `ASSUMPTIONS.md`, `RUN_REPORT.md`, `PROJECT_STATE.yaml`,
+`evaluations/panel-chapter-01.md`, `evaluations/proofread.md`,
+`evaluations/revision-loop.md`, `evaluations/revision-plan.md`, and the
+canonical chapter set exists and is
+nonempty. It does not inspect whether a literary gate passed: an honest failed
+audit or score is valid evidence. The optional count assertions compare the
+deterministic `word_count` receipt measure and fail before staging any
+delivery when the approved contract does not match. Standalone draft exports
+remain available without this flag.
 
-When the author needs a Word file, pandoc alone makes one, no PDF engine required; each chapter heading becomes a Heading 1:
+### Optional alternatives (never install)
 
-```bash
-pandoc --metadata-file=work/export/metadata.yaml -o delivery/<slug>.docx manuscript/chapters/chapter-01.md manuscript/chapters/chapter-02.md
-```
-
-After each command: the exit code is 0, and the output file exists and is not empty. If a command fails, keep whatever succeeded, copy the first line of the error into `delivery/EXPORT.md`, and never report a file that does not exist.
+The portable helper above is the mandatory default and must be attempted before
+an alternative. Pandoc, PDF engines and LibreOffice may be used only when they
+already exist and the author requests that format or the host has a documented
+compatibility need. Verify the selected command and output; do not write a
+second manuscript by hand. A missing optional tool affects only that optional
+format: the standard-library manuscript and EPUB remain the default delivery.
+If the default helper is blocked by a host, permission, quota or incomplete
+source problem, preserve the checkpoint and write `delivery/DELIVERY_STATUS.md`
+or `delivery/EXPORT.md` with `status: blocked`, the exact error and next action.
 
 ### delivery/EXPORT.md (always)
 
@@ -211,21 +237,17 @@ Write it on every run, so the author can repeat the export after any later corre
 Author: <author>. Language: <lang>. Chapters: chapter-01.md to chapter-NN.md (NN files).
 
 ## Status
-- pandoc: <version>, or not found
-- PDF engine: <engine>, or none working (checked: xelatex, lualatex, tectonic, typst, weasyprint, pdflatex)
-- delivery/<slug>.md: the proofread manuscript
+- portable helper: passed, or blocked (exact error)
+- delivery/manuscript.md: created, or not created (reason)
 - delivery/<slug>.epub: created, or not created (reason)
-- delivery/<slug>.pdf: created, or not created (reason)
-- delivery/<slug>.docx: created on request, or not requested
+- delivery/export-receipt.json: created, or not created (reason)
+- word count: `<receipt.word_count.total>` prose words; per-chapter counts are in the receipt
+- optional DOCX/PDF: created only when requested and dependencies already existed, or not created (reason)
+- quality gates: passed, gates not met, or not assessed; never infer publication approval
 
 ## Commands (run from the book folder)
-<the exact EPUB command, every chapter listed>
-<the exact PDF command, every chapter listed>
-<the exact DOCX command, if the author asked for a Word file>
-
-## If you choose to install what is missing
-- pandoc: https://pandoc.org/installing.html
-- a PDF engine: a TeX distribution (TeX Live, MiKTeX or MacTeX) provides xelatex and lualatex
+<the exact portable helper command, including title, author and language>
+<the exact optional command, if one was run>
 
 ## Before you publish
 <the ebook and print checklist items still open>

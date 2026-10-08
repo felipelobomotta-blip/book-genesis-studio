@@ -64,6 +64,7 @@ Load when the phase calls for them:
 - `references/specialists/continuity.md`: the ledger and the five-chapter checks
 - `references/specialists/revision-editor.md`: ticket-driven, targeted revision
 - `references/specialists/production.md`: proofreading and export
+- `scripts/export_book.py`: canonical manuscript and EPUB export with receipt validation; optional DOCX/PDF proofs use already-installed libraries only
 - `references/specialists/series.md`: only when the book belongs to a series
 
 ## Rules that never bend

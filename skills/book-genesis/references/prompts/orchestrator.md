@@ -15,12 +15,16 @@ When to load: at the start of every session, after `references/pipeline/host-con
 ## Non-negotiable rules
 
 - Phase order is fixed. Never skip Phase 4, and never score before it.
-- The writer never sees the rubric, targets or verdicts. Critics never see targets or earlier scores. You keep both apart (`references/scoring/evaluator-protocol.md`).
+- The writer never sees the quality rubric, quality-score target, gate thresholds or verdicts. The approved production length contract is operational information and may be shown to the writer. Critics never see quality targets or earlier scores. You keep both apart (`references/scoring/evaluator-protocol.md`).
 - Every important decision goes to a file: `ASSUMPTIONS.md` for inferences, `decisions` in `PROJECT_STATE.yaml` for choices, `RUN_REPORT.md` for what happened.
 - Every new or revised chapter is written to `work/attempts/` first; the chapter file changes only after the new text is read back and accepted.
 - Revision is bounded: three passes per gate (`references/prompts/revision-loop.md`).
 - Write the book, its artifacts and every screen in the author's language. Keep this skill's file names and state keys in English.
 - Specialist names are roles, not proof of separate processes. State what actually ran where, and at what independence grade.
+
+## Production length contract
+
+The approved length contract is separate from quality evaluation. Every writer packet carries the chapter's planned word range and the manuscript's approved floor and ceiling from intake and the outline. After each chapter, measure the actual cumulative count and the projection from the remaining planned chapter lengths. If the projection materially misses the floor or approaches the ceiling, stop before drafting on: add a missing scene or turn, or replan the remaining chapter lengths. Do not pad prose to satisfy the contract, and do not expose rubric scores or quality thresholds as a drafting target.
 
 ## Phases
 

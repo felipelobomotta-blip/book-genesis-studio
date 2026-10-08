@@ -79,12 +79,14 @@ phase_5_revision_loop:
     - "references/scoring/genesis-score.md"
     - "references/scoring/rubric-criteria.md"
     - "references/roles/panel.md"
+    - "references/specialists/production.md"
     - "references/specialists/revision-editor.md"
     - "references/specialists/prose-craft.md"
   gate: "revision_loop"
   outputs:
     - "evaluations/revision-loop.md"
     - "evaluations/revision-plan.md"
+    - "evaluations/proofread.md"
   next: "Phase 6: Final Score"
 
 phase_6_final_score:

@@ -9,13 +9,15 @@ When to load: Phase 3. Roles: writer drafts; orchestrator runs the checks and th
 Assemble `work/briefs/chapter-NN.md` for the writer from files, never from memory:
 
 - the chapter's entry in `artifacts/07-outline.md`, including its scene pressure and planned length;
+- the approved production length contract: this chapter's planned word range and the manuscript floor and ceiling from intake and `PROJECT_STATE.yaml`;
 - the chapter's row in `artifacts/06-emotional-curve.md`: start and end emotion, peak moment, and the anchor the reader should carry away;
 - the characters present, from `artifacts/03-characters.md`, with their voice cards;
 - the rhythm contract and narrative voice from `artifacts/05-voice.md`;
 - the ledger entries the chapter touches, from `artifacts/09-continuity-ledger.md`;
+- a compact canonical fact block assembled from those same character and ledger entries: exact names and relationships for referenced cast, the known present-time/date/tide state, and what each character currently knows. Do not invent alternate names, relationships or dates when canon is incomplete; use the existing form and surface the assumption for continuity review;
 - the last 300 words or so of the previous chapter.
 
-The brief never contains the rubric, the quality target, panel verdicts or audit findings. The writer writes for readers, not for a score.
+The brief never contains the rubric, a quality-score target, gate thresholds, panel verdicts or audit findings. The production length contract is allowed because it plans scope; the writer writes for readers and scenes, not for a score.
 
 ## Writing
 
@@ -28,8 +30,8 @@ Follow `references/specialists/prose-craft.md` for openings, chapter endings and
 
 ## After each chapter
 
-1. Save the draft to `work/attempts/chapter-NN/attempt-1.md`, read it back, then copy it to `manuscript/chapters/chapter-NN.md`.
-2. Count its words and update `manuscript.completed_chapters`, `manuscript.word_count_actual` and the running comparison with the plan.
+1. Save the draft to `work/attempts/chapter-NN/attempt-1.md` and read it back. For a new chapter with no accepted file, create the canonical file only after that read-back. When replacing an existing accepted chapter during revision, stage the draft and use the safe promotion record in `references/prompts/revision-loop.md`; never overwrite an accepted chapter with an ordinary copy.
+2. Count its words and update `manuscript.completed_chapters`, `manuscript.word_count_actual` and the running comparison with the plan. After every chapter, record the cumulative count and the projection from the remaining planned chapter lengths. If that projection materially misses the manuscript floor or approaches its ceiling, stop before the next chapter: add a missing scene or turn, or replan the remaining chapter lengths. Do not add padding.
 3. Check: the chapter's function is clear, names and facts match the ledger, the voice is recognizable, the ending pulls forward, and the chapter adds something the previous one did not.
 
 ## Chapter 1 checkpoint
@@ -42,7 +44,7 @@ After chapters 5, 10, 15 and so on:
 
 1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Send any finding to the revision editor as a targeted ticket and fix it before continuing.
 2. Run the panel on the latest chapter (chapter read).
-3. Compare the running word count with the plan. If the book is heading more than 15 percent under the floor, propose where to expand (a missing turn, a thin subplot) before writing on.
+3. Review the length trend against the approved contract and the next block's scene work before checking in.
 4. Check in.
 
 ## Finishing the draft

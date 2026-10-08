@@ -8,16 +8,16 @@ When to load: Phase 0 (set up independence), Phases 3 to 6 (every panel, audit a
 
 | Role | Sees | Never sees | May edit |
 |---|---|---|---|
-| Writer | brief, foundation, voice, outline, chapter brief | rubric, targets, verdicts | the chapter being drafted |
+| Writer | brief, foundation, voice, outline, chapter brief, approved production length contract (planned chapter range plus manuscript floor and ceiling) | rubric, quality-score target, gate thresholds, verdicts | the chapter being drafted |
 | Blind reader | persona card, genre line, previous chapter tail, the text, tells file | plan files, targets, earlier scores and verdicts, writer notes | nothing |
 | Auditor | whole manuscript, plan files, pattern standards | targets, earlier scores, panel verdicts | nothing |
 | Rubric evaluator | manuscript or declared sample, `references/scoring/rubric-criteria.md`, pattern standards, tells file; the market position only when scoring Market | targets, earlier scores, revision rationale, writer notes, gate-policy files | nothing |
 | Revision editor | tickets, quoted passages, preserve list, voice file | targets, numeric scores | only the passages in its tickets |
 | Orchestrator | everything | | state and reports |
 
-The orchestrator freezes each critic's report as written before applying any target or threshold.
+The production length contract is a scope constraint, not a quality target. It may appear in every writer packet so the writer can plan the chapter's scene work. The orchestrator freezes each critic's report as written before applying any quality target or gate threshold.
 
-Supply copies of the allowed material in a separate packet. Do not expose state, score reports, this protocol or `references/scoring/genesis-score.md` through the packet or its links. A rubric evaluator follows the report format in `references/scoring/rubric-criteria.md`; it does not need to open this file.
+Supply copies of the allowed material in a separate packet. Do not expose quality state, score reports, this protocol or `references/scoring/genesis-score.md` through the packet or its links. Include only the approved production length fields needed for the chapter brief. A rubric evaluator follows the report format in `references/scoring/rubric-criteria.md`; it does not need to open this file.
 
 ## Independence levels
 
@@ -60,3 +60,7 @@ Where the host's documentation does not guarantee that a subagent cannot see the
 ## Integrity failures
 
 Mark an evaluation `DEGRADED` when a critic edited the text it judged, saw a target or earlier score, claimed full coverage after reading excerpts, made claims without quotes, or when a missing answer was counted as a pass. A degraded evaluation can produce tickets. It cannot pass a gate.
+
+Before aggregating a blind-reader answer, save the raw answer and run `python "<skill-root>/scripts/validate_blind_reader.py" --chapter <assigned-chapter> --report <raw-report.json>` (repeat `--chapter` for every assigned chapter). The validator returns a receipt and errors, accepts one JSON Markdown fence, and normalizes only whitespace and typographic quotation marks when checking exact contiguous quotes. It must reject missing fields, invalid enums, invented or paraphrased quotes, copied prose in `felt.emotion`, and malformed/degraded structure. A nonzero result is degraded and never counts as a vote. Retry only the affected reader/chapter in a fresh context, with the same persona and packet, at most twice; preserve every raw attempt and record which attempt supplied the final verdict. Do not silently replace a paraphrase with a real sentence.
+
+If a multi-chapter packet produces an unverifiable quote or omits a chapter, repeat only the affected reader/chapter in a fresh context with one chapter, its previous tail and the same persona. Do not include the earlier verdict or a desired answer. Ask for short, contiguous, exact quotes. Keep both attempts and record which one supplies the final verdict. Retry at most twice; a remaining failure stays degraded and never becomes a passing vote. Broadly positive votes do not override shared stop paragraphs or failed evidence checks.

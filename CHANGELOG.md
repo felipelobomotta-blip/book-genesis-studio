@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Guard existing native CLI calls with one active call per book, unique attempt directories, pending response publication and hashed completion receipts. A running call is waited on; it is not retried into the same output file.
+- Add portable Markdown and EPUB export, optional DOCX/PDF reading proofs, deterministic prose counts, and complete-book artifact/length preflight. Exported files do not imply that literary gates or human publication approval passed.
+- Preserve accepted chapters through hash-checked revision promotion and a shared cooperative book lock. Complete technical proofreading before final scoring; later corrections must refresh affected review evidence before export.
+- Validate blind-reader JSON structure and exact quotations before counting votes, allowing only documented typography/inline-emphasis normalization. Propagate explicitly requested native model and reasoning settings.
+- Separate evaluator criteria from orchestration targets; include install records in rollback and exclude Python bytecode caches from installed payloads.
+- Add a recorded review-only continuity example, installer failure regressions, delivery integrity tests and native-call concurrency/termination tests. Complete-book validation remains a separate real-host acceptance test.
+
 ## 6.0.0-beta.1 (2026-09-22)
 
 One skill, blind critics, bounded gates. Decisions in [ADR 0012](docs/adr/0012-book-genesis-6-one-skill-blind-critics.md).
