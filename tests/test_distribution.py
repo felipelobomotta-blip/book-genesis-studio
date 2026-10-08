@@ -487,7 +487,7 @@ class InstallTests(unittest.TestCase):
         edited = skills / "book-genesis" / "SKILL.md"
         original_with_local_edit = edited.read_text(encoding="utf-8") + "\nlocal change to preserve\n"
         edited.write_text(original_with_local_edit, encoding="utf-8")
-        record_path = skills / INSTALL_RECORD
+        record_path = (skills / INSTALL_RECORD).resolve()
         previous_record = record_path.read_bytes()
 
         original_rename = Path.rename
