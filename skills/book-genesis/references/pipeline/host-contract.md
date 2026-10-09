@@ -51,6 +51,32 @@ If the author does not answer, do nothing. The checkpoint is saved; the next ses
 
 - One orchestrator owns `PROJECT_STATE.yaml`. Only one writer or editor touches a chapter at a time. Work sequentially unless the host offers real parallel subagents and the tasks are independent.
 - Publish, then record. Every new or revised chapter goes to `work/attempts/chapter-NN/` first (`attempt-K.md` for drafts, `revision-rK.md` for revisions), is read back, and only then is copied to `manuscript/chapters/chapter-NN.md`. The revision editor also keeps a copy of the accepted version under `work/revisions/` (`references/specialists/revision-editor.md`). Keep every attempt and copy. The chapter file always holds the last accepted version.
+- Preserve response provenance byte-for-byte: programmatically extract the actual final-prose field from the saved native response, copy that extracted payload to the staged attempt, read it back, and copy the staged bytes to the new canonical file. Do not retype, manually clean, summarize or omit a returned sentence as “normalization”; an intended prose change is a new explicit attempt. For a structured response, retain the raw envelope and its SHA256, the extracted prose payload and its SHA256, and the staged/canonical SHA256 values. Record and validate all four before claiming the text is unchanged. If a host requires a newline convention, apply only the one explicitly recorded in the receipt and hash the resulting source bytes consistently. The portable check below is only for an initial unpublished chapter after read-back and acceptance; it must fail if either saved destination already exists:
+
+  ```python
+  from hashlib import sha256
+  from pathlib import Path
+  import shutil
+
+  def digest(path):
+      return sha256(Path(path).read_bytes()).hexdigest()
+
+  source, staged, canonical = map(Path, ("extracted-prose.md", "attempt-1.md", "chapter-01.md"))
+  if staged.exists() or canonical.exists():
+      raise FileExistsError("saved attempt or canonical chapter already exists")
+  source_hash = digest(source)
+  shutil.copyfile(source, staged)
+  staged_hash = digest(staged)
+  if staged_hash != source_hash:
+      raise RuntimeError("response to staged attempt changed")
+  shutil.copyfile(staged, canonical)
+  canonical_hash = digest(canonical)
+  if canonical_hash != staged_hash:
+      raise RuntimeError("staged attempt to canonical copy changed")
+  ```
+
+  Never use this example to overwrite a saved attempt or accepted chapter. In Phase 5: Revision Loop, a literary revision uses the existing `promote_chapter.py` evidence guard and its recorded four-reader-vote promotion protocol. In Phase 3: Drafting, only a narrowly factual continuity repair may preserve the accepted copy, stage the editor candidate, obtain a fresh clean continuity recheck bound to those same staged bytes and neighboring chapters, verify the accepted hash is unchanged, and perform the recorded programmatic copy/hash into canonical. Structural, connective, scene, voice, prose and character rewrites stay in Phase 5. That Phase 3 exception does not bypass the Phase 5 panel, authorize a literary rewrite, or justify fabricated votes. Never copy the whole JSON envelope as chapter prose or hand-transcribe it.
+- For each Phase 3 block, follow the bounded protocol in `references/specialists/continuity.md`: record `repair_budget: 3` and `repair_dispatches_used: N` before dispatch, count every dispatch without reset, allow one fresh recheck per dispatch, and preserve all raw calls. Its baseline/hash triage governs promotion and open warnings; after the budget, carry the recorded warning or promotion block to Phase 4/5 rather than reopening the block.
 - Update state after reading back what you saved, never before. Keep `manuscript.word_count_actual` on `whitespace_split_prose_v1`, the same count used by `check_progress.py` and the export receipt. After each canonical chapter save and phase checkpoint, rerun the read-only progress check. A planned decision or pending reviewer call is not a saved decision or completed review.
 - Phase 7 consumes the chapters frozen by Phase 6. A proofread or continuity discovery after that freeze returns to the orchestrator for the staged Phase 5 revision protocol, affected evidence rerun and a refreshed Phase 6 record; no production-only canonical edit or skipped vote is allowed.
 - Before each meaningful step, show a short public status: role, chapter or phase, the file you are about to write. Do not invent progress, percentages, votes or reasoning traces.

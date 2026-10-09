@@ -145,7 +145,7 @@ Every finding quotes the contradicting passages exactly, with chapter and paragr
 | medium | knowledge whose path is plausible but never shown; an ambiguous time gap; a character's whereabouts unclear for three chapters or more; season or weather against the timeline; an age off by one year; a major set-up with no payoff |
 | low | a clothing detail; a minor detail introduced with emphasis and never mentioned again; a spelling variant of a minor name |
 
-When in doubt, choose the higher severity. An inconsistency the plan records as arc (a character changing, an unreliable narrator's deliberate lie) is not a finding.
+Do not turn an uncertain interpretation into an established contradiction. Label the uncertainty and verify the exact text, entity and time evidence before forcing a repair; once a contradiction is established, choose the higher impact severity when it spans categories. An inconsistency the plan records as arc (a character changing, an unreliable narrator's deliberate lie) is not a finding.
 
 ```markdown
 ### CC-02-03 | severity: high | Mara knows about the arson before anyone tells her
@@ -163,14 +163,22 @@ Finding IDs are `CC-<check number>-<finding number>`. In Phase 4: Adversarial Au
 
 Before saving, reread every high finding: confirm each quote is exact and sits where the finding says (a plain text search of the chapter confirms it), and that the contradiction is real and not a misreading.
 
+## Evidentiary triage
+
+- An absent ledger fact is not by itself a contradiction. It may be an unseeded setup that needs a ticket, but the report must say that the ledger is incomplete rather than claim a conflict.
+- Establish the same entity and time window before calling two states contradictory. Reuse the ledger's exact or approximate time precision; do not invent a narrower timestamp to manufacture a finding.
+- Dialogue can be a lie, suspicion or mistaken belief. Treat it as a contradiction only when the text establishes that the speaker's statement is explicitly correct, or when a later correction fails to account for it.
+- A brief character memory is not a full flashback scene unless the approved author contract explicitly counts brief recollections as flashbacks. Do not demand an invented scene as a continuity fix.
+- A finding must distinguish a target ticket, a candidate-introduced regression and a preexisting or unrelated discovery. The last category remains open evidence for a later gate; it is not a reason to call a safe narrow repair clean.
+
 ## Repairs
 
-1. The orchestrator turns each finding into a ticket in the auditor's format (`references/roles/auditor.md`), with the finding ID and the ledger entry as `evidence`. The passage to change is the ticket's quote, and the class follows the fix: `continuity` for replacing a wrong value, `prose` for turning a line into suspicion, `structural` when a scene must show a knowledge path. The revision editor applies it (`references/specialists/revision-editor.md`).
-2. In Phase 3: Drafting, every finding is ticketed and fixed before the next block is drafted, because errors compound. Low findings in one chapter can share one ticket.
+1. The orchestrator turns each finding into a ticket in the auditor's format (`references/roles/auditor.md`), with the finding ID and the ledger entry as `evidence`. The passage to change is the ticket's quote. A `continuity` ticket whose smallest fix replaces a wrong value is eligible for the bounded Phase 3 factual path; a fix needing prose, connective work, a scene, character behavior, voice or structure goes to Phase 5. The revision editor applies it (`references/specialists/revision-editor.md`).
+2. In Phase 3: Drafting, record `repair_budget: 3` and `repair_dispatches_used: N` in the existing block check before each dispatch. Count every editor dispatch for that block, including failed or single-ticket retries; a new call ID or resumed context never resets it. Allow exactly one fresh recheck attempt per edit dispatch, including a verifier call that fails, times out or returns no usable report; that failed attempt retains the accepted file and consumes the dispatch's recheck allowance. This specific rule overrides any general retry-at-most-twice allowance: do not spend empty extra verifier calls. Preserve every raw call.
 3. Chapters that no ticket names keep their files. Nothing is redrafted to fix a local contradiction.
-4. Before a revision is promoted, recheck it and its neighbors against the ledger, and mark every earlier finding closed or open. This applies in Phase 5: Revision Loop too, after the panel prefers a revision: structural fixes break continuity. A revision that fails the recheck is never promoted; the chapter file keeps its accepted version, and the finding stays open.
-5. When the page is better than the plan, change canon instead of the page: the orchestrator updates the ledger entry, notes "canon revised" with the reason, and rechecks every chapter that relied on the old value.
-6. At most three repair passes per check. A pass that leaves the same findings open over the same text is not repeated: stop at a checkpoint, record what remains in `RUN_REPORT.md`, and tell the author.
+4. Before a Phase 3 factual revision is promoted, recheck the same staged bytes and neighbors against a baseline of the accepted chapter. Record the accepted and staged hashes, a SHA256 for every neighbor file in the before snapshot and after snapshot, and a deterministic snapshot hash for each set of path/hash pairs. Any missing, changed or mismatched binding makes the comparison unverifiable and retains the accepted version. Promote only when the target closes, bindings remain valid and no contradiction is introduced or worsened. A preexisting or unrelated finding remains open as a warning and is carried to Phase 4/5; it must not be labeled clean. An unresolved target, regression or unverifiable comparison retains the accepted version. Phase 5 uses its separate four-vote `promote_chapter.py` protocol; its structural changes still receive the continuity recheck after panel acceptance.
+5. When the page is better than the plan, change canon instead of the page only if the change does not override the approved premise, declared time window, point of view or any other author constraint. The orchestrator records the reason in the ledger and rechecks every chapter that relied on the old value; otherwise preserve the approved constraint and carry the contradiction as a failed contract/ticket for the appropriate gate.
+6. After three cumulative Phase 3 dispatches for the block, preserve the best accepted state, record `repair_status: warning` or `promotion_blocked`, the reason and open findings in the existing check and `RUN_REPORT.md`, finish drafting, and route unresolved work to Phase 4/5. Do not reopen the block because a new finding, call ID or context appeared. The bounded literary Phase 5 rules remain separate.
 
 ## Check file (`evaluations/continuity-check-NN.md`)
 
@@ -179,6 +187,15 @@ Before saving, reread every high finding: confirm each quote is exact and sits w
 Ledger updated: yes (new entries: C-09, K-11, O-04)
 Run by: fresh context under the auditor's rules (or: orchestrator, not independent)
 Findings: high N, medium N, low N
+repair_budget: 3
+repair_dispatches_used: 0
+
+## Repair dispatch log
+| Dispatch | Call ID | Candidate | Recheck attempt | Result |
+|---|---|---|---|---|
+
+## Recheck provenance
+Accepted/staged SHA256, neighbor before/after SHA256 and deterministic before/after snapshot hashes are recorded for every dispatch. A mismatch retains the accepted chapter.
 
 ## High
 ### CC-02-01 | severity: high | ...

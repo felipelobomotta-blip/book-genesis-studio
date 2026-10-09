@@ -31,7 +31,7 @@ Follow `references/specialists/prose-craft.md` for openings, chapter endings and
 
 ## After each chapter
 
-1. Save the draft to `work/attempts/chapter-NN/attempt-1.md` and read it back. For a new chapter with no accepted file, create the canonical file only after that read-back. When replacing an existing accepted chapter during revision, stage the draft and use the safe promotion record in `references/prompts/revision-loop.md`; never overwrite an accepted chapter with an ordinary copy.
+1. Take the writer's actual final prose from the saved host response, extracting the documented final-prose field programmatically when the response is a structured envelope. Retain the raw response/envelope and hashes, then copy the extracted prose bytes to `work/attempts/chapter-NN/attempt-1.md` (or the next revision attempt) and read that file back. Validate the SHA256 of source prose, staged attempt and canonical file before claiming they are the same. Do not retype, manually clean, summarize or omit a returned sentence; an intended prose edit must be a new explicit attempt. For a new chapter with no accepted file, create the canonical file only after that read-back. For a Phase 3 factual or continuity repair, preserve the accepted copy, stage the narrowly ticketed candidate, obtain a fresh clean continuity recheck bound to the same staged bytes and neighboring chapters, verify the accepted hash is unchanged, and use the recorded programmatic copy/hash path into canonical; do not fabricate panel votes or use this exception for a literary rewrite. For a Phase 5 literary revision, use the safe `promote_chapter.py` promotion record and four complete reader votes from `references/prompts/revision-loop.md`; never overwrite an accepted chapter with an ordinary copy.
 2. Run `python scripts/check_progress.py --book-dir <book-folder>` from this skill to obtain the observed canonical chapter numbers and prose count; a stale state mismatch is expected immediately after a newly accepted save. Update `manuscript.completed_chapters` and `manuscript.word_count_actual` from that verified report, using its `whitespace_split_prose_v1` method, then rerun the check and require success before the next chapter. Record the cumulative count and the projection from the remaining planned chapter lengths. If that projection materially misses the manuscript floor or approaches its ceiling, stop before the next chapter: add a missing scene or turn, or replan the remaining chapter lengths. Do not add padding.
 3. Check: the chapter's function is clear, names and facts match the ledger, the voice is recognizable, the ending pulls forward, and the chapter adds something the previous one did not.
 
@@ -43,7 +43,7 @@ Run the reader panel on chapter 1 (`references/roles/panel.md`, chapter read). S
 
 After chapters 5, 10, 15 and so on:
 
-1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Send any finding to the revision editor as a targeted ticket and fix it before continuing.
+1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Use that document's cumulative counter, baseline/hash triage and warning handoff: at most three total editor dispatches for the block, one fresh recheck per dispatch, no reset for a new call/context, and unresolved findings carried to Phase 4/5 after the budget.
 2. Run the panel on the latest chapter (chapter read).
 3. Review the length trend against the approved contract and the next block's scene work before checking in.
 4. Check in.
