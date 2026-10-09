@@ -18,6 +18,8 @@ jobs:
       - name: Suite check (skills self-contained, pipeline order, agents in sync)
         run: python runner/installer.py verify-suite
       - run: python -m unittest discover -s tests -v
+      - name: Verify recorded review evidence (no model calls)
+        run: python examples/continuity-review/verify_recording.py
       - name: PowerShell installer preview
         if: runner.os == 'Windows'
         shell: pwsh

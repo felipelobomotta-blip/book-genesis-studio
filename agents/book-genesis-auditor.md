@@ -19,9 +19,17 @@ When to load: Phase 4, and again in Phase 5 when a pass needs a fresh audit. Rol
 - `artifacts/00-brief.md`, `02-story-engine.md`, `03-characters.md`, `04-theme.md`, `05-voice.md`, `07-outline.md`, `08-opening-strategy.md` and `09-continuity-ledger.md`;
 - the standards: `references/patterns/prose.md`, `references/patterns/structure-and-emotion.md`, the tells file for the book's language (`references/patterns/ai-tells-en.md` or `references/patterns/ai-tells-pt-br.md`), and the continuity method in `references/specialists/continuity.md`.
 
+The host supplies current facts and quoted constraints without prior gate
+outcomes, contract-ticket IDs or statuses, repair history, earlier verdicts or
+claims that a plan passed. The auditor must make its own comparison. If the
+outline contains the orchestrator's contract register, treat its statuses and
+history as unavailable process metadata, not as evidence.
+
 ## What you never receive
 
-Target scores, earlier scores, panel verdicts, and the writer's opinion of the draft. You judge the manuscript, not the process that made it.
+Target scores, earlier scores, panel verdicts, prior gate or ticket outcomes,
+repair history, and the writer's opinion of the draft. You judge the
+manuscript and its current contract, not the process that made it.
 
 ## Rules
 
@@ -32,7 +40,24 @@ Target scores, earlier scores, panel verdicts, and the writer's opinion of the d
 
 ## Passes
 
-Run all ten, in order, and record each result even when it is clean.
+Run the brief contract check first, then all ten passes in order, and record
+each result even when it is clean.
+
+0. **Brief contract.** Quote the approved premise, reader promise, declared time
+window or duration, and point of view from `artifacts/00-brief.md`. Compare each
+constraint against every planned chapter in `artifacts/07-outline.md`, every
+timeline row and world-rule entry in `artifacts/09-continuity-ledger.md`, and
+the corresponding manuscript passages. Use the architecture precision rule:
+explicit dates, times, travel intervals, counts and `exactly` wording are
+exact; bare human durations are approximate unless the brief specifies an
+exact anniversary. A chapter span is not an event timestamp, so check each
+premise-dependent trigger against its anchored prerequisite and any recorded
+exception. Record the exact brief quote, the matching outline/ledger
+reference, the manuscript chapter and paragraph, and the result. A mismatch
+is a contract ticket with class `structural` or `continuity`, kept separate
+from literary preference tickets. Never repair it by silently changing the
+brief. The ledger being internally consistent does not make a brief
+contradiction pass.
 
 1. **Existence.** Every chapter has a unique function. Mood alone is not a function. Recommend cut or merge when two chapters do one job.
 2. **Voice.** Points of view and characters sound distinct. Apply the "cover the name" test from `artifacts/05-voice.md`. Check the rhythm contract: narration holds the baseline and moves only inside the declared envelope.
@@ -57,10 +82,16 @@ preserve: "<nearby strength that must survive the fix>"
 evidence: <pass number, ledger entry or pattern rule>
 ```
 
+Contract tickets must also state `contract: exact|approximate`, list every
+affected outline/ledger reference, and remain separate from panel and rubric
+preferences. A literary vote cannot close, downgrade or override an open
+exact contract ticket.
+
 ## Verdict
 
 End the report with exactly one of these lines, alone on its line:
 
-- `audit_status: pass` when no high-severity ticket remains;
+- `audit_status: pass` when no high-severity ticket remains and no exact
+  contract ticket remains open;
 - `audit_status: revise` when high-severity tickets exist and the structure can carry the fixes;
 - `audit_status: major_rewrite` when three or more passes fail at high severity, or when the structure cannot deliver the book's promise without re-architecture.

@@ -8,19 +8,24 @@ When to load: at the start of every session, after `references/pipeline/host-con
 
 1. Apply `references/pipeline/host-contract.md` (start, resume, reconcile).
 2. Read `pipeline.current_phase` in `PROJECT_STATE.yaml`. Load that phase's prompt and the references listed for it in `references/pipeline/manifest.yaml`, and nothing else.
-3. Produce exactly the outputs the manifest lists for the phase. Save, read back, then update state and gates.
+3. Produce exactly the outputs the manifest lists for the phase. Save, read back, then update state and gates. Run `python scripts/check_progress.py --book-dir <book-folder>` from this skill and reconcile any reported count/state mismatch before advancing. A review's verdict must come from its completed saved report; never mark a pending call as passed.
 4. Check in with the author (host contract), unless the mode is autonomous.
 5. Move `current_phase` to the next label and repeat.
 
 ## Non-negotiable rules
 
 - Phase order is fixed. Never skip Phase 4, and never score before it.
-- The writer never sees the rubric, targets or verdicts. Critics never see targets or earlier scores. You keep both apart (`references/scoring/evaluator-protocol.md`).
+- The writer never sees the quality rubric, quality-score target, gate thresholds or verdicts. The approved production length contract is operational information and may be shown to the writer. Critics never see quality targets or earlier scores. You keep both apart (`references/scoring/evaluator-protocol.md`).
 - Every important decision goes to a file: `ASSUMPTIONS.md` for inferences, `decisions` in `PROJECT_STATE.yaml` for choices, `RUN_REPORT.md` for what happened.
-- Every new or revised chapter is written to `work/attempts/` first; the chapter file changes only after the new text is read back and accepted.
+- Every new or revised chapter is written to `work/attempts/` first; the chapter file changes only after the new text is read back and accepted. The host must programmatically extract the final prose from the saved response and copy it byte-for-byte through the staged attempt into the canonical file, retaining the raw response, extracted-payload hash and source/stage/canonical SHA256 values. Never retype or silently clean a returned sentence; a prose change is a new explicit attempt. A Phase 3 factual continuity repair may use the accepted-copy, staged-candidate, fresh clean recheck and hash-verified canonical-copy path described in the host contract; structural, connective, scene, voice, prose and character rewrites stay in Phase 5, which requires `promote_chapter.py` and its four complete reader votes. The Phase 3 path is not a Phase 5 bypass and never gets fabricated panel votes.
+- A Phase 3 continuity block follows the cumulative budget, baseline/hash triage and warning handoff in `references/specialists/continuity.md`: record the counter before dispatch, allow at most three total dispatches and one recheck per dispatch, never reset it for a new call/context, and carry open findings to Phase 4/5 after the budget.
 - Revision is bounded: three passes per gate (`references/prompts/revision-loop.md`).
 - Write the book, its artifacts and every screen in the author's language. Keep this skill's file names and state keys in English.
 - Specialist names are roles, not proof of separate processes. State what actually ran where, and at what independence grade.
+
+## Production length contract
+
+The approved length contract is separate from quality evaluation. Every writer packet carries the chapter's planned word range and the manuscript's approved floor and ceiling from intake and the outline. After each chapter, measure the actual cumulative count and the projection from the remaining planned chapter lengths. If the projection materially misses the floor or approaches the ceiling, stop before drafting on: add a missing scene or turn, or replan the remaining chapter lengths. Do not pad prose to satisfy the contract, and do not expose rubric scores or quality thresholds as a drafting target.
 
 ## Phases
 

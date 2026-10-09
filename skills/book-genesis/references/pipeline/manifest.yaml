@@ -1,3 +1,7 @@
+# Each phase's prompt and references are the orchestrator's working set.
+# Never forward a phase's complete reference list to a critic or writer.
+# Build each role's packet from the allowed material in evaluator-protocol.md;
+# rubric evaluators receive rubric-criteria.md, never the gate-policy files.
 phase_0_intake:
   label: "Phase 0: Intake"
   prompt: "references/prompts/intake.md"
@@ -73,13 +77,16 @@ phase_5_revision_loop:
   references:
     - "references/scoring/evaluator-protocol.md"
     - "references/scoring/genesis-score.md"
+    - "references/scoring/rubric-criteria.md"
     - "references/roles/panel.md"
+    - "references/specialists/production.md"
     - "references/specialists/revision-editor.md"
     - "references/specialists/prose-craft.md"
   gate: "revision_loop"
   outputs:
     - "evaluations/revision-loop.md"
     - "evaluations/revision-plan.md"
+    - "evaluations/proofread.md"
   next: "Phase 6: Final Score"
 
 phase_6_final_score:
@@ -87,6 +94,7 @@ phase_6_final_score:
   prompt: "references/scoring/genesis-score.md"
   references:
     - "references/scoring/evaluator-protocol.md"
+    - "references/scoring/rubric-criteria.md"
     - "references/roles/panel.md"
   gate: "final_score"
   outputs:

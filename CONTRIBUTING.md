@@ -11,7 +11,7 @@ python runner/installer.py verify-suite
 python -m unittest discover -s tests -v
 ```
 
-No API key is needed. Nothing in this repository calls a model.
+No provider API key is needed for the installer and test suite. The repository does not call provider SDKs directly. The native-command guard (`skills/book-genesis/scripts/run_host_call.py`) can launch an existing caller-selected agent CLI, which uses that host's configured account and quota.
 
 ## Where things live
 

@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Mapping
+from typing import Callable, Mapping
 from uuid import uuid4
 
 from runner.agents import AGENTS_RELATIVE, AGENT_SPECS, agent_drift
@@ -517,15 +517,32 @@ def install_suite(
         return _result(True, destination_root, errors=[], dry_run=True, **plan)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+
+    def build_record() -> bytes:
+        new_record = {
+            "schema_version": RECORD_SCHEMA,
+            "suite": load_distribution_manifest()["suite_name"],
+            "target": target,
+            "canonical_skill": load_distribution_manifest()["canonical_skill"],
+            "installed_at_utc": datetime.now(timezone.utc).isoformat(),
+            "skills": {item["skill"]: _tree_digest(destination_root / item["skill"]) for item in actions},
+            "agents_root": str(agents_root or ""),
+            "agents": {
+                item["agent"]: _file_digest(Path(item["destination"]))
+                for item in agent_actions
+            },
+        }
+        return (json.dumps(new_record, indent=2) + "\n").encode("utf-8")
+
     groups = [(destination_root,
                {item["skill"]: source_root / item["skill"] for item in actions if item["action"] != "unchanged"},
-               destination_root / BACKUP_DIRECTORY / timestamp, shutil.copytree)]
+               destination_root / BACKUP_DIRECTORY / timestamp, _copytree_without_generated_python)]
     if agents_root is not None:
         groups.append((agents_root,
                        {item["agent"]: REPO_ROOT / AGENTS_RELATIVE / item["agent"]
                         for item in agent_actions if item["action"] != "unchanged"},
                        agents_root / BACKUP_DIRECTORY / timestamp, shutil.copy2))
-    used_backups = _swap_groups(groups)
+    used_backups = _swap_groups(groups, record=(destination_root / INSTALL_RECORD, build_record))
 
     retire_backup = destination_root / BACKUP_DIRECTORY / timestamp / "retired"
     for item in retirements:
@@ -537,25 +554,23 @@ def install_suite(
             item["kind"] = "failed"
     plan["retirements"] = [item for item in retirements if item["kind"] != "failed"]
 
-    new_record = {
-        "schema_version": RECORD_SCHEMA,
-        "suite": load_distribution_manifest()["suite_name"],
-        "target": target,
-        "canonical_skill": load_distribution_manifest()["canonical_skill"],
-        "installed_at_utc": datetime.now(timezone.utc).isoformat(),
-        "skills": {item["skill"]: _tree_digest(destination_root / item["skill"]) for item in actions},
-        "agents_root": str(agents_root or ""),
-        "agents": {item["agent"]: _file_digest(Path(item["destination"])) for item in agent_actions},
-    }
-    (destination_root / INSTALL_RECORD).write_text(json.dumps(new_record, indent=2) + "\n", encoding="utf-8")
     return _result(True, destination_root, errors=[], backups=[str(path) for path in sorted(used_backups)], **plan)
 
 
-def _swap_groups(groups: list[tuple[Path, dict[str, Path], Path, object]]) -> set[Path]:
+def _swap_groups(
+    groups: list[tuple[Path, dict[str, Path], Path, object]],
+    *,
+    record: tuple[Path, Callable[[], bytes]] | None = None,
+) -> set[Path]:
     """Stage every group first, then swap them all; any failure restores every swap made so far."""
     stages: list[Path] = []
     swapped: list[tuple[Path, Path | None, Path | None]] = []
     used: set[Path] = set()
+    record_target: Path | None = None
+    record_backup: Path | None = None
+    staged_record: Path | None = None
+    record_moved = False
+    record_promoted = False
     try:
         for parent, sources, _, copy in groups:
             if not sources:
@@ -567,6 +582,13 @@ def _swap_groups(groups: list[tuple[Path, dict[str, Path], Path, object]]) -> se
             stage.mkdir()
             for name, source in sources.items():
                 copy(source, stage / name)  # type: ignore[operator]
+        if record is not None:
+            record_target, build_record = record
+            record_target.parent.mkdir(parents=True, exist_ok=True)
+            record_stage = record_target.parent / f".book-genesis-stage-{uuid4().hex}"
+            record_stage.mkdir()
+            stages.append(record_stage)
+            staged_record = record_stage / record_target.name
         try:
             for (parent, sources, backup_root, _), stage in zip(groups, stages):
                 for name in sources:
@@ -578,7 +600,21 @@ def _swap_groups(groups: list[tuple[Path, dict[str, Path], Path, object]]) -> se
                         used.add(backup_root)
                     swapped.append((target, backup, disabled))
                     (stage / name).rename(target)
+            if record_target is not None and staged_record is not None:
+                staged_record.write_bytes(build_record())
+                if record_target.exists() or _is_link(record_target):
+                    previous_record = staged_record.with_name(f".previous-{record_target.name}")
+                    record_target.rename(previous_record)
+                    record_backup = previous_record
+                    record_moved = True
+                staged_record.rename(record_target)
+                record_promoted = True
         except Exception:
+            if record_target is not None and record_moved and not record_promoted:
+                if record_target.exists() or _is_link(record_target):
+                    _remove(record_target)
+                if record_backup is not None and record_backup.exists():
+                    record_backup.rename(record_target)
             for target, backup, disabled in reversed(swapped):
                 _remove(target)
                 if backup is not None:
@@ -651,11 +687,32 @@ def _file_digest(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest() if path.is_file() else ""
 
 
+def _is_generated_python_artifact(path: Path) -> bool:
+    """Return whether *path* is interpreter-generated bytecode/cache content."""
+
+    return "__pycache__" in path.parts or path.suffix.lower() in {".pyc", ".pyo"}
+
+
+def _copytree_without_generated_python(source: Path, destination: Path) -> str:
+    """Copy a skill payload while excluding Python bytecode from every level."""
+
+    def ignore(_directory: str, names: list[str]) -> list[str]:
+        return [
+            name
+            for name in names
+            if name == "__pycache__" or Path(name).suffix.lower() in {".pyc", ".pyo"}
+        ]
+
+    return shutil.copytree(source, destination, ignore=ignore)
+
+
 def _tree_digest(root: Path) -> str:
     digest = sha256()
     if not root.is_dir():
         return ""
-    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+    for path in sorted(
+        item for item in root.rglob("*") if item.is_file() and not _is_generated_python_artifact(item)
+    ):
         relative = path.relative_to(root).as_posix().encode("utf-8")
         digest.update(len(relative).to_bytes(4, "big"))
         digest.update(relative)

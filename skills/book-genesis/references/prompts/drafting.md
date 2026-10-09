@@ -9,13 +9,16 @@ When to load: Phase 3. Roles: writer drafts; orchestrator runs the checks and th
 Assemble `work/briefs/chapter-NN.md` for the writer from files, never from memory:
 
 - the chapter's entry in `artifacts/07-outline.md`, including its scene pressure and planned length;
+- the author's approved premise, reader promise and explicit time/POV constraints from `artifacts/00-brief.md`, plus this chapter's single validated timeline row. Check these against the outline's brief-to-plan contract review before dispatch. If the packet says both "one night" and "Morning 2", stop and repair the plan or packet; never send contradictory instructions to the writer or silently relax the author's constraint;
+- the approved production length contract: this chapter's planned word range and the manuscript floor and ceiling from intake and `PROJECT_STATE.yaml`;
 - the chapter's row in `artifacts/06-emotional-curve.md`: start and end emotion, peak moment, and the anchor the reader should carry away;
 - the characters present, from `artifacts/03-characters.md`, with their voice cards;
 - the rhythm contract and narrative voice from `artifacts/05-voice.md`;
 - the ledger entries the chapter touches, from `artifacts/09-continuity-ledger.md`;
+- a compact canonical fact block assembled from those same character and ledger entries: exact names and relationships for referenced cast, the known present-time/date/tide state, and what each character currently knows. Do not invent alternate names, relationships or dates when canon is incomplete; use the existing form and surface the assumption for continuity review;
 - the last 300 words or so of the previous chapter.
 
-The brief never contains the rubric, the quality target, panel verdicts or audit findings. The writer writes for readers, not for a score.
+The brief never contains the rubric, a quality-score target, gate thresholds, panel verdicts or audit findings. The production length contract is allowed because it plans scope; the writer writes for readers and scenes, not for a score.
 
 ## Writing
 
@@ -28,8 +31,8 @@ Follow `references/specialists/prose-craft.md` for openings, chapter endings and
 
 ## After each chapter
 
-1. Save the draft to `work/attempts/chapter-NN/attempt-1.md`, read it back, then copy it to `manuscript/chapters/chapter-NN.md`.
-2. Count its words and update `manuscript.completed_chapters`, `manuscript.word_count_actual` and the running comparison with the plan.
+1. Take the writer's actual final prose from the saved host response, extracting the documented final-prose field programmatically when the response is a structured envelope. Retain the raw response/envelope and hashes, then copy the extracted prose bytes to `work/attempts/chapter-NN/attempt-1.md` (or the next revision attempt) and read that file back. Validate the SHA256 of source prose, staged attempt and canonical file before claiming they are the same. Do not retype, manually clean, summarize or omit a returned sentence; an intended prose edit must be a new explicit attempt. For a new chapter with no accepted file, create the canonical file only after that read-back. For a Phase 3 factual or continuity repair, preserve the accepted copy, stage the narrowly ticketed candidate, obtain a fresh clean continuity recheck bound to the same staged bytes and neighboring chapters, verify the accepted hash is unchanged, and use the recorded programmatic copy/hash path into canonical; do not fabricate panel votes or use this exception for a literary rewrite. For a Phase 5 literary revision, use the safe `promote_chapter.py` promotion record and four complete reader votes from `references/prompts/revision-loop.md`; never overwrite an accepted chapter with an ordinary copy.
+2. Run `python scripts/check_progress.py --book-dir <book-folder>` from this skill to obtain the observed canonical chapter numbers and prose count; a stale state mismatch is expected immediately after a newly accepted save. Update `manuscript.completed_chapters` and `manuscript.word_count_actual` from that verified report, using its `whitespace_split_prose_v1` method, then rerun the check and require success before the next chapter. Record the cumulative count and the projection from the remaining planned chapter lengths. If that projection materially misses the manuscript floor or approaches its ceiling, stop before the next chapter: add a missing scene or turn, or replan the remaining chapter lengths. Do not add padding.
 3. Check: the chapter's function is clear, names and facts match the ledger, the voice is recognizable, the ending pulls forward, and the chapter adds something the previous one did not.
 
 ## Chapter 1 checkpoint
@@ -40,11 +43,11 @@ Run the reader panel on chapter 1 (`references/roles/panel.md`, chapter read). S
 
 After chapters 5, 10, 15 and so on:
 
-1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Send any finding to the revision editor as a targeted ticket and fix it before continuing.
+1. Update the ledger and run the continuity check (`references/specialists/continuity.md`). Use that document's cumulative counter, baseline/hash triage and warning handoff: at most three total editor dispatches for the block, one fresh recheck per dispatch, no reset for a new call/context, and unresolved findings carried to Phase 4/5 after the budget.
 2. Run the panel on the latest chapter (chapter read).
-3. Compare the running word count with the plan. If the book is heading more than 15 percent under the floor, propose where to expand (a missing turn, a thin subplot) before writing on.
+3. Review the length trend against the approved contract and the next block's scene work before checking in.
 4. Check in.
 
 ## Finishing the draft
 
-The phase ends when every planned chapter exists and has been read back. Set `manuscript.length_gate` to `PASS` (at or above the floor), `FLAG` (within 10 percent under it) or `BLOCK` (further under). A book under its floor goes to expansion before Phase 6 can call it complete, unless the intake declared a short form.
+The phase ends when every planned chapter exists and has been read back. Set `manuscript.length_gate` to `PASS` (within the approved floor and ceiling), `FLAG` (within 10 percent under the floor) or `BLOCK` (further under, or above the ceiling). A book outside its approved range needs targeted expansion or compression before Phase 6 can call its length contract complete. A declared short form uses its own approved range; it does not waive that range or permit silently reclassifying an incomplete novel as a novella.

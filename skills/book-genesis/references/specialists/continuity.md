@@ -27,7 +27,7 @@ Sections, with IDs that findings can cite:
 | Knowledge | K- | the fact; who knows it, since when, and how (told by whom, overheard, witnessed, discovered, inferred from clues on the page); who must not know it yet; the reveal the outline plans |
 | Locations | L- | name and aliases; layout and directions; distances with travel times |
 | Objects | O- | where introduced and with what emphasis; who holds it; where last seen; status (open, paid off, background, destroyed, lost); the planned payoff |
-| Timeline | T- | one row per chapter: day, date or time of day; time elapsed since the previous chapter; season and year; flashback marker |
+| Timeline | T- | one row per chapter: day, date or time of day; time elapsed since the previous chapter; season and year; flashback marker; for a premise-dependent trigger, its anchored event and prerequisite |
 | World rules | W- | the rule, its exact limit, its cost; what is not revealed yet, and when it will be |
 | Threads | TH- | the question, promise or mystery; where it opened; importance (major, subplot, detail); status (open, resolved, abandoned); the planned close |
 | Conflicts | X- | two values that disagree, each with its quote and source; status |
@@ -61,11 +61,13 @@ Updated after: chapter 10 (check 02)
 
 ### Ledger rules
 
-- **Seed it in Phase 2: Architecture**, before any chapter exists, from `artifacts/02-story-engine.md`, `artifacts/03-characters.md`, `artifacts/04-theme.md` where it fixes facts, `artifacts/07-outline.md` and `artifacts/08-opening-strategy.md`. Every seeded entry is a plan entry. The outline's reveals become Knowledge entries with their planned chapter and who is present; its set-ups become Objects and Threads with their planned payoff.
+- **Seed it in Phase 2: Architecture**, before any chapter exists, from the approved intake contract in `artifacts/00-brief.md`, `artifacts/02-story-engine.md`, `artifacts/03-characters.md`, `artifacts/04-theme.md` where it fixes facts, `artifacts/07-outline.md` and `artifacts/08-opening-strategy.md`. Every seeded entry is a plan entry. Carry the brief's premise, reader promise, declared time window or duration, and point of view into the architecture check; the outline's reveals become Knowledge entries with their planned chapter and who is present; its set-ups become Objects and Threads with their planned payoff. Carry the brief's exact-versus-approximate temporal precision with the entry; do not infer an exact anniversary from a bare human duration.
+- The brief is an approved constraint, not a draft to be silently rewritten by architecture. Before Phase 3, the orchestrator records exact brief quotes and matching outline/ledger references in `artifacts/07-outline.md` under `## Brief contract check`, with `PASS` or `BLOCK` for every planned chapter and every relevant ledger entry, including every timeline and world-rule row. A contradiction is repaired inside the outline and ledger, or returned to the author; in autonomous mode it remains a recorded repair plan until the existing brief is satisfied.
 - **The page becomes canon once written.** A drafted fact that differs from the plan is a finding: either the page or the plan changes, and the decision is recorded in the ledger.
 - **Never overwrite on contradiction.** When an update meets a value that disagrees with an entry, add a Conflict entry with both quotes. The check turns it into a finding.
 - **Legitimate change is history, not conflict.** Dyed hair, a healed limp, a year of aging: record the new value with the scene that changed it, and keep the old one with the chapters in which it held.
-- **Numbers show their arithmetic.** Ages, counts, money, distances and elapsed days are recorded with their sources, and any check that combines them shows each operand with its source: "34 in ch01 (autumn 2019); ch20 is autumn 2021; 34 + 2 = 36; ch20 p5 says 'thirty-five'." Correct arithmetic does not prove the reading: state the interpretation used ("three days later" counted from which day?).
+- **Numbers show their arithmetic.** Ages, counts, money, distances and elapsed days are recorded with their sources, and any check that combines them shows each operand with its source: "34 in ch01 (autumn 2019); ch20 is autumn 2021; 34 + 2 = 36; ch20 p5 says 'thirty-five'." Correct arithmetic does not prove the reading: state the interpretation used ("three days later" counted from which day?) and whether the brief makes the interval exact or approximate. A bare human duration is not an exact anniversary unless the brief specifies that precision.
+- **Premise triggers are anchored.** A chapter's time span is a bound, not an event timestamp. When a premise depends on an event such as a name surfacing after a crossing, record the event's time or bounded position, its prerequisite event, the relevant rule or exception, and every outline/ledger reference that depends on it. A repair updates that whole dependency set in one batch; it never moves one row while leaving dependent references implicit.
 - **Uncertain identity gets a new entry.** If you cannot tell whether "Ana" is a new character or C-04's nickname, create an entry marked "review: possible alias of C-04". A wrong merge destroys data; a wrong split only raises a question.
 - **Track what carries weight.** Named characters and recurring unnamed ones ("the bartender at the Red Door"), places where scenes happen, objects given narrative emphasis (a close-up, an exchange, a reaction). A cup of coffee is not an object; a bloodstained cup is. With more than 30 named characters, mark each one major, supporting, minor or mentioned.
 - **Flashbacks** carry a flashback marker and never enter the present-day location log.
@@ -78,7 +80,7 @@ Each chapter brief (`work/briefs/chapter-NN.md`) carries the ledger entries that
 
 | When | Scope | Output |
 |---|---|---|
-| Phase 2: Architecture | the foundation and outline artifacts | the seeded ledger |
+| Phase 2: Architecture | the approved intake brief, foundation and outline artifacts | the seeded ledger and the outline's brief contract check, including temporal precision and premise-trigger anchors |
 | Phase 3: Drafting, after chapters 5, 10, 15 and so on, and after the last chapter | the new block, read against the ledger and every earlier chapter | the ledger updated, then `evaluations/continuity-check-NN.md` (NN is the block number: 01 for chapters 1 to 5) |
 | Phase 4: Adversarial Audit | every chapter; the auditor's continuity pass applies every check below at full depth, thread payoffs included | tickets in `artifacts/10-adversarial-audit.md`, in the auditor's format |
 | After any revision, in Phase 3: Drafting or Phase 5: Revision Loop | the revised chapter and its neighbors, before the orchestrator promotes it | the ledger updated for the changed chapters; a Recheck section in the check file whose findings it verifies, or a note with the pass in `evaluations/revision-loop.md` |
@@ -143,7 +145,7 @@ Every finding quotes the contradicting passages exactly, with chapter and paragr
 | medium | knowledge whose path is plausible but never shown; an ambiguous time gap; a character's whereabouts unclear for three chapters or more; season or weather against the timeline; an age off by one year; a major set-up with no payoff |
 | low | a clothing detail; a minor detail introduced with emphasis and never mentioned again; a spelling variant of a minor name |
 
-When in doubt, choose the higher severity. An inconsistency the plan records as arc (a character changing, an unreliable narrator's deliberate lie) is not a finding.
+Do not turn an uncertain interpretation into an established contradiction. Label the uncertainty and verify the exact text, entity and time evidence before forcing a repair; once a contradiction is established, choose the higher impact severity when it spans categories. An inconsistency the plan records as arc (a character changing, an unreliable narrator's deliberate lie) is not a finding.
 
 ```markdown
 ### CC-02-03 | severity: high | Mara knows about the arson before anyone tells her
@@ -161,14 +163,22 @@ Finding IDs are `CC-<check number>-<finding number>`. In Phase 4: Adversarial Au
 
 Before saving, reread every high finding: confirm each quote is exact and sits where the finding says (a plain text search of the chapter confirms it), and that the contradiction is real and not a misreading.
 
+## Evidentiary triage
+
+- An absent ledger fact is not by itself a contradiction. It may be an unseeded setup that needs a ticket, but the report must say that the ledger is incomplete rather than claim a conflict.
+- Establish the same entity and time window before calling two states contradictory. Reuse the ledger's exact or approximate time precision; do not invent a narrower timestamp to manufacture a finding.
+- Dialogue can be a lie, suspicion or mistaken belief. Treat it as a contradiction only when the text establishes that the speaker's statement is explicitly correct, or when a later correction fails to account for it.
+- A brief character memory is not a full flashback scene unless the approved author contract explicitly counts brief recollections as flashbacks. Do not demand an invented scene as a continuity fix.
+- A finding must distinguish a target ticket, a candidate-introduced regression and a preexisting or unrelated discovery. The last category remains open evidence for a later gate; it is not a reason to call a safe narrow repair clean.
+
 ## Repairs
 
-1. The orchestrator turns each finding into a ticket in the auditor's format (`references/roles/auditor.md`), with the finding ID and the ledger entry as `evidence`. The passage to change is the ticket's quote, and the class follows the fix: `continuity` for replacing a wrong value, `prose` for turning a line into suspicion, `structural` when a scene must show a knowledge path. The revision editor applies it (`references/specialists/revision-editor.md`).
-2. In Phase 3: Drafting, every finding is ticketed and fixed before the next block is drafted, because errors compound. Low findings in one chapter can share one ticket.
+1. The orchestrator turns each finding into a ticket in the auditor's format (`references/roles/auditor.md`), with the finding ID and the ledger entry as `evidence`. The passage to change is the ticket's quote. A `continuity` ticket whose smallest fix replaces a wrong value is eligible for the bounded Phase 3 factual path; a fix needing prose, connective work, a scene, character behavior, voice or structure goes to Phase 5. The revision editor applies it (`references/specialists/revision-editor.md`).
+2. In Phase 3: Drafting, record `repair_budget: 3` and `repair_dispatches_used: N` in the existing block check before each dispatch. Count every editor dispatch for that block, including failed or single-ticket retries; a new call ID or resumed context never resets it. Allow exactly one fresh recheck attempt per edit dispatch, including a verifier call that fails, times out or returns no usable report; that failed attempt retains the accepted file and consumes the dispatch's recheck allowance. This specific rule overrides any general retry-at-most-twice allowance: do not spend empty extra verifier calls. Preserve every raw call.
 3. Chapters that no ticket names keep their files. Nothing is redrafted to fix a local contradiction.
-4. Before a revision is promoted, recheck it and its neighbors against the ledger, and mark every earlier finding closed or open. This applies in Phase 5: Revision Loop too, after the panel prefers a revision: structural fixes break continuity. A revision that fails the recheck is never promoted; the chapter file keeps its accepted version, and the finding stays open.
-5. When the page is better than the plan, change canon instead of the page: the orchestrator updates the ledger entry, notes "canon revised" with the reason, and rechecks every chapter that relied on the old value.
-6. At most three repair passes per check. A pass that leaves the same findings open over the same text is not repeated: stop at a checkpoint, record what remains in `RUN_REPORT.md`, and tell the author.
+4. Before a Phase 3 factual revision is promoted, recheck the same staged bytes and neighbors against a baseline of the accepted chapter. Record the accepted and staged hashes, a SHA256 for every neighbor file in the before snapshot and after snapshot, and a deterministic snapshot hash for each set of path/hash pairs. Any missing, changed or mismatched binding makes the comparison unverifiable and retains the accepted version. Promote only when the target closes, bindings remain valid and no contradiction is introduced or worsened. A preexisting or unrelated finding remains open as a warning and is carried to Phase 4/5; it must not be labeled clean. An unresolved target, regression or unverifiable comparison retains the accepted version. Phase 5 uses its separate four-vote `promote_chapter.py` protocol; its structural changes still receive the continuity recheck after panel acceptance.
+5. When the page is better than the plan, change canon instead of the page only if the change does not override the approved premise, declared time window, point of view or any other author constraint. The orchestrator records the reason in the ledger and rechecks every chapter that relied on the old value; otherwise preserve the approved constraint and carry the contradiction as a failed contract/ticket for the appropriate gate.
+6. After three cumulative Phase 3 dispatches for the block, preserve the best accepted state, record `repair_status: warning` or `promotion_blocked`, the reason and open findings in the existing check and `RUN_REPORT.md`, finish drafting, and route unresolved work to Phase 4/5. Do not reopen the block because a new finding, call ID or context appeared. The bounded literary Phase 5 rules remain separate.
 
 ## Check file (`evaluations/continuity-check-NN.md`)
 
@@ -177,6 +187,15 @@ Before saving, reread every high finding: confirm each quote is exact and sits w
 Ledger updated: yes (new entries: C-09, K-11, O-04)
 Run by: fresh context under the auditor's rules (or: orchestrator, not independent)
 Findings: high N, medium N, low N
+repair_budget: 3
+repair_dispatches_used: 0
+
+## Repair dispatch log
+| Dispatch | Call ID | Candidate | Recheck attempt | Result |
+|---|---|---|---|---|
+
+## Recheck provenance
+Accepted/staged SHA256, neighbor before/after SHA256 and deterministic before/after snapshot hashes are recorded for every dispatch. A mismatch retains the accepted chapter.
 
 ## High
 ### CC-02-01 | severity: high | ...
