@@ -1,3 +1,7 @@
+# Each phase's prompt and references are the orchestrator's working set.
+# Never forward a phase's complete reference list to a critic or writer.
+# Build each role's packet from the allowed material in evaluator-protocol.md;
+# rubric evaluators receive rubric-criteria.md, never the gate-policy files.
 phase_0_intake:
   label: "Phase 0: Intake"
   prompt: "references/prompts/intake.md"
@@ -30,6 +34,7 @@ phase_2_architecture:
   label: "Phase 2: Architecture"
   prompt: "references/prompts/architecture.md"
   references:
+    - "references/specialists/causality.md"
     - "references/patterns/structure-and-emotion.md"
     - "references/specialists/narrative-foundation.md"
     - "references/specialists/continuity.md"
@@ -44,6 +49,7 @@ phase_3_drafting:
   label: "Phase 3: Drafting"
   prompt: "references/prompts/drafting.md"
   references:
+    - "references/pipeline/evidence.md"
     - "references/specialists/prose-craft.md"
     - "references/patterns/prose.md"
     - "references/roles/blind-reader.md"
@@ -60,6 +66,7 @@ phase_4_adversarial_audit:
   label: "Phase 4: Adversarial Audit"
   prompt: "references/prompts/adversarial-audit.md"
   references:
+    - "references/specialists/causality.md"
     - "references/roles/auditor.md"
     - "references/specialists/continuity.md"
   gate: "adversarial_audit"
@@ -71,22 +78,29 @@ phase_5_revision_loop:
   label: "Phase 5: Revision Loop"
   prompt: "references/prompts/revision-loop.md"
   references:
+    - "references/pipeline/evidence.md"
+    - "references/specialists/causality.md"
     - "references/scoring/evaluator-protocol.md"
     - "references/scoring/genesis-score.md"
+    - "references/scoring/rubric-criteria.md"
     - "references/roles/panel.md"
+    - "references/specialists/production.md"
     - "references/specialists/revision-editor.md"
     - "references/specialists/prose-craft.md"
   gate: "revision_loop"
   outputs:
     - "evaluations/revision-loop.md"
     - "evaluations/revision-plan.md"
+    - "evaluations/proofread.md"
   next: "Phase 6: Final Score"
 
 phase_6_final_score:
   label: "Phase 6: Final Score"
   prompt: "references/scoring/genesis-score.md"
   references:
+    - "references/pipeline/evidence.md"
     - "references/scoring/evaluator-protocol.md"
+    - "references/scoring/rubric-criteria.md"
     - "references/roles/panel.md"
   gate: "final_score"
   outputs:
@@ -97,6 +111,7 @@ phase_7_editorial_package:
   label: "Phase 7: Editorial Package"
   prompt: "references/prompts/editorial-package.md"
   references:
+    - "references/pipeline/evidence.md"
     - "references/specialists/production.md"
     - "references/specialists/research.md"
     - "references/roles/panel.md"

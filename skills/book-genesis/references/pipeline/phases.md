@@ -9,7 +9,7 @@ When to load: when you need an overview without loading every prompt. Role: orch
 | Phase 0: Intake | assumptions, brief with panel personas, market map, story engine, independence setup | yes |
 | Phase 1: Foundation | characters, theme, voice with rhythm contract, emotional curve | yes |
 | Phase 2: Architecture | outline with scene pressure and beats, opening strategy, continuity ledger | yes |
-| Phase 3: Drafting | chapters, panel read of chapter 1, continuity and panel every five chapters | after chapter 1, every fifth chapter, and at the end |
+| Phase 3: Drafting | chapters, four creative reader checkpoints, factual continuity checks every five chapters | after creative or factual checkpoints and at the end; combine when coincident |
 | Phase 4: Adversarial Audit | read-only audit with quoted tickets and `audit_status` | yes; always on `major_rewrite` |
 | Phase 5: Revision Loop | panel gate and rubric gate, at most three passes each, draft comparison | yes; always when a gate fails its third pass in check-in mode |
 | Phase 6: Final Score | completeness, panel, rubric, gates and independence in one report | yes |

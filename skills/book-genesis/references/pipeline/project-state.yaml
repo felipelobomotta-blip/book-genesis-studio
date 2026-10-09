@@ -54,3 +54,8 @@ gates:
 
 decisions: []
 open_questions: []
+
+delivery:
+  status: "pending"
+  scope: ""
+  receipt: ""

@@ -4,7 +4,7 @@ This repository contains Book Genesis, a set of Agent Skills for writing complet
 
 ## Writing a book from this checkout
 
-When asked to create, plan, draft, audit, revise, score or package a book, use the installed `book-genesis` skill. If it is not installed, read `skills/book-genesis/SKILL.md` and follow it, resolving `references/...` paths from `skills/book-genesis/`.
+When writing from this recovery checkout, read `skills/book-genesis/SKILL.md` directly and resolve `references/...` paths from `skills/book-genesis/`. A global installed skill may be a different release; do not silently use it to validate this build. For a project-local installation, run the installer's `verify-install` against this checkout before starting and record the installed version and file hashes in the run report.
 
 - Start with `skills/book-genesis/references/pipeline/host-contract.md`, then `references/prompts/orchestrator.md`.
 - Write the book in a folder outside this repository, or under `books/`, which git ignores.

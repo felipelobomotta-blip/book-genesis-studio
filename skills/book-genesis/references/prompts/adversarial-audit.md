@@ -6,15 +6,21 @@ When to load: Phase 4, and in Phase 5 when a pass needs a fresh audit. Role: orc
 
 ## Run the auditor
 
-1. Build the auditor's packet exactly as `references/roles/auditor.md` lists: all chapters, the plan files, and the pattern standards. No targets, no scores, no panel verdicts.
+1. Build the auditor's packet exactly as `references/roles/auditor.md` lists: all chapters, the approved intake brief, the plan files, and the pattern standards. No targets, no scores, no panel verdicts. The auditor's first pass is the dedicated brief contract comparison; it must compare the intake premise, reader promise, declared time window or duration, and point of view with every planned chapter, the ledger timeline/world rules, and the manuscript even when the ledger is internally consistent.
 2. Run it at the strongest independence level recorded in `PROJECT_STATE.yaml` (`references/scoring/evaluator-protocol.md`).
 3. Save its report verbatim to `artifacts/10-adversarial-audit.md`. A read-only auditor returns the report; you save it.
+
+For a mechanism-driven story, reconstruct the decisive causal chain from the
+prose and inspect repeated middle-book explanations under
+`references/specialists/causality.md`. Do not let knowledge available only in
+the plan fill a gap on the page. Keep deliberate ambiguity distinct from a
+contradiction, and quote the actual passages before making a ticket.
 
 ## Act on the verdict
 
 The report ends with one `audit_status` line.
 
-- `audit_status: pass`: set the gate to passed and move to Phase 5, which still runs its two gates.
+- `audit_status: pass`: set the gate to passed and move to Phase 5, which still runs its two gates. This is valid only when the brief contract check and all ten other passes have no open high-severity ticket.
 - `audit_status: revise`: set the gate to `revise` and move to Phase 5 with the tickets as its first work.
 - `audit_status: major_rewrite`: stop and check in, even in autonomous mode. Show the failing passes and offer three paths: re-architect the affected part (back to Phase 2 for those chapters), revise anyway, or stop. Record the author's choice in `decisions`.
 

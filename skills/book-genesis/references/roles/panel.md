@@ -19,6 +19,7 @@ Each card has: a name; one line of identity; two or three recent reads taken fro
 
 - Every reader receives the same packet plus its own card, in its own fresh context, as set up in `references/scoring/evaluator-protocol.md`. Readers never see each other's verdicts.
 - Save each verdict verbatim, then the aggregate, in `evaluations/panel-<scope>.md` (for example `panel-chapter-01.md`, `panel-gate-pass-2.md`, `panel-hook-test.md`).
+- Save each chapter-read raw JSON and its original validation receipt before aggregation, as `references/pipeline/evidence.md` describes. A source hash mismatch, missing read or invalid quotation never counts as a valid current vote.
 
 ## Aggregation
 
@@ -36,7 +37,7 @@ Report the table, the tickets it produced, and the preserve list. Never average 
 
 ## Modes
 
-- **Chapter read** (Phase 3): chapter 1 after it is drafted, then the latest chapter at every fifth-chapter checkpoint.
+- **Chapter read** (Phase 3): the opening, about 25 percent, about 50 percent and before the final movement. Combine coincident checkpoints. Five-chapter factual continuity checks do not require an extra literary panel.
 - **Gate read** (Phase 5 and Phase 6): the declared sample is chapter 1, the chapter at the midpoint, the climax chapter, the final chapter, and every chapter revised in the current pass. Name the sample in the report. The gate passes when every sampled chapter gets a majority to turn the page and no defect of high severity remains.
 - **Hook test** (Phase 7): each reader sees three to five packages (title, logline, back-cover blurb) and the first 250 words, and answers three questions per package: would you click, would you buy, would you keep reading. Rank packages by total yes answers; the primary reader breaks ties.
 

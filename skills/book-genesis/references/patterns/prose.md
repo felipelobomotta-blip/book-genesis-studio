@@ -107,7 +107,7 @@ Checks (defaults):
 
 - P16. No stock phrase at a load-bearing position.
 - P17. Flag clusters (two in one paragraph) and repeats across the book. No ceiling applies elsewhere.
-- When the Prose dimension in references/scoring/genesis-score.md penalizes cliché, P16 and P17 are its test.
+- When the Prose dimension in references/scoring/rubric-criteria.md penalizes cliché, P16 and P17 are its test.
 
 ## 8. Leonard's rules as checks
 

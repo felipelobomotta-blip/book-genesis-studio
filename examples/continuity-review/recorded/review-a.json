@@ -1,0 +1,34 @@
+{
+  "outside_phrase": "none",
+  "coverage": "Read only examples/continuity-review/sample-a.md, skills/book-genesis/references/roles/auditor.md, and skills/book-genesis/references/specialists/continuity.md. Reviewed knowledge paths and timeline across Chapters 1–3, counting paragraphs as blank-line blocks after each chapter heading. The timeline is internally plausible; one high-severity knowledge-path contradiction is supported.",
+  "findings": [
+    {
+      "id": "CC-08-01",
+      "severity": "high",
+      "problem": "Nora acts on the spare-key location at 8:40 a.m., before Chapter 3 states that she is told it for the first time at 9:00 a.m. Chapter 1 also rules out a message reaching her before 9:00.",
+      "evidence": [
+        {
+          "chapter": 2,
+          "paragraph": 2,
+          "quote": "\"Go upstairs in the archive,\" Nora told Mae. \"There's a red coat in the cupboard. The spare key is sewn into its lining. Bring it here.\""
+        },
+        {
+          "chapter": 3,
+          "paragraph": 2,
+          "quote": "This was the first time anyone had told her where the spare key was hidden, and the first time she had seen those words."
+        },
+        {
+          "chapter": 1,
+          "paragraph": 3,
+          "quote": "Nora's radio was switched off, and no one carried a message between the vault and the pump house before 9:00."
+        }
+      ],
+      "smallest_fix": "Change the Chapter 2 instruction so it does not establish that Nora already knows the note's contents, while preserving the Chapter 3 first-reveal statement."
+    }
+  ],
+  "limitations": [
+    "This is a synthetic three-excerpt review, not a full-book audit.",
+    "No continuity ledger, outline, or whole-book timeline was provided or read, so no missing plan facts were inferred and no later chapter consequences were assessed.",
+    "Only the three explicitly authorized files were read."
+  ]
+}

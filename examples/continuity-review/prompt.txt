@@ -1,0 +1,12 @@
+Use Book Genesis for a focused, review-only continuity check of sample-a.md.
+Read all three excerpts in order. Use the continuity specialist and auditor rules.
+This is an excerpt review, not a whole-book audit. Do not start the book-generation pipeline.
+
+Check who is present when each fact is revealed, who knows it, and how they learned it.
+For each supported contradiction, quote both relevant passages exactly, name the chapter
+and paragraph, explain the problem, and suggest the smallest repair without writing it.
+Do not invent an off-page explanation or mistake a plausible inference for a contradiction.
+If nothing is supported, say so. Do not assign a book-quality score.
+
+Do not edit, rename or replace any manuscript file. Save only review-a.md beside the sample.
+Include the exact reading coverage and label the result as an AI review of synthetic excerpts.

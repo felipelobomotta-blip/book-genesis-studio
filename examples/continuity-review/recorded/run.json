@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-08",
+  "execution": "Two Codex subagents with fork_turns=none; one excerpt set per context. The reviewer instructions used the repository auditor and continuity references. This was not a standalone CLI invocation.",
+  "coverage": "Two synthetic three-excerpt cases, one review per case, one model family. No measured accuracy rate, full-book test or human validation.",
+  "source_base_commit": "46a744fa5cf9745a2b0764e749a58afdbced6234",
+  "reader_packet_files": [
+    "sample for that reader only",
+    "skills/book-genesis/references/roles/auditor.md",
+    "skills/book-genesis/references/specialists/continuity.md"
+  ],
+  "isolation": "Both reviewers reported no phrase from another conversation. No private parent canary was returned. This check is not a proof of process-level filesystem isolation.",
+  "files": {
+    "sample-a.md": {
+      "before_sha256": "321995017655df35d2482a8220beb8c327ab80fa85d572e644b5e6fa4bda581f",
+      "after_sha256": "321995017655df35d2482a8220beb8c327ab80fa85d572e644b5e6fa4bda581f",
+      "normalized_sha256": "321995017655df35d2482a8220beb8c327ab80fa85d572e644b5e6fa4bda581f",
+      "report": "review-a.json"
+    },
+    "sample-b.md": {
+      "before_sha256": "f984ad696c412345a2a6c8ec4e7c372d764588f4ea862e33cff3960f751506fb",
+      "after_sha256": "f984ad696c412345a2a6c8ec4e7c372d764588f4ea862e33cff3960f751506fb",
+      "normalized_sha256": "f984ad696c412345a2a6c8ec4e7c372d764588f4ea862e33cff3960f751506fb",
+      "report": "review-b.json"
+    }
+  }
+}

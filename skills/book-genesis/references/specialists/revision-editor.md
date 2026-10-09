@@ -58,7 +58,7 @@ A `continuity` ticket whose smallest fix needs more than replacing a value must 
 ## Targeted repair
 
 1. Before you edit a chapter, copy its accepted version to `work/revisions/chapter-NN.pre-rK.md`, where K is the next unused revision number for that chapter (one more than the highest K already there).
-2. Write the revised chapter to `work/attempts/chapter-NN/revision-rK.md`, never to `manuscript/chapters/`. The orchestrator copies it there only after it is accepted: by the panel's draft comparison in Phase 5: Revision Loop, and by the continuity recheck in both phases. The chapter file always holds the last accepted version, and a rejected revision never replaces it.
+2. Write the revised chapter to `work/attempts/chapter-NN/revision-rK.md`, never to `manuscript/chapters/`. The orchestrator copies it there only after it is accepted: a narrowly factual Phase 3 ticket uses the bounded continuity recheck and hash-verified copy protocol; a Phase 5 literary revision uses the panel's draft comparison and `promote_chapter.py`. The chapter file always holds the last accepted version, and a rejected revision never replaces it.
 3. Change only the quoted passages and their immediate seams: the sentence before and the sentence after each changed span, adjusted only so the join reads (tense, pronoun, transition). When the fix calls for new text, insert it directly next to the named passage. Everything else stays exactly as it was.
 4. Never rewrite a whole chapter for a local defect. A whole-chapter rewrite needs a structural ticket whose span is the whole chapter.
 5. If the fix needs a change outside the span (a set-up two chapters earlier, a scene the outline does not have), do not make it. Return a proposed follow-up ticket with class, location and quote.
@@ -195,4 +195,4 @@ Revision: work/attempts/chapter-07/revision-r1.md
 
 ## In Phase 3: Drafting
 
-During drafting you receive continuity tickets only, from the check that follows each block of five chapters (`references/specialists/continuity.md`). Most are factual; some are connective or structural, for example when a character must learn something on the page before using it. Fix those and nothing else; the orchestrator promotes your revision after the continuity recheck. Prose quality is judged later, in Phase 4: Adversarial Audit and Phase 5: Revision Loop.
+During drafting you receive narrowly factual continuity tickets only, from the check that follows each block of five chapters (`references/specialists/continuity.md`). Replace the wrong value or other explicitly bounded fact and nothing else; the orchestrator may promote it only after the bounded continuity recheck and hash comparison. A change that needs a scene, knowledge path, structure, connective passage, character behavior, voice or prose rewrite belongs in Phase 5 with the four-reader-vote promotion protocol. Prose quality is judged later, in Phase 4: Adversarial Audit and Phase 5: Revision Loop.

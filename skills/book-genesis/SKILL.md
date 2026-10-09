@@ -7,6 +7,8 @@ description: Use when someone wants to write a complete book from an idea, even 
 
 Take an idea to a complete, commercial-length book inside the author's own agent: planned, drafted, read blind, audited, revised and packaged, with every decision saved to files.
 
+This recovery build restores the 5.0 creative approach: draft with a compact story packet and fewer constraints, then audit and repair the prose. Preserve voice, asymmetry and consequential choices. Execution safeguards and file verification stay with the orchestrator.
+
 The goal is a book written with the measured patterns of books readers finish, audited the way a demanding editor would audit it, and packaged to sell. It is a goal, not a promise: no workflow can guarantee sales.
 
 ## Start here
@@ -31,6 +33,8 @@ Resolve every `references/...` path from this skill's folder. The author's files
 
 Load only the active phase's prompt and the references `references/pipeline/manifest.yaml` lists for it.
 
+Those references are the orchestrator's working set, not a critic packet. Never forward the whole list to another role. Assemble each role's packet from the allowed material in `references/scoring/evaluator-protocol.md`.
+
 | Phase | Prompt |
 |---|---|
 | Phase 0: Intake | `references/prompts/intake.md` |
@@ -49,7 +53,7 @@ Load only the active phase's prompt and the references `references/pipeline/mani
 - **Critics are blind.** Readers see only prose; the auditor sees the plan but never targets or earlier scores; the writer never sees the rubric. `references/scoring/evaluator-protocol.md` sets who sees what.
 - **Independence is measured and shown.** Critics run in isolated subagents or in a second installed tool from another model family when the host allows it (`references/hosts.md`). Every verdict carries its grade.
 - **Four readers decide, not one.** Primary, hostile, adjacent-genre and casual readers, built per book (`references/roles/panel.md`, `references/roles/blind-reader.md`).
-- **Two gates, bounded.** The panel decides whether the book holds readers; the rubric (`references/scoring/genesis-score.md`) decides what to fix. Three passes per gate, then an honest stop.
+- **Two gates, bounded.** The panel decides whether the book holds readers; the rubric (`references/scoring/rubric-criteria.md`) decides what to fix. The orchestrator alone reads the gate policy in `references/scoring/genesis-score.md`. Three passes per gate, then an honest stop.
 - **Measured patterns, named sources.** `references/patterns/index.md` points to prose, structure and emotion patterns from named books and studies, and to machine-prose tells in English and Brazilian Portuguese.
 
 ## Specialists
@@ -62,6 +66,11 @@ Load when the phase calls for them:
 - `references/specialists/continuity.md`: the ledger and the five-chapter checks
 - `references/specialists/revision-editor.md`: ticket-driven, targeted revision
 - `references/specialists/production.md`: proofreading and export
+- `scripts/export_book.py`: canonical manuscript and EPUB export with receipt validation; optional DOCX/PDF proofs use already-installed libraries only
+- `scripts/check_progress.py`: read-only reconciliation of saved chapter numbers, prose counts and progress state before resuming or claiming complete delivery
+- `references/specialists/causality.md`: a small causal contract and middle-book review when the story depends on a mechanism or mystery
+- `references/pipeline/evidence.md`: original reader receipts, current-text coverage and delivery status
+- `scripts/verify_book.py`: read-only verification of current reader evidence and source-bound deliverables; it never grades prose or approves publication
 - `references/specialists/series.md`: only when the book belongs to a series
 
 ## Rules that never bend

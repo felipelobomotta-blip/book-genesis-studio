@@ -114,6 +114,6 @@ The former commercial-patterns file is retired. Its conversion, review, email-li
 - Auditor (references/roles/auditor.md). Receives all five files in Phase 4: Adversarial Audit, runs the structure checks on the full manuscript and the counts on every chapter, and writes findings to artifacts/10-adversarial-audit.md.
 - Revision editor (references/specialists/revision-editor.md). In Phase 5: Revision Loop, works the auditor's tickets with the repair moves in references/patterns/prose.md and the tells file, and recounts after each pass.
 - Reader panel (references/roles/panel.md). Reads as readers; this library is not part of its brief.
-- Final score (references/scoring/genesis-score.md). Counts are evidence for dimension scores, never the score itself, and the caveat at the top of this file governs every reported number.
+- Rubric evaluator (references/scoring/rubric-criteria.md). Counts are evidence for dimension scores, never the score itself, and the caveat at the top of this file governs every reported number.
 - Other languages. Only English and Brazilian Portuguese have a tells file. For another language, adapt references/patterns/ai-tells-en.md with a native reader's review and record the adaptation in ASSUMPTIONS.md.
 - Author overrides. Every numeric ceiling in this library is a project default. The author may change any of them; record the new value and the reason in ASSUMPTIONS.md.

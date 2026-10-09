@@ -1,0 +1,10 @@
+{
+  "outside_phrase": "none",
+  "coverage": "Reviewed the three excerpts in sample-b.md for knowledge paths and timeline continuity. Paragraphs were counted as blank-line blocks after each chapter heading. Chapter 1 establishes the sealed-note agreement, Ivo's opening of the envelope with Nora present at 8:20, and Nora's knowledge of the key location before leaving. Chapter 2 places Nora at the pump house at 8:40 and shows her conveying that information to Mae. Chapter 3 places Ivo at the pump house at 9:00, with Nora reading the note and recalling information she heard forty minutes earlier. No supported contradiction was found.",
+  "findings": [],
+  "limitations": [
+    "This was a synthetic three-excerpt review, not a full-book audit.",
+    "No whole-book continuity ledger, outline, neighboring chapters, or external source material was read.",
+    "Travel time between the archive and pump house is not specified, so only the stated sequence and knowledge paths were assessed."
+  ]
+}
