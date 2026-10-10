@@ -106,7 +106,7 @@ def _resume_command(root: Path, *, model: str | None = None, effort: str | None 
     return command
 
 
-def prepare_project(project: Path, *, host: str, idea: str, language: str = "English", model: str | None = None, effort: str | None = None, autonomous: bool = False, author_name: str | None = None) -> dict[str, object]:
+def prepare_project(project: Path, *, host: str, idea: str, language: str = "English", model: str | None = None, effort: str | None = None, autonomous: bool = False, author_name: str | None = None, autonomous_contract: dict | None = None) -> dict[str, object]:
     _profile(host, model, effort)
     author_name = _author_name(author_name)
     if not idea.strip() or not language.strip():
@@ -144,6 +144,8 @@ def prepare_project(project: Path, *, host: str, idea: str, language: str = "Eng
             "collaboration": "autonomous" if autonomous else "check-in",
             "created_at": _now(), "execution": "native_interactive",
         }
+        if autonomous_contract is not None:
+            config["autonomous_contract"] = autonomous_contract
         _write_json(_install_path(project / CONFIG), config, exclusive=True)
     except BaseException:
         # Delete only directories this attempt claimed. Recheck resolved
@@ -374,6 +376,10 @@ def build_parser() -> argparse.ArgumentParser:
             ideas.add_argument("--idea-file", type=Path)
             command.add_argument("--language", default="English")
             command.add_argument("--autonomous", action="store_true", help="Request the existing core's go-to-the-end mode")
+            command.add_argument("--chapters", type=int, default=12, help="Unattended Codex production contract (default 12)")
+            command.add_argument("--min-words", type=int, default=40000)
+            command.add_argument("--max-words", type=int, default=48000)
+            command.add_argument("--quality-target", type=float, default=8.5, help="Private calibrated craft floor; never sent to writers or critics")
     status = commands.add_parser("status", help="Run the existing core's read-only progress and delivery checks")
     status.add_argument("project", type=Path)
     status.add_argument("--json", action="store_true", help="Print the full read-only evidence as one JSON object")
@@ -423,7 +429,9 @@ def _run(args: argparse.Namespace) -> int:
             if report["resume_snapshot"]["status"] == "blocked":
                 print(f"Resume is blocked: {report['resume_snapshot']['error']}")
         return 0 if report["technical_checks_passed"] else 1
-    if not args.prepare_only and not _has_terminal():
+    saved = read_project(root) if args.command == "resume" else None
+    controlled = bool(saved and saved.get("autonomous_contract")) or bool(args.command == "new" and args.autonomous and args.host == "codex")
+    if not args.prepare_only and not _has_terminal() and not controlled:
         raise ValueError("The native agent needs an interactive terminal. " + ("Add --prepare-only to prepare the book without a model call, then run resume from a terminal." if args.command == "new" else "Run resume from your terminal, or add --prepare-only to only verify the project."))
     author_name = _author_name(args.author)
     if args.command == "new":
@@ -434,12 +442,19 @@ def _run(args: argparse.Namespace) -> int:
                 raise ValueError("Pass --idea or --idea-file, or start from an interactive terminal")
             idea = input("What is your book idea? ").strip()
         if author_name is None and not args.prepare_only:
+            if not _has_terminal():
+                raise ValueError("Pass --author for unattended execution; no publishing name is inferred")
             # This visible Enter choice is an explicit author credit, never an
             # account-derived identity or a placeholder deferred until export.
             author_name = _author_name(input("Name on the title page [Anonymous]: ").strip() or "Anonymous")
-        config = prepare_project(root, host=host, idea=idea, language=args.language, model=args.model, effort=args.effort, autonomous=args.autonomous, author_name=author_name)
+        contract = None
+        if args.autonomous and host == "codex":
+            if not 1 <= args.chapters <= 100 or args.min_words < 100 * args.chapters or args.max_words < args.min_words or not 0 <= args.quality_target <= 9.2:
+                raise ValueError("Invalid unattended chapter, length or quality contract")
+            contract = {"chapters": args.chapters, "min_words": args.min_words, "max_words": args.max_words, "quality_target": args.quality_target}
+        config = prepare_project(root, host=host, idea=idea, language=args.language, model=args.model, effort=args.effort, autonomous=args.autonomous, author_name=author_name, autonomous_contract=contract)
     else:
-        config = read_project(root)
+        config = saved
         host = str(config["host"])
         if args.host is not None and args.host != host:
             raise ValueError(f"This book was prepared and verified for {HOST_NAMES[host]}. Resume it with --host {host}, or prepare a new project for {HOST_NAMES[args.host]}.")
@@ -455,6 +470,9 @@ def _run(args: argparse.Namespace) -> int:
         command = _resume_command(root, model=model, effort=effort, author_name=author_name)
         print(f"Prepared and verified: {root}\nNo model was called. When ready, run in {'PowerShell' if os.name == 'nt' else 'a terminal'}: {command}")
         return 0
+    if config.get("autonomous_contract"):
+        from launcher.autonomous import launch_controlled
+        return launch_controlled(root.resolve(), config, model=model, effort=effort, author_name=author_name)
     return launch_project(root, config, host=host, model=model, effort=effort, resumed=args.command == "resume", author_name=author_name)
 
 

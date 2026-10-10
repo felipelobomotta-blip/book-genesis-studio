@@ -55,6 +55,14 @@ What has actually been run where is tracked in [compatibility](docs/compatibilit
 
 ## Start a book
 
+New unattended Codex projects have a [controlled native execution path](docs/controlled-native-acceptance.md), with durable revision budgets, original-call evidence, phase prerequisites and source-verified export. This path is under fresh full-length acceptance testing; its existence is not a claim that the 90/100 quality bar has passed.
+
+```bash
+python book_genesis.py new ./books/my-novel --host codex --model gpt-5.6-luna --effort high --author "Your Name" --autonomous --idea "Your idea"
+```
+
+This freezes a 12-chapter, 40,000–48,000-word production contract by default. Set `--chapters`, `--min-words` and `--max-words` when creating a different length. Progress shows the active role, elapsed time and saved chapter counts. `resume` retains the original snapshot and counters; it does not silently upgrade an existing book.
+
 This recovery checkout also includes an optional [small native CLI launcher](docs/native-cli.md): `python book_genesis.py doctor`, then `python book_genesis.py new ./books/my-book --host codex` or `--host claude`. It prepares a verified project and opens your existing agent's own live terminal UI and sign-in. One supervised Codex run delivered six chapters and a verified EPUB; literary gates failed. The launcher remains an unreleased prototype, with unattended and full-length acceptance still unverified.
 
 Open your agent in an empty folder for the book and say:

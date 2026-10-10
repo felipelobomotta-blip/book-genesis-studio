@@ -750,6 +750,12 @@ def _complete_pipeline_preflight(
 ) -> None:
     """Require saved pipeline evidence before a host labels delivery complete."""
 
+    from workflow_state import verify_execution, WorkflowError
+    try:
+        verify_execution(book_root)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ExportError(f"complete pipeline controlled execution preflight: {exc}") from exc
+
     missing = []
     for relative in _COMPLETE_PIPELINE_FILES:
         path = book_root / relative

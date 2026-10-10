@@ -13,6 +13,14 @@ The goal is a book written with the measured patterns of books readers finish, a
 
 ## Start here
 
+The optional checkout launcher can run a new autonomous Codex project through
+`scripts/autonomous_book.py`. In that mode a deterministic controller owns state,
+phase prerequisites, revision budgets and delivery; the native model receives
+only a scoped role packet and returns its artifact. Do not start a second
+orchestrator or edit the controller's `.book-genesis/workflow.json`. The shared
+phase, writing, criticism and export rules below still apply. Existing guided
+projects retain their original host-owned workflow and snapshot.
+
 1. Read `references/pipeline/host-contract.md`. It covers starting, resuming, checking in with the author, and recovering from failures.
 2. Read `references/prompts/orchestrator.md`. It is the main loop.
 3. Open or create the author's book folder. If `PROJECT_STATE.yaml` exists, resume from it; otherwise start at Phase 0 with whatever idea the author gave.
