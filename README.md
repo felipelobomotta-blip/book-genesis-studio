@@ -53,6 +53,8 @@ What has actually been run where is tracked in [compatibility](docs/compatibilit
 
 ## Start a book
 
+This recovery checkout also includes an optional [small native CLI launcher](docs/native-cli.md): `python book_genesis.py doctor`, then `python book_genesis.py new ./books/my-book --host codex` or `--host claude`. It prepares a verified project and opens your existing agent's own live terminal UI and sign-in. One supervised Codex run delivered six chapters and a verified EPUB; literary gates failed. The launcher remains an unreleased prototype, with unattended and full-length acceptance still unverified.
+
 Open your agent in an empty folder for the book and say:
 
 > Use book-genesis. My idea: a retired train dispatcher finds a farewell letter inside a station clock.

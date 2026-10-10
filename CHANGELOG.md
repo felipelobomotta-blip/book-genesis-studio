@@ -2,6 +2,10 @@
 
 ## Unreleased — 5.1 recovery build
 
+- Add an optional native CLI launcher for Codex and Claude Code. Prepare and verify a project, collect its author credit up front, preserve checkpoints on resume, and hand the terminal to the unmodified host's own sign-in, live UI and permissions. No second editorial engine or subscription-token proxy.
+- Forward exact native model and effort selections. For Claude Code, use invocation-scoped effort settings so saved environment values cannot silently replace an explicit selection; leave global settings unchanged.
+- Give each launcher one book ownership record and truthful exit receipts. On Windows, assign the suspended native child to a private kill-on-close job before it starts, then verify descendant shutdown before releasing ownership. Atomic preparation and scoped rollback preserve other work.
+- Supply saved current-reader indexes to status verification without regenerating reviews. A supervised six-chapter Codex run delivered verified Markdown and EPUB within its word contract; literary gates failed. Unattended, full-length and complete Claude-book acceptance remain unverified. See [native CLI validation](docs/native-cli.md).
 - Restore the 5.0 prose-first drafting policy with compact writer packets and four creative reader checkpoints. Preserve the current portable installer, native-call guard, critic isolation and staged revision.
 - Review causal mechanisms and repetitive middle-book explanations through a small continuity contract and targeted repairs.
 - Bind current reader coverage to the original validation receipts and canonical source hashes; changed chapters cannot inherit old passes.

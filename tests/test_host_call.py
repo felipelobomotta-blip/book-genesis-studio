@@ -369,8 +369,10 @@ class HostCallTests(unittest.TestCase):
 
     def test_tree_shutdown_failure_keeps_lock_when_direct_child_is_reaped(self) -> None:
         control = self.root / "control-tree-failure"
+        owned_pids: list[int] = []
 
         def report_tree_failure_but_reap_direct_child(process: subprocess.Popen[bytes]) -> bool:
+            owned_pids.append(process.pid)
             process.terminate()
             process.wait(timeout=2)
             return False
@@ -379,12 +381,16 @@ class HostCallTests(unittest.TestCase):
             with self.assertRaises(HostCallError) as raised:
                 self.call("tree-failure", "wait", control=control, timeout=0.08)
 
-        pid = int((control / "started").read_text(encoding="ascii"))
+        # An 80ms timeout can reap Python before the fixture writes its start
+        # marker. Assert against the real Popen PID captured at shutdown.
+        self.assertEqual(1, len(owned_pids))
+        pid = owned_pids[0]
         self.assertFalse(self.pid_alive(pid), "direct child was not reaped after simulated tree failure")
         self.assertIn("shutdown was not verified", str(raised.exception))
         self.assertIn("active lock retained", str(raised.exception))
         lock = self.state / "work" / "host-calls" / ".active.lock"
         self.assertTrue(lock.is_file(), "unverified tree shutdown must retain the active lock")
+        self.assertEqual(pid, json.loads(lock.read_text(encoding="utf-8"))["child_pid"])
         self.assertEqual("failed", raised.exception.receipt["status"])
 
     def test_book_root_inside_system_temp_uses_sibling_fresh_cwd(self) -> None:
