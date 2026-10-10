@@ -15,6 +15,7 @@ sys.path.insert(0, str(SCRIPT_ROOT))
 
 from build_comparison import ComparisonPacketError, READERS, build_comparison  # noqa: E402
 from validate_blind_reader import validate_blind_reader_report  # noqa: E402
+from prepare_rubric import catalog_digest
 
 
 class ComparisonPacketTests(unittest.TestCase):
@@ -69,16 +70,18 @@ class ComparisonPacketTests(unittest.TestCase):
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         self.assertTrue((self.bundle / "manifest.private.json").is_file())
 
-    def test_schema_binds_each_identity_and_keeps_exact_quote_field_shapes(self) -> None:
+    def test_schema_binds_each_identity_and_anonymous_passage_fields(self) -> None:
         manifest = build_comparison(self.accepted, self.candidate, self.bundle)
         for row in manifest["readers"]:
             schema = json.loads((self.bundle / row["response_schema"]).read_text())
             fields = schema["properties"]
             self.assertEqual([row["reader"]], fields["reader"]["enum"])
-            self.assertEqual({"quote"}, set(fields["stopped_at"]["anyOf"][0]["properties"]))
+            self.assertEqual({"passage_id"}, set(fields["stopped_at"]["anyOf"][0]["properties"]))
             self.assertEqual({"reason"}, set(fields["why_stopped"]["anyOf"][0]["properties"]))
-            self.assertEqual({"quote", "reason"}, set(fields["strongest_passage"]["properties"]))
-            self.assertEqual({"quote", "reason"}, set(fields["remember_tomorrow"]["items"]["properties"]))
+            self.assertEqual({"passage_id", "reason"}, set(fields["strongest_passage"]["properties"]))
+            self.assertEqual({"passage_id", "reason"}, set(fields["remember_tomorrow"]["items"]["properties"]))
+            self.assertEqual([3], fields["schema_version"]["enum"])
+            self.assertEqual({"A:p0001", "A:p0002", "B:p0001", "B:p0002"}, set(schema["$defs"]["passageId"]["enum"]))
             self.assertEqual(set(fields), set(schema["required"]))
             self.assertFalse(schema["additionalProperties"])
 
@@ -128,6 +131,99 @@ class ComparisonPacketTests(unittest.TestCase):
         report.write_text(json.dumps(payload), encoding="utf-8")
         self.assertFalse(validate_blind_reader_report([self.accepted], report, expected_reader="Priya")["valid"])
         self.assertFalse(validate_blind_reader_report([self.accepted], report, expected_reader=" ")["valid"])
+
+    def passage_report(self, row, *, vote="same"):
+        report = self.root / "passage-report.json"
+        report.write_text(json.dumps({
+            "schema_version": 3, "catalog_sha256": row["catalog_sha256"],
+            "reader": row["reader"], "turn_page": "no", "stopped_at": None, "why_stopped": None,
+            "remember_tomorrow": [{"passage_id": "A:p0001", "reason": "Physical action."}],
+            "confused_by": [{"passage_id": "B:p0002", "reason": "Unclear motive."}], "flags": [],
+            "strongest_passage": {"passage_id": "A:p0001", "reason": "Concrete."},
+            "weakest_passage": {"passage_id": "B:p0002", "reason": "Predictable."},
+            "machine_tells": [], "felt": {"emotion": "unmoved", "reason": "Low stakes."},
+            "confidence": "medium", "compare": vote,
+        }), encoding="utf-8")
+        return report
+
+    def validate_passages(self, row, report, paths=None):
+        return validate_blind_reader_report(paths or [self.accepted, self.candidate], report,
+                                            expected_reader=row["reader"], catalog_path=self.bundle / row["catalog"])
+
+    def test_passage_votes_for_either_version_or_same_preserve_negative_judgment_and_raw_bytes(self):
+        manifest = build_comparison(self.accepted, self.candidate, self.bundle)
+        for row, vote in zip(manifest["readers"], ["A", "B", "same", "A"]):
+            report = self.passage_report(row, vote=vote)
+            raw = report.read_bytes()
+            receipt = self.validate_passages(row, report)
+            self.assertTrue(receipt["valid"], receipt)
+            self.assertEqual(row["catalog_sha256"], receipt["catalog_sha256"])
+            self.assertEqual(4, len(receipt["resolved_evidence"]))
+            self.assertEqual(raw, report.read_bytes())
+            self.assertEqual("no", json.loads(raw)["turn_page"])
+
+    def test_public_catalog_has_only_anonymous_complete_sources(self):
+        manifest = build_comparison(self.accepted, self.candidate, self.bundle)
+        for row in manifest["readers"]:
+            raw = (self.bundle / row["catalog"]).read_text()
+            catalog = json.loads(raw)
+            for forbidden in (str(self.accepted), str(self.candidate), "accepted", "candidate", "quality target", "calibrated score"):
+                self.assertNotIn(forbidden, raw)
+            self.assertEqual(["A", "B"], [s["label"] for s in catalog["sources"]])
+            self.assertEqual(4, sum(len(s["passages"]) for s in catalog["sources"]))
+
+    def test_comparison_cannot_reuse_reports_after_source_or_context_change(self):
+        context = self.root / "context.md"
+        context.write_text("# Context\n\nThe key had broken.\n", encoding="utf-8")
+        row = build_comparison(self.accepted, self.candidate, self.bundle, [context])["readers"][0]
+        report = self.passage_report(row)
+        sources = [self.accepted, self.candidate, context]
+        self.assertTrue(self.validate_passages(row, report, sources)["valid"])
+        for path in sources:
+            old = path.read_bytes()
+            path.write_bytes(old + b"\nNew action.\n")
+            self.assertFalse(self.validate_passages(row, report, sources)["valid"])
+            path.write_bytes(old)
+
+    def test_truncated_catalog_cannot_be_rehashed_to_pass(self):
+        row = build_comparison(self.accepted, self.candidate, self.bundle)["readers"][0]
+        report = self.passage_report(row)
+        path = self.bundle / row["catalog"]
+        catalog = json.loads(path.read_text())
+        catalog["sources"][0]["passages"].pop()
+        path.write_text(json.dumps(catalog))
+        raw = json.loads(report.read_text())
+        raw["catalog_sha256"] = catalog_digest(catalog)
+        report.write_text(json.dumps(raw))
+        receipt = self.validate_passages(row, report)
+        self.assertFalse(receipt["valid"])
+        self.assertTrue(any("complete assigned prose" in error for error in receipt["errors"]))
+
+    def test_opposite_order_catalog_cannot_change_a_saved_vote(self):
+        rows = build_comparison(self.accepted, self.candidate, self.bundle)["readers"]
+        first = rows[0]
+        opposite = next(row for row in rows if row["mapping"] != first["mapping"])
+        report = self.passage_report(first)
+        receipt = validate_blind_reader_report([self.accepted, self.candidate], report, expected_reader=first["reader"],
+                                               catalog_path=self.bundle / opposite["catalog"])
+        self.assertFalse(receipt["valid"])
+        self.assertTrue(any("different evidence catalog" in error for error in receipt["errors"]))
+
+    def test_unknown_id_copied_quote_and_missing_vote_are_invalid(self):
+        row = build_comparison(self.accepted, self.candidate, self.bundle)["readers"][0]
+        for fault in ("id", "quote", "vote", "protocol"):
+            report = self.passage_report(row)
+            raw = json.loads(report.read_text())
+            if fault == "id":
+                raw["strongest_passage"]["passage_id"] = "A:p9999"
+            elif fault == "quote":
+                raw["strongest_passage"]["quote"] = "Mara checked the desk."
+            elif fault == "vote":
+                del raw["compare"]
+            else:
+                raw["schema_version"] = 2
+            report.write_text(json.dumps(raw))
+            self.assertFalse(self.validate_passages(row, report)["valid"])
 
 
 if __name__ == "__main__":

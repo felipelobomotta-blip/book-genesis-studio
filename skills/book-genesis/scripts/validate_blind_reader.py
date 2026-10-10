@@ -306,12 +306,12 @@ def validate_blind_reader_report(
     resolved: list[dict[str, Any]] = []
     catalog_hash = None
     if isinstance(report, dict) and "schema_version" in report:
-        if type(report["schema_version"]) is not int or report["schema_version"] != 2:
+        if type(report["schema_version"]) is not int or report["schema_version"] not in (2, 3):
             errors.append("unsupported reader report schema")
         else:
             report, catalog_hash, resolved = _resolve_passages(report, chapter_paths, catalog_path, errors)
     elif catalog_path is not None:
-        errors.append("a catalog requires a schema 2 passage-reference report")
+        errors.append("a catalog requires a schema 2 or 3 passage-reference report")
 
     if parse_failed:
         pass
@@ -370,24 +370,32 @@ def _resolve_passages(report: dict, chapter_paths: list[Path], catalog_path: Pat
     digest = None
     try:
         if catalog_path is None:
-            raise ValueError("schema 2 requires a frozen --catalog")
+            raise ValueError("passage references require a frozen --catalog")
         catalog = json.loads(catalog_path.read_text(encoding="utf-8-sig"),
                              object_pairs_hook=_unique_object, parse_constant=_no_constant)
-        if canonical_json(catalog) != canonical_json(build_catalog(chapter_paths)):
-            raise ValueError("catalog differs from the complete current assigned prose; obtain a fresh read")
+        if report["schema_version"] == 3:
+            from build_comparison import verify_comparison_catalog
+            catalog = verify_comparison_catalog(catalog, chapter_paths)
+            passages = {p["id"]: {"version": c["label"], "quote": p["text"]}
+                        for c in catalog["sources"] for p in c["passages"]}
+        else:
+            if canonical_json(catalog) != canonical_json(build_catalog(chapter_paths)):
+                raise ValueError("catalog differs from the complete current assigned prose; obtain a fresh read")
+            passages = {p["id"]: {"chapter": c["chapter"], "quote": p["text"]}
+                        for c in catalog["chapters"] for p in c["passages"]}
         digest = catalog_digest(catalog)
         if report.get("catalog_sha256") != digest:
             raise ValueError("report is bound to a different evidence catalog")
-        passages = {p["id"]: {"chapter": c["chapter"], "quote": p["text"]}
-                    for c in catalog["chapters"] for p in c["passages"]}
-    except (OSError, UnicodeError, ValueError, TypeError) as exc:
+    except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
         errors.append(f"evidence catalog: {exc}")
 
     view = copy.deepcopy(report)
     view.pop("schema_version", None)
     view.pop("catalog_sha256", None)
-    if "compare" in view:
+    if report["schema_version"] == 2 and "compare" in view:
         errors.append("schema 2 is for current-draft reads, not A/B comparisons")
+    elif report["schema_version"] == 3 and "compare" not in view:
+        errors.append("schema 3 requires an anonymous comparison vote")
 
     def resolve(item: Any, location: str) -> None:
         if not isinstance(item, dict):
@@ -418,7 +426,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--chapter", action="append", required=True, help="assigned chapter source; repeatable")
     parser.add_argument("--report", required=True, help="raw JSON report path, or - for stdin")
     parser.add_argument("--expected-reader", help="exact assigned identity; a mismatch is invalid, never renamed")
-    parser.add_argument("--catalog", type=Path, help="Frozen complete assigned prose for schema 2 passage references")
+    parser.add_argument("--catalog", type=Path, help="Frozen complete assigned prose for current-draft or A/B passage references")
     args = parser.parse_args(argv)
     receipt = validate_blind_reader_report(
         [Path(value) for value in args.chapter], Path(args.report), expected_reader=args.expected_reader,

@@ -14,7 +14,7 @@ Version 5.1.0-dev · unreleased recovery build · MIT licensed · free · runs o
 
 **Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. This branch is not a published release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md), [tested headless reviewer commands](docs/scoped-transport-20261010.md), and a [separate correctness check for factual repairs](docs/factual-corrections-20261010.md). Real model controls accepted a supported correction and blocked a changed witness account without invented preference votes. The complete automated suite passed 278 tests. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
+**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md), [tested headless reviewer commands](docs/scoped-transport-20261010.md), and a [separate correctness check for factual repairs](docs/factual-corrections-20261010.md). [Anonymous A/B readers now use frozen paragraph references](docs/comparison-evidence-20261010.md), preserving their votes without recopying quotations. The complete automated suite passed 284 tests. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
 
 ## The goal
 

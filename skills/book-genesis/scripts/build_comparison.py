@@ -42,8 +42,14 @@ def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]
 
     string = {"type": "string"}
     key = "passage_id" if catalog is not None else "quote"
-    citation = ({"type": "string", "enum": [p["id"] for c in catalog["chapters"] for p in c["passages"]]}
+    comparison = catalog is not None and catalog.get("kind") == "anonymous_comparison"
+    groups = (catalog["sources"] if comparison else catalog["chapters"]) if catalog is not None else []
+    citation = ({"type": "string", "enum": [p["id"] for c in groups for p in c["passages"]]}
                 if catalog is not None else string)
+    citation_definition = citation
+    if comparison:
+        # A long comparison should send the ID enum once, not once per field.
+        citation = {"$ref": "#/$defs/passageId"}
     quote = obj({key: citation})
     reason = obj({key: citation, "reason": string})
     properties = {
@@ -60,12 +66,15 @@ def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]
         "felt": obj({"emotion": string, "reason": string}),
         "confidence": {"type": "string", "enum": sorted(CONFIDENCE)},
     }
-    if catalog is None:
+    if catalog is None or comparison:
         properties["compare"] = {"type": "string", "enum": ["A", "B", "same"]}
-    else:
-        properties.update(schema_version={"type": "integer", "enum": [2]},
+    if catalog is not None:
+        properties.update(schema_version={"type": "integer", "enum": [3 if comparison else 2]},
                           catalog_sha256={"type": "string", "enum": [catalog_digest(catalog)]})
-    return obj(properties)
+    schema = obj(properties)
+    if comparison:
+        schema["$defs"] = {"passageId": citation_definition}
+    return schema
 
 
 def _source(path: Path) -> tuple[dict[str, Any], str]:
@@ -91,6 +100,38 @@ def _source(path: Path) -> tuple[dict[str, Any], str]:
             "reader_body_sha256": digest(body.encode("utf-8")), "h1_omitted": True}, body
 
 
+def comparison_catalog(entries: list[tuple[str, dict, str]]) -> dict:
+    """Complete anonymous prose only: no filenames, titles or revision identity."""
+    sources = []
+    for label, record, body in entries:
+        paragraphs = [p for p in re.split(r"\n[ \t]*\n", body) if p.strip()]
+        sources.append({"label": label, "sha256": record["sha256"],
+                        "passages": [{"id": f"{label}:p{i:04d}", "text": paragraph}
+                                     for i, paragraph in enumerate(paragraphs, 1)]})
+    return {"schema_version": 3, "kind": "anonymous_comparison", "sources": sources}
+
+
+def verify_comparison_catalog(catalog: dict, chapter_paths: list[Path]) -> dict:
+    """Rebuild every assigned paragraph, including shared context, before reuse."""
+    from prepare_rubric import canonical_json
+    if not isinstance(catalog, dict) or catalog.get("schema_version") != 3 or catalog.get("kind") != "anonymous_comparison":
+        raise ValueError("not an anonymous comparison catalog")
+    rows = catalog.get("sources")
+    if not isinstance(rows, list) or len(rows) < 2 or not all(isinstance(row, dict) for row in rows):
+        raise ValueError("comparison catalog needs both complete versions")
+    labels = [row.get("label") for row in rows]
+    if labels != ["A", "B"] + [f"context-{i}" for i in range(1, len(rows) - 1)]:
+        raise ValueError("invalid comparison source labels")
+    sources = [_source(path) for path in chapter_paths]
+    if sorted(row.get("sha256", "") for row in rows) != sorted(record["sha256"] for record, _ in sources):
+        raise ValueError("comparison catalog differs from the assigned source files")
+    by_hash = {record["sha256"]: (record, body) for record, body in sources}
+    rebuilt = comparison_catalog([(row["label"], *by_hash[row["sha256"]]) for row in rows])
+    if canonical_json(catalog) != canonical_json(rebuilt):
+        raise ValueError("comparison catalog differs from the complete assigned prose")
+    return rebuilt
+
+
 def build_comparison(accepted: Path, candidate: Path, output_dir: Path,
                      context: list[Path] | None = None, *, role_path: Path | None = None) -> dict[str, Any]:
     accepted_record, accepted_body = _source(accepted)
@@ -111,29 +152,40 @@ def build_comparison(accepted: Path, candidate: Path, output_dir: Path,
     secrets.SystemRandom().shuffle(order)
     candidate_first = set(order[:2])
     rows = []
-    prose_context = "".join(f"\n\n## Prose context {i}\n\n{body}"
-                            for i, (_, body) in enumerate(context_data, 1))
     for persona, (reader, lens) in READERS.items():
         mapping = {"A": "candidate", "B": "accepted"} if persona in candidate_first else {"A": "accepted", "B": "candidate"}
         bodies = {"accepted": accepted_body, "candidate": candidate_body}
+        records = {"accepted": accepted_record, "candidate": candidate_record}
+        catalog = comparison_catalog(
+            [(label, records[mapping[label]], bodies[mapping[label]]) for label in ("A", "B")]
+            + [(f"context-{i}", record, body) for i, (record, body) in enumerate(context_data, 1)])
+        rendered = {row["label"]: "\n\n".join(f"[{p['id']}]\n{p['text']}" for p in row["passages"])
+                    for row in catalog["sources"]}
+        prose_context = "".join(f"\n\n## Prose context {i}\n\n{rendered[f'context-{i}']}"
+                                for i in range(1, len(context_data) + 1))
         packet = (
             f"# Chapter comparison\n\nYou are {reader}, {lens}. Your JSON reader field must be exactly {json.dumps(reader)}.\n"
             "Compare two anonymous prose versions, A and B. Their order carries no information about when they were written. "
             "Use only the supplied prose and reader role. Do not look for project files or earlier evaluations. "
             "Choose A, B or same from your real reading experience; an unfavorable vote is valid. Do not score the text.\n\n"
-            "When you did not stop, stopped_at and why_stopped must both be null. Otherwise stopped_at contains only quote, "
-            "and why_stopped contains only reason. Passage and memory objects contain only quote and reason, with no chapter key. "
-            "Copy short exact contiguous quotes. Do not alter a quote to improve grammar.\n\n"
-            + role + prose_context + "\n\n## Draft A\n\n" + bodies[mapping["A"]]
-            + "\n\n## Draft B\n\n" + bodies[mapping["B"]] + "\n"
+            "Use schema_version 3 and the supplied catalog_sha256. Cite the bracketed paragraph IDs in passage_id, "
+            "not copied quotations. The schema overrides the role's older quote example without changing its questions. "
+            "When you did not stop, stopped_at and why_stopped must both be null. Otherwise stopped_at contains only passage_id, "
+            "and why_stopped contains only reason. Passage and memory objects contain only passage_id and reason. "
+            f"catalog_sha256: {catalog_digest(catalog)}\n\n"
+            + role + prose_context + "\n\n## Draft A\n\n" + rendered["A"]
+            + "\n\n## Draft B\n\n" + rendered["B"] + "\n"
         ).encode("utf-8")
         packet_name, schema_name = f"{persona}.packet.md", f"{persona}.schema.json"
         (output_dir / packet_name).write_bytes(packet)
-        schema_data = (json.dumps(reader_schema(reader), indent=2) + "\n").encode("utf-8")
+        schema_data = (json.dumps(reader_schema(reader, catalog=catalog), indent=2) + "\n").encode("utf-8")
         (output_dir / schema_name).write_bytes(schema_data)
+        catalog_name = f"{persona}.catalog.json"
+        (output_dir / catalog_name).write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         rows.append({"persona": persona, "reader": reader, "packet": packet_name,
                      "packet_sha256": digest(packet), "response_schema": schema_name,
-                     "response_schema_sha256": digest(schema_data), "mapping": mapping})
+                     "response_schema_sha256": digest(schema_data), "mapping": mapping,
+                     "catalog": catalog_name, "catalog_sha256": catalog_digest(catalog)})
     for row in source_records:
         if digest(Path(row["path"]).read_bytes()) != row["sha256"]:
             raise ComparisonPacketError("An input changed during packet creation; preserve this failed bundle")
