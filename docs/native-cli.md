@@ -6,6 +6,11 @@ It is a working entry point for the current recovery checkout, not a new release
 
 ## Use it from this checkout
 
+The [latest native acceptance report](native-acceptance-20261010.md) records
+failed autonomous runs and the tested recovery fixes. Use the checkout command
+below explicitly: an older globally installed `book-genesis` command may still
+point to another source folder. It is not automatically upgraded by changes here.
+
 You need Python 3.10+ and a separately installed Codex or Claude Code. The launcher does not install agent runtimes, change their settings, copy credentials or create provider accounts.
 
 ```bash

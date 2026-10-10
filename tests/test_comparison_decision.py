@@ -79,6 +79,16 @@ class ComparisonDecisionTests(unittest.TestCase):
         self.assertEqual("reject", decision["decision"])
         self.assertEqual("nondecisive_panel", decision["reason"])
 
+    def test_new_candidate_cannot_reuse_old_reads_even_when_cited_paragraphs_survive(self):
+        self.reports(["candidate"] * 4)
+        # All quoted/identified original passages remain present. The new
+        # uncited paragraph still changes the draft those readers must judge.
+        self.candidate.write_text(self.candidate.read_text(encoding="utf-8") + "\nShe burned the letter.\n", encoding="utf-8")
+        new_bundle = self.root / "new-comparison"
+        build_comparison(self.accepted, self.candidate, new_bundle)
+        with self.assertRaisesRegex(ValueError, "validations must pass"):
+            decide(new_bundle / "manifest.private.json", self.index_path, 1)
+
     def test_original_report_receipt_or_source_changes_reject_the_decision(self):
         self.reports(["candidate"] * 4)
         for path in (self.root / "primary.json", self.root / "primary.validation.json", self.accepted):
