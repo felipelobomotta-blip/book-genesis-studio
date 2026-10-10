@@ -20,6 +20,7 @@ sys.path.insert(0, str(SCRIPTS))
 from export_book import export_book  # noqa: E402
 from validate_blind_reader import validate_blind_reader_report  # noqa: E402
 from verify_book import verify_book  # noqa: E402
+from prepare_rubric import build_catalog, catalog_digest
 
 
 class VerificationTests(unittest.TestCase):
@@ -77,6 +78,45 @@ class VerificationTests(unittest.TestCase):
         self.assertTrue(result["reviews"]["scopes"][0]["majority_turn_page"])
         self.assertEqual("pending", result["delivery"]["status"])
         self.assertEqual("not_assessed", result["publication_approval"])
+
+    def use_passage_reports(self):
+        catalog_path = self.readers / "catalog.json"
+        catalog = build_catalog([self.chapter])
+        self.write_json(catalog_path, catalog)
+        for row in self.index["scopes"][0]["readers"]:
+            path = self.book / row["report"]
+            report = json.loads(path.read_text())
+            report.update(schema_version=2, catalog_sha256=catalog_digest(catalog))
+            for item in report["remember_tomorrow"] + [report["strongest_passage"], report["weakest_passage"]]:
+                quote = item.pop("quote")
+                item["passage_id"] = "c01p0001" if quote.startswith("Mara") else "c01p0002"
+            self.write_json(path, report)
+            self.write_json(self.book / row["validation"], validate_blind_reader_report([self.chapter], path, catalog_path=catalog_path))
+            row["catalog"] = catalog_path.relative_to(self.book).as_posix()
+        self.save_index()
+
+    def test_passage_receipts_cover_current_draft_and_detect_modified_resolutions(self):
+        self.use_passage_reports()
+        self.assertEqual("current", self.verify()["reviews"]["status"])
+        path = self.book / self.index["scopes"][0]["readers"][0]["validation"]
+        receipt = json.loads(path.read_text())
+        receipt["resolved_evidence"][0]["quote"] = "A fabricated passage."
+        self.write_json(path, receipt)
+        self.assertEqual("incomplete", self.verify()["reviews"]["status"])
+
+    def test_passage_review_index_requires_saved_catalog_and_original_digest(self):
+        self.use_passage_reports()
+        row = self.index["scopes"][0]["readers"][0]
+        catalog_path = row.pop("catalog")
+        self.save_index()
+        self.assertEqual("incomplete", self.verify()["reviews"]["status"])
+        row["catalog"] = catalog_path
+        self.save_index()
+        path = self.book / row["validation"]
+        receipt = json.loads(path.read_text())
+        receipt["catalog_sha256"] = "0" * 64
+        self.write_json(path, receipt)
+        self.assertEqual("incomplete", self.verify()["reviews"]["status"])
 
     def test_edit_invalidates_old_read_even_when_every_quote_still_matches(self) -> None:
         self.chapter.write_text(self.chapter.read_text(encoding="utf-8") + "\nShe left before the news arrived.\n", encoding="utf-8")

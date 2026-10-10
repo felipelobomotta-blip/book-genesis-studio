@@ -16,6 +16,7 @@ import secrets
 from typing import Any
 
 from validate_blind_reader import CONFIDENCE, FLAGS, TURN_PAGES
+from prepare_rubric import catalog_digest
 
 
 READERS = {
@@ -34,15 +35,18 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def reader_schema(reader: str) -> dict[str, Any]:
+def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]:
     def obj(properties: dict[str, Any]) -> dict[str, Any]:
         return {"type": "object", "properties": properties,
                 "required": list(properties), "additionalProperties": False}
 
     string = {"type": "string"}
-    quote = obj({"quote": string})
-    reason = obj({"quote": string, "reason": string})
-    return obj({
+    key = "passage_id" if catalog is not None else "quote"
+    citation = ({"type": "string", "enum": [p["id"] for c in catalog["chapters"] for p in c["passages"]]}
+                if catalog is not None else string)
+    quote = obj({key: citation})
+    reason = obj({key: citation, "reason": string})
+    properties = {
         "reader": {"type": "string", "enum": [reader]},
         "turn_page": {"type": "string", "enum": sorted(TURN_PAGES)},
         "stopped_at": {"anyOf": [quote, {"type": "null"}]},
@@ -50,13 +54,18 @@ def reader_schema(reader: str) -> dict[str, Any]:
         "remember_tomorrow": {"type": "array", "items": reason},
         "confused_by": {"type": "array", "items": reason},
         "flags": {"type": "array", "items": obj({
-            "flag": {"type": "string", "enum": sorted(FLAGS)}, "quote": string})},
+            "flag": {"type": "string", "enum": sorted(FLAGS)}, key: citation})},
         "strongest_passage": reason, "weakest_passage": reason,
-        "machine_tells": {"type": "array", "items": obj({"tell": string, "quote": string})},
+        "machine_tells": {"type": "array", "items": obj({"tell": string, key: citation})},
         "felt": obj({"emotion": string, "reason": string}),
         "confidence": {"type": "string", "enum": sorted(CONFIDENCE)},
-        "compare": {"type": "string", "enum": ["A", "B", "same"]},
-    })
+    }
+    if catalog is None:
+        properties["compare"] = {"type": "string", "enum": ["A", "B", "same"]}
+    else:
+        properties.update(schema_version={"type": "integer", "enum": [2]},
+                          catalog_sha256={"type": "string", "enum": [catalog_digest(catalog)]})
+    return obj(properties)
 
 
 def _source(path: Path) -> tuple[dict[str, Any], str]:

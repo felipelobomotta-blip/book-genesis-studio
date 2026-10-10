@@ -172,11 +172,17 @@ def verify_reviews(book_root: Path, chapters: list[Any], index_path: Path | None
                     original = _json(receipt_path)
                     if original.get("schema_version") != 1 or original.get("valid") is not True or original.get("status") != "passed":
                         raise ValueError("original reader validation did not pass")
-                    fresh = validate_blind_reader_report([canonical[item].path for item in names], report_path)
+                    catalog_path = _inside(book_root, row["catalog"]) if "catalog" in row else None
+                    fresh = validate_blind_reader_report([canonical[item].path for item in names], report_path,
+                                                        expected_reader=reader, catalog_path=catalog_path)
                     if not fresh["valid"]:
                         raise ValueError("raw report is invalid: " + "; ".join(fresh["errors"]))
                     if original.get("report_sha256") != fresh["report_sha256"]:
                         raise ValueError("raw report hash differs from its original receipt")
+                    if original.get("catalog_sha256") != fresh.get("catalog_sha256"):
+                        raise ValueError("reader catalog differs from its original receipt")
+                    if original.get("resolved_evidence") != fresh.get("resolved_evidence"):
+                        raise ValueError("reader passage evidence differs from its original receipt")
                     old_sources = original.get("source_chapters")
                     if not isinstance(old_sources, list):
                         raise ValueError("original receipt has no source bindings")

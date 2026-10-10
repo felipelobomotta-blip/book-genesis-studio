@@ -2,6 +2,7 @@
 
 ## Unreleased — 5.1 recovery build
 
+- Extend complete, frozen passage references to current-draft reader panels. Prepare four individual packets and structured schemas, resolve IDs in separate receipts, and verify the saved catalog when reusing reader evidence. Legacy quote reports and anonymous comparisons keep their existing format. Four fresh Luna/high readers validated on their first attempt while retaining concrete negative findings; 258 automated tests passed.
 - Return the active phase's exact installed playbook and reference paths with CLI progress checks. Keep the manifest as the source of routing and identify count/state checks as distinct from editorial verification. A native run had advanced after omitting the required architecture review; supplying phase instructions addresses the omitted-context path but is not proof that a review ran.
 - Clarify the native handoff: the agent is already the writing session, ordinary commentary is its live terminal output, and the launcher has already verified the installed snapshot. Reuse the saved install record instead of manually transcribing hashes or trying to control the agent's own window.
 - Preserve a failed receipt and partial response on a caught keyboard interruption, stop and reap the owned child, and keep ownership when tree shutdown is unverified. Connectivity canaries now have a short explicit timeout and use the host's normal network-approval flow; force-killed attempts remain explicitly incomplete.

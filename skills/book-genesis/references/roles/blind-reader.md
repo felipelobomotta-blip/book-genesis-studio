@@ -26,6 +26,19 @@ Read straight through once, as your persona, before judging anything. Note the e
 
 ## Verdict
 
+For a current-draft packet with a frozen passage catalog and response schema
+version 2, cite `passage_id` in place of every `quote` field below. Include
+`schema_version: 2` and the supplied `catalog_sha256`; omit `compare`. The
+catalog contains every visible paragraph in reading order. Read all of it,
+then identify passages; do not copy, paraphrase or invent a quote. For
+`stopped_at`, identify the paragraph where attention first dropped and use
+`why_stopped` to explain the precise issue. The validator resolves each ID to
+the unchanged text in a separate receipt. An ID proves the location exists,
+not that your interpretation is correct. Preserve your actual judgment.
+
+For legacy prose packets or anonymous A/B comparisons, use the quote format
+below. Do not convert an old raw response into the new format.
+
 Return only one JSON object in the manuscript's language, with no preface,
 duplicate verdict or score. The host validates it with
 `scripts/validate_blind_reader.py` before aggregation. Quotes are exact

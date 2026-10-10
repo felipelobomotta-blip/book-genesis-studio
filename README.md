@@ -14,7 +14,7 @@ Version 5.1.0-dev · unreleased recovery build · MIT licensed · free · runs o
 
 **Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. This branch is not a published release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md). The rubric's quotation failures were resolved in two fresh native calls without editing their responses; 248 automated tests passed after startup, interruption and phase-context improvements. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
+**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md). Two rubric calls and four current-draft reader calls passed the revised evidence protocol on their first attempt without editing responses; 258 automated tests passed. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
 
 ## The goal
 
