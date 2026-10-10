@@ -64,6 +64,8 @@ The launcher passes the terminal streams directly to the native CLI. Activity is
 
 `.book-genesis/launcher.lock` prevents two launcher sessions owning a project. It is separate from the core's scoped `work/host-calls/.active.lock`, so launching the parent does not block its independent readers. While the native CLI runs, the lock names both the launcher PID and the native PID. Launch receipts in `.book-genesis/launches/` record the exact native command (without the long start prompt, which is stored as a SHA-256), the selected host/model/effort, the native PID and the exit status.
 
+New Codex receipts also contain a separate `scoped_command` for headless roles. The agent passes the matching receipt to `run_host_call.py --launch-receipt`; it can add a response schema and a short canary timeout. This keeps interactive terminal flags out of reviewer calls, retains the selected executable/model/effort, and preserves the guard's fresh working directory. Older receipts require an explicitly verified command and are not upgraded in place. [Real transport checks and limits](scoped-transport-20261010.md).
+
 Process lifecycle:
 
 - A nonzero native exit, including a native CLI rejecting a flag, is returned as the launcher's exit code and recorded as `native_session_exited` with that code.

@@ -534,15 +534,51 @@ def run_host_call(
             lock_path.unlink(missing_ok=True)
 
 
+def command_from_launch(book_dir: str | Path, receipt_path: str | Path, *,
+                        output_schema: str | Path | None = None, timeout_seconds: float | None = None) -> str:
+    """Use the launcher's saved headless recipe, not the interactive parent argv."""
+    root = Path(book_dir).resolve()
+    path = Path(receipt_path).resolve()
+    if path.parent != (root / ".book-genesis/launches").resolve():
+        raise ValueError("launch receipt must be in this book's .book-genesis/launches folder")
+    record = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(record, dict) or record.get("host") != "codex" or not isinstance(record.get("scoped_command"), dict):
+        raise ValueError("this launch has no prepared Codex scoped command; use an explicitly verified --command-json")
+    argv, timeout = _parse_command(json.dumps(record["scoped_command"]))
+    if "exec" not in argv or "--no-alt-screen" in argv or argv[-3:] != ["-o", "{output}", "-"]:
+        raise ValueError("invalid headless Codex recipe; refusing an interactive command")
+    if output_schema is not None:
+        schema_path = Path(output_schema).resolve()
+        if not schema_path.is_relative_to(root) or not schema_path.is_file():
+            raise ValueError("response schema must be a file inside this book folder")
+        schema = json.loads(schema_path.read_text(encoding="utf-8-sig"))
+        if not isinstance(schema, dict):
+            raise ValueError("response schema must be a JSON object")
+        if "--output-schema" in argv:
+            raise ValueError("headless recipe already contains a response schema")
+        argv[-3:-3] = ["--output-schema", str(schema_path)]
+    command = {"argv": argv, "timeout_seconds": timeout if timeout_seconds is None else timeout_seconds}
+    _parse_command(json.dumps(command))
+    return json.dumps(command)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--book-dir", required=True)
     parser.add_argument("--call-id", required=True)
     parser.add_argument("--packet", required=True)
-    parser.add_argument("--command-json", required=True, help='argv JSON array or {"argv":[...],"timeout_seconds":...}')
+    command_group = parser.add_mutually_exclusive_group(required=True)
+    command_group.add_argument("--command-json", help='argv JSON array or {"argv":[...],"timeout_seconds":...}')
+    command_group.add_argument("--launch-receipt", help="Use this launcher's prepared headless Codex command")
+    parser.add_argument("--output-schema", help="Structured-output schema inside the book, with --launch-receipt")
+    parser.add_argument("--timeout-seconds", type=float, help="Override the prepared command timeout, with --launch-receipt")
     args = parser.parse_args(argv)
     try:
-        receipt = run_host_call(args.book_dir, args.call_id, args.packet, args.command_json)
+        if args.command_json is not None and (args.output_schema is not None or args.timeout_seconds is not None):
+            raise ValueError("--output-schema and --timeout-seconds require --launch-receipt")
+        command = args.command_json if args.command_json is not None else command_from_launch(
+            args.book_dir, args.launch_receipt, output_schema=args.output_schema, timeout_seconds=args.timeout_seconds)
+        receipt = run_host_call(args.book_dir, args.call_id, args.packet, command)
     except (HostCallError, OSError, ValueError) as exc:
         if isinstance(exc, HostCallError):
             receipt = exc.receipt

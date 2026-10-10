@@ -246,6 +246,17 @@ def _uninterruptible():
         signal.signal(signal.SIGINT, previous)
 
 
+def codex_scoped_command(executable: list[str], *, model: str | None, effort: str | None) -> dict:
+    """A headless Codex role, separate from the parent's interactive argv."""
+    argv = list(executable) + ["--no-daemon", "-a", "on-request", "exec",
+                               "--skip-git-repo-check", "--sandbox", "read-only"]
+    if model:
+        argv += ["-m", model]
+    if effort:
+        argv += ["-c", "model_reasoning_effort=" + json.dumps(effort)]
+    return {"argv": argv + ["-o", "{output}", "-"], "timeout_seconds": 900}
+
+
 def session_argv(host: str, project: Path, prompt: str, *, model: str | None, effort: str | None) -> list[str]:
     argv = list(find_native(host))
     if host == "codex":

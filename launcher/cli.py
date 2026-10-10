@@ -19,7 +19,7 @@ import subprocess
 import sys
 from uuid import uuid4
 
-from launcher.native import HOST_NAMES, HOSTS, NativeShutdownUnverified, find_native, inspect_native, login_argv, run_attached, session_argv
+from launcher.native import HOST_NAMES, HOSTS, NativeShutdownUnverified, codex_scoped_command, find_native, inspect_native, login_argv, run_attached, session_argv
 from runner.distribution import INSTALL_RECORD, install_suite, verify_install
 from runner.filesystem import load_manifest
 
@@ -206,6 +206,13 @@ def start_prompt(config: dict[str, object], *, resumed: bool, model: str | None 
     else:
         author_note = "The original project's title-page author is " + json.dumps(_author_name(config.get("author_name"))) + ". Retain a newer explicit author credit already saved with this book; use the project default only if no newer credit exists. "
     native_role_settings = ""
+    if config["host"] == "codex":
+        native_role_settings = (
+            "For scoped Codex roles, use run_host_call.py --book-dir . --call-id <fresh-id> --packet <packet-file> "
+            "--launch-receipt <the-matching-launch-receipt>. The launcher supplies its tested headless exec command. "
+            "For a structured role, add --output-schema <absolute-schema-path>; for a canary add --timeout-seconds 60. "
+            "Do not rebuild the argv, reuse the interactive native_command, omit exec, or invent CLI flags. "
+        )
     if config["host"] == "claude" and effort is not None:
         native_role_settings = (
             "For scoped fresh Claude CLI roles, pass the selected --effort and CLI-scoped --settings "
@@ -289,6 +296,10 @@ def launch_project(project: Path, config: dict[str, object], *, host: str, model
             "native_command": argv[:-1], "prompt_sha256": sha256(prompt.encode("utf-8")).hexdigest(),
             "started_at": _now(), "native_exit_code": None, "book_completion": "not_assessed",
         }
+        if host == "codex" and "-C" in argv:
+            # session_argv owns this layout: the resolved executable prefix is
+            # followed by -C. Reuse those exact paths, never resolve PATH again.
+            record["scoped_command"] = codex_scoped_command(argv[:argv.index("-C")], model=model, effort=effort)
         _write_json(receipt, record, exclusive=True)
         print(f"Opening {HOST_NAMES[host]}. The native UI owns sign-in, permissions and live activity.", flush=True)
         print(f"Book folder: {root}", flush=True)
