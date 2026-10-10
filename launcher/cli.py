@@ -449,6 +449,8 @@ def _run(args: argparse.Namespace) -> int:
             author_name = _author_name(input("Name on the title page [Anonymous]: ").strip() or "Anonymous")
         contract = None
         if args.autonomous and host == "codex":
+            if not args.model or not args.effort:
+                raise ValueError("Pass --model and --effort for the controlled unattended run; no model is silently substituted")
             if not 1 <= args.chapters <= 100 or args.min_words < 100 * args.chapters or args.max_words < args.min_words or not 0 <= args.quality_target <= 9.2:
                 raise ValueError("Invalid unattended chapter, length or quality contract")
             contract = {"chapters": args.chapters, "min_words": args.min_words, "max_words": args.max_words, "quality_target": args.quality_target}

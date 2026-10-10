@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 from autonomous_book import BookWorkflow
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json, verify_execution
 from workflow_roles import obj, TEXT, validate_json
+from workflow_roles import validate_neutral, render_plan
 from verify_book import verify_book
 
 
@@ -74,6 +75,19 @@ class JournalTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkflowError, "exhausted 2"):
             resumed.call("draft", b"packet", schema, COMMAND, lambda p: validate_json(p, schema), transport=transport)
         self.assertEqual(2, len(resumed.data["steps"]["draft"]["attempts"]))
+
+    def test_producer_retry_gets_exact_validation_feedback_without_changing_base_request(self):
+        packets = []
+        def generate(_id, packet, _schema, _root):
+            packets.append(packet)
+            return {"wrong": "field"} if len(packets) == 1 else {"text": "correct shape"}
+        schema = obj({"text": TEXT})
+        with redirect_stdout(io.StringIO()):
+            self.j.call("planner", b"original idea", schema, COMMAND, lambda p: validate_json(p, schema),
+                        feedback=True, transport=receipt_transport(generate))
+        self.assertEqual("original idea", packets[0])
+        self.assertIn("missing or unexpected fields", packets[1])
+        self.assertEqual(digest(b"original idea"), self.j.data["steps"]["planner"]["request"]["packet_sha256"])
 
     def test_stale_vote_cannot_be_rebound_to_new_packet(self):
         schema = obj({"text": TEXT})
@@ -140,10 +154,18 @@ def fixture_response(call_id, packet, schema, root):
                             for name in props["files"]["properties"]}}
         if "book" in props:
             value["book"] = {"title": "The Test Letter", "genre": "Literary short fiction", "audience": "adult fiction readers"}
+        if "contract" in props:
+            value["contract"] = {key: "A courier returns a stolen letter and confesses during one afternoon in close third person."
+                                 for key in props["contract"]["properties"]}
         if "chapters" in props:
             value["chapters"] = [{"number": n, "title": f"Chapter {n}", **{key: "A consequential choice with a complete ending."
                 for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)]
         return value
+    if "canon" in props:
+        return {"opening_strategy": "Begin with the stolen letter arriving at the door.",
+            "chapters": [{"number": n, "title": f"Chapter {n}", **{key: "A consequential choice with a complete ending."
+                for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)],
+            "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
     if "prose" in props:
         revision = "revision-" in call_id
         number = 2 if "draft-02" in call_id else 1
@@ -154,7 +176,7 @@ def fixture_response(call_id, packet, schema, root):
         catalog = json.loads(packet.split("Complete sources:\n", 1)[1])
         names = [s["source"] for s in catalog["sources"]]
         passes = props["checks"]["items"]["properties"]["name"]["enum"]
-        defective = "measure-0-audit" in call_id or "audit-original" in call_id
+        defective = "measure-0-audit" in call_id or "audit-original" in call_id or "plan-check-0" in call_id
         findings = [{"severity": "high", "kind": "character", "chapters": [1],
             "evidence_ids": [catalog["sources"][-1]["passages"][0]["id"]], "problem": "The courier has not confessed.",
             "fix": "Let the courier confess before the door opens.", "preserve": "The letter and the opened door."}] if defective else []
@@ -184,7 +206,7 @@ def fixture_response(call_id, packet, schema, root):
     if "turn_page" in props:
         reader = props["reader"]["enum"][0]
         comparison = "compare" in props
-        ids = (schema["$defs"]["passageId"]["enum"] if comparison else props["strongest_passage"]["properties"]["passage_id"]["enum"])
+        ids = schema["$defs"]["passageId"]["enum"]
         ev = {"passage_id": ids[0], "reason": "The choice holds attention."}
         result = {"schema_version": 3 if comparison else 2, "catalog_sha256": props["catalog_sha256"]["enum"][0],
             "reader": reader, "turn_page": "yes", "stopped_at": None, "why_stopped": None,
@@ -229,6 +251,9 @@ class FullWorkflowTests(unittest.TestCase):
             result = verify_book(root, "evaluations/final-reader-index.json")
             self.assertEqual("delivered", result["delivery"]["status"])
             self.assertEqual("current", result["reviews"]["status"])
+            plan_packet = (root / "work/workflow/plan-check-1/packet.md").read_text(encoding="utf-8")
+            neutral_sources = json.loads(plan_packet.split("Complete sources:\n", 1)[1])
+            self.assertEqual([], validate_neutral(neutral_sources))
             calls = len(list((root / "work/host-calls").iterdir()))
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(0, BookWorkflow(root, COMMAND, **kwargs).run())
@@ -237,6 +262,23 @@ class FullWorkflowTests(unittest.TestCase):
             epub.write_bytes(b"damaged export")
             with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "delivery is missing or stale"):
                 BookWorkflow(root, COMMAND, **kwargs).run()
+
+
+class NeutralPlanningTests(unittest.TestCase):
+    def test_observed_repair_history_and_self_approval_cannot_reach_a_critic(self):
+        for phrase in ("This repairs the dependency chain identified in the supplied finding for chapters 10 and 12.",
+                       "## Brief contract check\nStatus: PASS. verification: degraded (not independent).",
+                       "The previous review approved the plan."):
+            self.assertTrue(validate_neutral({"fact": phrase}))
+        self.assertFalse(validate_neutral({"fact": "June repairs the piano and passes the key to Mara."}))
+
+    def test_rendered_story_files_have_one_source_of_facts(self):
+        from workflow_roles import plan_schema
+        data = fixture_response("architecture", "", plan_schema(2), Path("."))
+        rendered = render_plan(data)
+        self.assertIn("Chapter 2", rendered["artifacts/07-outline.md"])
+        self.assertIn("Point of view", rendered["artifacts/07-outline.md"])
+        self.assertEqual([], validate_neutral(rendered))
 
 
 if __name__ == "__main__":

@@ -28,7 +28,8 @@ from validate_rubric import validate_rubric, rubric_schema
 from verify_book import verify_book
 from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEMA, TEXT,
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
-    validate_json, validate_prose, validate_review)
+    validate_json, validate_prose, validate_review, neutral_contract_schema,
+    plan_schema, validate_neutral, render_plan)
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
 
@@ -94,11 +95,11 @@ class BookWorkflow:
         if not report["ok"]:
             raise WorkflowError("Program-owned progress does not reconcile: " + json.dumps(report["mismatches"]))
 
-    def call(self, key, packet, schema, validator=None):
+    def call(self, key, packet, schema, validator=None, *, feedback=False):
         self.journal.check_canonical()
         kwargs = {"transport": self.transport} if self.transport is not None else {}
         result = self.journal.call(key, packet if isinstance(packet, bytes) else packet.encode("utf-8"), schema,
-            self.command, validator or (lambda p: validate_json(p, schema)), **kwargs)
+            self.command, validator or (lambda p: validate_json(p, schema)), feedback=feedback, **kwargs)
         self.journal.check_canonical()
         return result
 
@@ -130,39 +131,62 @@ class BookWorkflow:
 
     def planning(self):
         if self.journal.data["phase"] == 0:
-            schema = artifact_schema(self.artifact_paths(0), metadata=True)
+            schema = artifact_schema([p for p in self.artifact_paths(0) if p != "artifacts/00-brief.md"], metadata=True)
+            schema["properties"]["contract"] = neutral_contract_schema()
+            schema["required"].append("contract")
             packet = self.phase_packet(0, {"idea": self.config["idea"], "language": self.config["language"],
                 "chapters": self.contract["chapters"], "min_words": self.contract["min_words"], "max_words": self.contract["max_words"],
                 "author": self.config["author_name"], "collaboration": "autonomous; make reasonable creative assumptions and record them"})
-            response, _ = self.call("intake", packet, schema)
+            packet += "\nReturn the neutral story contract separately; the program renders the brief from it and the author's exact idea/length. "
+            packet += "Keep the market map under 700 words and story engine under 800. No process verdicts, gate outcomes or quality scores in story fields."
+            def validate_intake(path):
+                report = validate_json(path, schema)
+                if report["valid"]:
+                    report["errors"] += validate_neutral(read_json(path)["contract"])
+                    report["valid"] = not report["errors"]
+                return report
+            response, _ = self.call("intake", packet, schema, validate_intake, feedback=True)
             data = read_json(response)
+            brief = ["# Book brief", "", "## Author's idea", self.config["idea"], "", "## Production scope",
+                f"{self.contract['chapters']} chapters; {self.contract['min_words']}-{self.contract['max_words']} prose words; {self.config['language']}.", ""]
+            brief += [f"## {key.replace('_', ' ').title()}\n\n{value}\n" for key, value in data["contract"].items()]
+            data["files"]["artifacts/00-brief.md"] = "\n".join(brief)
             self.publish_artifacts(data)
             self.state["project"].update(data["book"])
             freeze(self.root / "work/book-metadata.json", encoded(data["book"]))
             self.finish(0, [self.root / name for name in self.artifact_paths(0)] + [self.root / "work/book-metadata.json"])
         if self.journal.data["phase"] == 1:
             schema = artifact_schema(self.artifact_paths(1))
-            response, _ = self.call("foundation", self.phase_packet(1, self.files(self.artifact_paths(0))), schema)
+            response, _ = self.call("foundation", self.phase_packet(1, self.files(self.artifact_paths(0)))
+                + "\nKeep each artifact under 800 words; retain concrete character, voice and story facts. Do not include process claims.", schema, feedback=True)
             self.publish_artifacts(read_json(response))
             self.finish(1, [self.root / name for name in self.artifact_paths(1)])
         if self.journal.data["phase"] == 2:
-            schema = artifact_schema(self.artifact_paths(2), chapters=True)
+            schema = plan_schema(self.contract["chapters"])
             inputs = self.files(self.artifact_paths(0) + self.artifact_paths(1))
             packet = self.phase_packet(2, inputs) + (
                 f"\nPlan exactly {self.contract['chapters']} chapters numbered in order. The chapters array is the writer's compact packet: "
                 "give only each chapter's relevant character/voice cards, current knowledge/custody facts and scene work. "
                 "Do not expose future reveals in early packets. Ledger facts must distinguish planned from demonstrated events. "
-                "The program supplies exact per-chapter word allowances. Do not put verification claims or the brief-check register "
-                "in the outline; an independent verifier will supply that record separately.")
+                "The program supplies exact per-chapter word allowances. Return only the neutral structured fields: "
+                "chapters, canon and opening_strategy. Keep each chapter entry below 300 words, the full canon below 1500, "
+                "and the opening strategy below 600. The program renders the outline and ledger from those facts. "
+                "Do not include verification claims, process verdicts, a brief-check register, repair history or references to findings. "
+                "An independent verifier and the program supply the separate process record.")
             def validate_plan(path):
                 report = validate_json(path, schema)
                 if report["valid"] and [c["number"] for c in read_json(path)["chapters"]] != list(range(1, self.contract["chapters"] + 1)):
                     report.update(valid=False, errors=["Plan must contain every approved chapter in order"])
+                if report["valid"]:
+                    report["errors"] += validate_neutral(read_json(path))
+                    report["valid"] = not report["errors"]
                 return report
-            response, _ = self.call("architecture", packet, schema, validate_plan)
+            response, _ = self.call("architecture", packet, schema, validate_plan, feedback=True)
             data = read_json(response)
             for attempt in range(2):
-                review = self.review(f"plan-check-{attempt}", {"approved-brief": inputs["artifacts/00-brief.md"], **data["files"]}, PLAN_PASSES,
+                rendered = render_plan(data)
+                review = self.review(f"plan-check-{attempt}", {"approved-brief": inputs["artifacts/00-brief.md"],
+                    "outline": rendered["artifacts/07-outline.md"], "ledger": rendered["artifacts/09-continuity-ledger.md"]}, PLAN_PASSES,
                     "Verify the plan against the neutral approved brief. Examine every chapter and every timeline/world-rule entry. "
                     "A contradiction of an exact constraint blocks drafting. Use revise for any such contradiction. "
                     "Treat ordinary approximate durations as approximate. Do not invent exact requirements. "
@@ -171,10 +195,12 @@ class BookWorkflow:
                     break
                 if attempt == 1:
                     raise WorkflowError("Independent architecture verification still blocks drafting after one whole-plan repair")
-                repair = self.phase_packet(2, {**inputs, "proposed_plan": data, "repair_findings": review["data"]["findings"]})
-                repair += "\nRepair the entire dependency chain in one batch. Preserve the approved brief and the chapter count. Return the same schema."
-                response, _ = self.call("architecture-repair", repair, schema, validate_plan)
+                repair = packet + "\n\nCurrent proposed plan and supported defects:\n" + json.dumps({"plan": data, "findings": review["data"]["findings"]}, ensure_ascii=False)
+                repair += "\nRepair the entire dependency chain in one batch. Preserve the approved brief and chapter count. Return the same neutral schema. "
+                repair += "The resulting fields must contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail labels or any process history."
+                response, _ = self.call("architecture-repair", repair, schema, validate_plan, feedback=True)
                 data = read_json(response)
+            data["files"] = render_plan(data)
             self.publish_artifacts(data)
             freeze(self.root / "work/approved-plan.json", encoded(data))
             freeze(self.root / "evaluations/plan-verification.json", encoded(review))
@@ -238,7 +264,7 @@ class BookWorkflow:
                         "production": {"chapter_words_min": low, "chapter_words_max": high,
                             "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
                             "remaining_chapters_including_this": remaining}}, ensure_ascii=False))
-                response, validation = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high))
+                response, validation = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high), feedback=True)
                 staged = self.stage_response(key, response)
                 self.journal.publish(staged, target)
                 self.sync()
@@ -473,7 +499,7 @@ class BookWorkflow:
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}, ensure_ascii=False))
-        response, _ = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high))
+        response, _ = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high), feedback=True)
         candidate = self.stage_response(key, response)
         bundle = self.root / f"work/comparisons/{key}"
         if not (bundle / "manifest.private.json").exists():

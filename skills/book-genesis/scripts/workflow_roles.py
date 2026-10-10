@@ -43,9 +43,48 @@ def validate_shape(value, schema, where="response"):
         for key in set(value) & set(schema["properties"]):
             errors += validate_shape(value[key], schema["properties"][key], where + "." + key)
     elif kind == "array":
+        if len(value) < schema.get("minItems", 0) or len(value) > schema.get("maxItems", float("inf")):
+            errors.append(f"{where}: wrong number of items")
         for i, item in enumerate(value):
             errors += validate_shape(item, schema["items"], f"{where}[{i}]")
     return errors
+
+
+# These are process assertions, not story facts. Do not forward them to fresh
+# critics even if a planning model puts them inside an otherwise valid string.
+PROCESS_CLAIMS = re.compile(r"(?i)brief contract check|verification\s*:|independent verification|"
+    r"(?:prior|previous|earlier|supplied) (?:finding|review|verdict)|repair history|"
+    r"(?:gate|audit|rubric)[ _-](?:status|score|passed|failed)|\bphase [0-7]\b")
+
+
+def neutral_contract_schema():
+    return obj({name: TEXT for name in ("premise", "reader_promise", "point_of_view", "time_window", "tone")})
+
+
+def plan_schema(chapters):
+    chapter = obj({"number": INTEGER, **{name: TEXT for name in ("title", "point_of_view", "time_window", "purpose",
+        "scene_pressure", "events", "characters", "continuity", "opening", "ending")}})
+    return obj({"opening_strategy": TEXT,
+        "chapters": {**array(chapter), "minItems": chapters, "maxItems": chapters},
+        "canon": obj({name: array(TEXT) for name in ("characters", "timeline", "world_rules", "objects", "knowledge")})})
+
+
+def validate_neutral(data):
+    text = encoded(data).decode("utf-8")
+    return ["Story facts contain process verdicts or repair history; return only current declarative story facts"] if PROCESS_CLAIMS.search(text) else []
+
+
+def render_plan(data):
+    """Render the same neutral fact structure used by writers and verifiers."""
+    outline = ["# Chapter outline", ""]
+    for chapter in data["chapters"]:
+        outline += [f"## Chapter {chapter['number']}: {chapter['title']}", ""]
+        outline += [f"**{key.replace('_', ' ').capitalize()}:** {value}\n" for key, value in chapter.items() if key not in ("number", "title")]
+    ledger = ["# Planned continuity canon", "", "These are planned facts; chapter drafts separately record demonstrated events.", ""]
+    for category, facts in data["canon"].items():
+        ledger += ["## " + category.replace("_", " ").title(), ""] + [f"- {fact}" for fact in facts] + [""]
+    return {"artifacts/07-outline.md": "\n".join(outline), "artifacts/08-opening-strategy.md": data["opening_strategy"],
+            "artifacts/09-continuity-ledger.md": "\n".join(ledger)}
 
 
 def validate_json(path: Path, schema: dict):

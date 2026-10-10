@@ -1,9 +1,24 @@
 """Launch the verified skill's controlled workflow, retaining native sign-in."""
 from pathlib import Path
+import subprocess
 import sys
 from uuid import uuid4
 
 from launcher.native import codex_scoped_command, find_native, run_attached
+
+
+def controlled_command(executable, *, model, effort):
+    """Capability-check the installed CLI; auth and execpolicy remain native."""
+    if not model or not effort:
+        raise ValueError("Unattended isolation requires an explicit --model and --effort; no silent native-default substitution")
+    help_result = subprocess.run(list(executable) + ["exec", "--help"], capture_output=True,
+                                 text=True, encoding="utf-8", timeout=15, shell=False)
+    if help_result.returncode or any(flag not in help_result.stdout for flag in ("--ignore-user-config", "--ephemeral")):
+        raise ValueError("Unattended isolation requires a native Codex exec with --ignore-user-config and --ephemeral support; no automatic CLI replacement")
+    command = codex_scoped_command(executable, model=model, effort=effort)
+    index = command["argv"].index("exec") + 1
+    command["argv"][index:index] = ["--ignore-user-config", "--ephemeral"]
+    return command
 
 
 def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
@@ -16,7 +31,7 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
         raise ValueError("An unattended run freezes model, effort and author; start a new project to change them")
     if not config.get("author_name"):
         raise ValueError("Unattended execution needs --author when preparing the new project")
-    command = codex_scoped_command(find_native("codex"), model=model, effort=effort)
+    command = controlled_command(find_native("codex"), model=model, effort=effort)
     command_file = root / ".book-genesis/native-command.json"
     if command_file.exists():
         import json

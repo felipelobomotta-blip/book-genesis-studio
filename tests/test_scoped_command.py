@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 from launcher import cli, native
+from launcher.autonomous import controlled_command
 from run_host_call import command_from_launch
 
 
@@ -46,6 +47,23 @@ class ScopedCommandTests(unittest.TestCase):
 
     def save_record(self):
         self.receipt_path.write_text(json.dumps(self.record), encoding="utf-8")
+
+    def test_controlled_roles_require_verified_capabilities_and_preserve_security_flags(self):
+        help_result = subprocess.CompletedProcess([], 0, "--ignore-user-config --ephemeral", "")
+        with patch("launcher.autonomous.subprocess.run", return_value=help_result):
+            command = controlled_command(self.prefix, model="exact-model", effort="high")
+        argv = command["argv"]
+        self.assertGreater(argv.index("--ignore-user-config"), argv.index("exec"))
+        self.assertIn("--ephemeral", argv)
+        self.assertNotIn("--ignore-rules", argv)
+        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", argv)
+        self.assertEqual("read-only", argv[argv.index("--sandbox") + 1])
+        self.assertEqual("exact-model", argv[argv.index("-m") + 1])
+        with patch("launcher.autonomous.subprocess.run", return_value=subprocess.CompletedProcess([], 0, "old help", "")):
+            with self.assertRaisesRegex(ValueError, "requires a native"):
+                controlled_command(self.prefix, model="exact-model", effort="high")
+        with self.assertRaisesRegex(ValueError, "explicit"):
+            controlled_command(self.prefix, model=None, effort=None)
 
     def run_guard(self, *extra):
         return subprocess.run([sys.executable, str(ROOT / "skills/book-genesis/scripts/run_host_call.py"),

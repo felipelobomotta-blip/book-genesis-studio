@@ -22,6 +22,23 @@ The guided native-agent path and existing projects remain available. An existing
 project is not silently migrated or upgraded. This controlled path is currently
 implemented for Codex; it is not a claim of end-to-end coverage for other hosts.
 
+Controlled roles capability-check `codex exec --help`, then use its documented
+`--ignore-user-config` and `--ephemeral` options. The explicit model, effort,
+read-only sandbox and approval setting are still supplied; execpolicy rules
+are retained. Authentication stays with the official CLI. The program does not
+edit global configuration or install another CLI. See the official
+[non-interactive guide](https://learn.chatgpt.com/docs/non-interactive-mode) and
+[command reference](https://learn.chatgpt.com/docs/developer-commands#codex-exec).
+
+The first live controlled run was stopped by QA after a plan repair leaked its
+history and self-approval into the next verifier packet. It delivered no chapter.
+The corrected planner returns declarative story fields; the program renders the
+brief, outline and ledger from those same fields and rejects process assertions.
+Repair calls retain the same neutral output contract. Their error feedback is
+kept outside story data. Frozen reader and comparison packets never receive
+producer-retry feedback. A full integration test now exercises plan rejection,
+repair, a fresh neutral verification and a later interrupted chapter promotion.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.

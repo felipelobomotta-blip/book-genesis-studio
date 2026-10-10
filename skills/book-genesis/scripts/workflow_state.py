@@ -239,11 +239,11 @@ class Journal:
         return row
 
     def call(self, key: str, packet: bytes, schema: dict | None, command: dict, validator,
-             *, attempts: int = 2, transport=run_host_call) -> tuple[Path, dict]:
+             *, attempts: int = 2, feedback: bool = False, transport=run_host_call) -> tuple[Path, dict]:
         if not re.fullmatch(r"[a-z0-9-]{1,100}", key):
             raise WorkflowError("Invalid stable workflow step name")
         request = {"packet_sha256": digest(packet), "schema_sha256": digest(encoded(schema)),
-                   "command_sha256": digest(encoded(command))}
+                   "command_sha256": digest(encoded(command)), "validation_feedback": feedback}
         steps = self.data["steps"]
         step = steps.get(key)
         if step and step["request"] != request:
@@ -284,11 +284,18 @@ class Journal:
                 rows.append(attempt)
                 self.save()  # Durable attempt exists before any network/process dispatch.
             call_dir = self.root / "work/host-calls" / attempt["call_id"]
+            actual_packet = packet
+            if feedback and len(rows) > 1 and rows[-2].get("validation_errors"):
+                actual_packet += ("\n\nDeterministic output validation rejected the previous response. "
+                    "Correct these output-contract errors while preserving the original creative request. "
+                    "Do not put this process note into any story or planning artifact:\n").encode("utf-8") + encoded(rows[-2]["validation_errors"])
+            attempt_packet = folder / f"packet-attempt-{len(rows)}.md"
+            freeze(attempt_packet, actual_packet)
             try:
                 with activity(key):
-                    result = transport(self.root, attempt["call_id"], folder / "packet.md", json.dumps(native))
+                    result = transport(self.root, attempt["call_id"], attempt_packet, json.dumps(native))
                 response = call_dir / "response"
-                if result.get("status") != "completed" or result.get("packet_sha256") != digest(packet):
+                if result.get("status") != "completed" or result.get("packet_sha256") != digest(actual_packet):
                     raise WorkflowError("Native response is not bound to the assigned packet")
                 receipt = read_json(call_dir / "receipt.json")
                 if receipt != {k: v for k, v in result.items() if k != "idempotent"}:
@@ -311,6 +318,7 @@ class Journal:
                 validation_path = folder / f"validation-{len(rows)}.json"
                 freeze(validation_path, encoded(validation))
                 if not validation.get("valid", validation.get("ok", False)):
+                    attempt["validation_errors"] = validation.get("errors", ["Invalid response"])
                     raise WorkflowError("; ".join(validation.get("errors", ["Invalid response"])))
             except (HostCallError, ValueError, OSError) as exc:
                 attempt.update(status="failed", error=str(exc), finished_at=self.now())
@@ -321,7 +329,7 @@ class Journal:
                 continue
             attempt.update(status="completed", finished_at=self.now())
             evidence = [self.record_file(call_dir / name) for name in ("packet", "response", "stdout", "stderr", "receipt.json")]
-            evidence += [self.record_file(validation_path), self.record_file(folder / "packet.md")]
+            evidence += [self.record_file(validation_path), self.record_file(folder / "packet.md"), self.record_file(attempt_packet)]
             if schema is not None:
                 evidence.append(self.record_file(folder / "schema.json"))
             step.update(status="completed", response=response.relative_to(self.root).as_posix(),

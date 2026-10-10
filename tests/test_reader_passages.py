@@ -146,7 +146,8 @@ class ReaderPassageTests(unittest.TestCase):
             self.assertNotIn("compare", schema["properties"])
             self.assertEqual([2], schema["properties"]["schema_version"]["enum"])
             citation = schema["properties"]["strongest_passage"]["properties"]["passage_id"]
-            self.assertEqual(["c02p0001", "c02p0002"], citation["enum"])
+            self.assertEqual({"$ref": "#/$defs/passageId"}, citation)
+            self.assertEqual(["c02p0001", "c02p0002"], schema["$defs"]["passageId"]["enum"])
         self.assertEqual(before, self.chapter.read_bytes())
         with self.assertRaises(FileExistsError):
             prepare_readers([self.chapter], out, audience="Adult fiction")

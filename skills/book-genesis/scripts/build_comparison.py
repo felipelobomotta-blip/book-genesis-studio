@@ -47,8 +47,8 @@ def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]
     citation = ({"type": "string", "enum": [p["id"] for c in groups for p in c["passages"]]}
                 if catalog is not None else string)
     citation_definition = citation
-    if comparison:
-        # A long comparison should send the ID enum once, not once per field.
+    if catalog is not None:
+        # Long chapters and comparisons send the ID enum once, not per field.
         citation = {"$ref": "#/$defs/passageId"}
     quote = obj({key: citation})
     reason = obj({key: citation, "reason": string})
@@ -72,7 +72,7 @@ def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]
         properties.update(schema_version={"type": "integer", "enum": [3 if comparison else 2]},
                           catalog_sha256={"type": "string", "enum": [catalog_digest(catalog)]})
     schema = obj(properties)
-    if comparison:
+    if catalog is not None:
         schema["$defs"] = {"passageId": citation_definition}
     return schema
 
