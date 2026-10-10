@@ -36,8 +36,11 @@ then identify passages; do not copy, paraphrase or invent a quote. For
 the unchanged text in a separate receipt. An ID proves the location exists,
 not that your interpretation is correct. Preserve your actual judgment.
 
-For legacy prose packets or anonymous A/B comparisons, use the quote format
-below. Do not convert an old raw response into the new format.
+For an anonymous comparison packet with schema version 3, use its supplied
+paragraph IDs and catalog digest in the same way, and include `compare` as
+`A`, `B` or `same`. IDs identify Draft A, Draft B or shared context; judge only
+the supplied prose. For legacy packets without a passage catalog, use the
+quote format below. Do not convert an old raw response into a new format.
 
 Return only one JSON object in the manuscript's language, with no preface,
 duplicate verdict or score. The host validates it with

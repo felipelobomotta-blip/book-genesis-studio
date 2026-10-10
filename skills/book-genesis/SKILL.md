@@ -74,6 +74,7 @@ Load when the phase calls for them:
 - `scripts/prepare_rubric.py`: freezes all visible manuscript passages with source hashes, so critics can cite passage IDs without recopying prose
 - `scripts/validate_rubric.py`: read-only checks of rubric coverage, all ten dimensions and source evidence; invalid or stale evidence cannot support a passing score
 - `scripts/check_correction.py`: freezes narrowly factual corrections for an independent canon check and verifies original native evidence before guarded promotion; it does not invent preference votes or grades
+- `scripts/decide_comparison.py`: translates four validated anonymous votes using the frozen mapping; ambiguous ties retain the accepted chapter without inventing defect counts
 - `references/specialists/series.md`: only when the book belongs to a series
 
 ## Rules that never bend

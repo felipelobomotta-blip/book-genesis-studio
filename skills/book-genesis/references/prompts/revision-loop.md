@@ -91,6 +91,34 @@ proofread requirement.
 
 ## Safe promotion record
 
+For a paragraph-bound creative comparison, record each persona's unaltered
+response and original validation paths in a JSON index:
+
+```json
+{
+  "primary": {"report": "primary.json", "validation": "primary.validation.json"},
+  "hostile": {"report": "hostile.json", "validation": "hostile.validation.json"},
+  "adjacent": {"report": "adjacent.json", "validation": "adjacent.validation.json"},
+  "casual": {"report": "casual.json", "validation": "casual.validation.json"}
+}
+```
+
+Paths are relative to the index file or absolute. Run
+`scripts/decide_comparison.py --manifest <bundle>/manifest.private.json
+--index <reports-index.json> --chapter <number> --output <fresh-decision.json>`.
+It revalidates all four original reports against the frozen sources and private
+mapping. Never replace this with model-written tally code. Four `A` votes in a
+counterbalanced panel mean a two-two split, not unanimous preference for either
+draft. `same` and `unsure` remain nondecisive; this automatic route does not
+promote an incomplete or nondecisive panel even if other readers prefer the
+candidate. Preserve those signals rather than changing them to make a record pass.
+
+A two-two result retains the accepted text through this helper. The separate
+tie exception below needs actual source-bound defects for each version, not
+the sum of complaints from people who preferred that version. A complaint can
+refer to the other version or to both. Without that separate evidence, keep
+the rejection; do not ask new readers until a majority appears.
+
 The schema-1 record below is for creative revisions. A verified factual correction
 uses the generated schema-2 record above, with its bound original reviewer call;
 it cannot supply hand-written votes or self-certify correctness.
