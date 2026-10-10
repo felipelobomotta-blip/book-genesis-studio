@@ -314,6 +314,29 @@ def _rollback_after_receipt_failure(
             _restore_holder_if_absent(quarantine, accepted)
 
 
+def _correction_decision(decision: dict, accepted: Path, candidate: Path) -> dict:
+    """A correctness verdict is not a fabricated literary preference panel."""
+    from check_correction import verify, digest
+    if decision.get("schema_version") != 2 or decision.get("kind") != "verified_correction" or decision.get("decision") != "promote":
+        raise PromotionError("unsupported correction decision")
+    try:
+        manifest = Path(decision["correction_manifest"])
+        calls = Path(decision["review_call_dir"])
+        if digest(manifest) != decision["correction_manifest_sha256"] or digest(calls / "receipt.json") != decision["review_receipt_sha256"]:
+            raise PromotionError("correction manifest or original receipt changed")
+        checked = verify(manifest, calls)
+        for key in ("chapter", "accepted_sha256", "candidate_sha256"):
+            if decision.get(key) != checked[key]:
+                raise PromotionError(f"correction decision {key} differs from its evidence")
+        if decision.get("review_report_sha256") != checked["report_sha256"]:
+            raise PromotionError("original correction report changed")
+        if Path(checked["accepted_path"]).resolve() != accepted.resolve() or Path(checked["candidate_path"]).resolve() != candidate.resolve():
+            raise PromotionError("correction decision belongs to different chapter files")
+        return checked
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PromotionError(f"correction verification failed: {exc}") from exc
+
+
 def _promote_chapter_locked(
     accepted_path: Path,
     candidate_path: Path,
@@ -348,12 +371,27 @@ def _promote_chapter_locked(
     baseline_hash = sha256_file(accepted_path)
     candidate_hash = sha256_file(candidate_path)
     decision, decision_hash = _read_decision(decision_path)
-    panel = _validate_decision(
-        decision,
-        accepted_hash=baseline_hash,
-        candidate_hash=candidate_hash,
-        accepted_path=accepted_path,
-    )
+    correction = None
+    if decision.get("schema_version") == 2:
+        correction = _correction_decision(decision, accepted_path, candidate_path)
+        panel = None
+    else:
+        panel = _validate_decision(
+            decision,
+            accepted_hash=baseline_hash,
+            candidate_hash=candidate_hash,
+            accepted_path=accepted_path,
+        )
+
+    def recheck_correction() -> None:
+        if correction is not None:
+            from check_correction import recheck, CorrectionError
+            try:
+                # Existing manuscript guards check the accepted inode even
+                # after it moves into the holder during atomic insertion.
+                recheck(correction["guarded_sources"], skip=accepted_path)
+            except CorrectionError as exc:
+                raise PromotionError(str(exc)) from exc
 
     if backup_dir is None:
         backup_dir = accepted_path.parent / ".chapter-promotion-backups"
@@ -398,6 +436,7 @@ def _promote_chapter_locked(
             raise PromotionError("decision JSON changed before atomic replacement")
         if sha256_file(stage_path) != candidate_hash:
             raise PromotionError("staged candidate changed before atomic replacement")
+        recheck_correction()
 
         # Move the accepted inode out of the canonical name first.  This lets
         # us validate the bytes that were actually displaced.  The candidate
@@ -419,6 +458,7 @@ def _promote_chapter_locked(
             raise PromotionError("decision JSON changed before atomic insertion")
         if sha256_file(stage_path) != candidate_hash:
             raise PromotionError("staged candidate changed before atomic insertion")
+        recheck_correction()
 
         if not _link_if_absent(stage_path, accepted_path):
             retain_backup = True
@@ -445,6 +485,8 @@ def _promote_chapter_locked(
             "panel": panel,
             "promoted_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
+        if correction is not None:
+            receipt["correction"] = {key: value for key, value in correction.items() if key != "guarded_sources"}
         try:
             _write_json_atomic(receipt_path, receipt)
         except Exception as exc:

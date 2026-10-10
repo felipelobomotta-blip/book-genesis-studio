@@ -18,9 +18,48 @@ Both must pass. Neither can be argued past: a strong rubric does not excuse read
 1. **Measure.** Run the panel gate read and the rubric evaluation, each under `references/scoring/evaluator-protocol.md`. If the last audit was `revise` or `major_rewrite`, also re-run the auditor on the chapters its tickets named and their dependent scenes. An autonomous `major_rewrite` uses this same bounded loop, with the original constraints and all high-severity blockers carried forward; it is not an approval to restart the book or reset counters. Save everything under `evaluations/`.
 2. **Plan.** Write `evaluations/revision-plan.md`: tickets in priority order (audit high-severity tickets, then panel two-vote defects, then the lowest rubric dimensions), each with its quoted passage, the smallest effective fix, and the preserve list from the panel's memories. Identify what must change for the reader, the setup and consequences it depends on, and how a fresh recheck can determine whether it was fixed. Use the smallest revision class that can work: cut or merge, structural, connective, character, voice, line. A payoff failure needs the relevant scene or linked scenes; do not reduce it to sentence polishing. A factual correction must include the expressions that depend on the value. Do not change approved canon just to erase a finding. If the bounded pass cannot address every blocker, record the deferral and reason.
 3. **Revise.** Hand the tickets to the revision editor (`references/specialists/revision-editor.md`). It sees tickets and passages, never scores or targets. It keeps a copy of the accepted chapter under `work/revisions/` and writes each revision to `work/attempts/chapter-NN/revision-rK.md`, never over the chapter itself.
-4. **Accept or reject.** Before spending comparison reads, inspect whether the candidate actually addresses its tickets and stays coherent with the surrounding scene. A candidate that still contains the named factual contradiction, creates a dependent contradiction, omits a required consequence or exceeds its authorized scope returns to planning; preserve it and count the attempt. For a viable candidate, freeze anonymous packets with `scripts/build_comparison.py --accepted <accepted.md> --candidate <revision.md> --output-dir <fresh-bundle>`. It assigns four distinct readers and counterbalances which version appears first. Only the individual `.packet.md` and `.schema.json` go to that reader; keep `manifest.private.json` with the orchestrator. Never tell a reader which version is accepted, revised, earlier or newer. When supported, use the host's structured output with that schema (Codex: `--output-schema <reader.schema.json>`). Validate the unaltered raw response against both input chapters with `scripts/validate_blind_reader.py --chapter <accepted.md> --chapter <revision.md> --report <raw.json> --expected-reader <assigned-name>` before counting it. A wrong identity or invalid quote is a failed read, never renamed or repaired; preserve it and retry only that reader within the bounds. Translate valid A/B votes using the private mapping. `same` provides no evidence of improvement and retains the accepted text. Freeze the four complete reader votes, the accepted and candidate SHA-256 values, and the decision in a JSON record. Copy the revision into `manuscript/chapters/` only if the panel prefers it by the recorded rule: at least three of four prefer the revision, or a two-two split where the revision has fewer concrete defects. Use `scripts/promote_chapter.py` for the replacement; it snapshots the accepted file, rechecks for stale inputs, replaces atomically, and writes a receipt. A failed check leaves the accepted chapter untouched. Otherwise leave the chapter as it is, keep the rejected revision where it is, and record why. Only a fresh check against the new canonical text may close an audit ticket; a preference vote alone does not close it.
+4. **Accept or reject.** Before spending comparison reads, inspect whether the candidate actually addresses its tickets and stays coherent with the surrounding scene. A candidate that still contains the named factual contradiction, creates a dependent contradiction, omits a required consequence or exceeds its authorized scope returns to planning; preserve it and count the attempt. A strictly factual correction against existing canon uses the separate correctness check below. For a viable creative revision, freeze anonymous packets with `scripts/build_comparison.py --accepted <accepted.md> --candidate <revision.md> --output-dir <fresh-bundle>`. It assigns four distinct readers and counterbalances which version appears first. Only the individual `.packet.md` and `.schema.json` go to that reader; keep `manifest.private.json` with the orchestrator. Never tell a reader which version is accepted, revised, earlier or newer. When supported, use the host's structured output with that schema (Codex: `--output-schema <reader.schema.json>`). Validate the unaltered raw response against both input chapters with `scripts/validate_blind_reader.py --chapter <accepted.md> --chapter <revision.md> --report <raw.json> --expected-reader <assigned-name>` before counting it. A wrong identity or invalid quote is a failed read, never renamed or repaired; preserve it and retry only that reader within the bounds. Translate valid A/B votes using the private mapping. `same` provides no evidence of improvement and retains the accepted text. Freeze the four complete reader votes, the accepted and candidate SHA-256 values, and the decision in a JSON record. Copy the revision into `manuscript/chapters/` only if the panel prefers it by the recorded rule: at least three of four prefer the revision, or a two-two split where the revision has fewer concrete defects. Use `scripts/promote_chapter.py` for the replacement; it snapshots the accepted file, rechecks for stale inputs, replaces atomically, and writes a receipt. A failed check leaves the accepted chapter untouched. Otherwise leave the chapter as it is, keep the rejected revision where it is, and record why. Only a fresh check against the new canonical text may close an audit ticket; a preference vote alone does not close it.
 5. **Record.** Append the pass to `evaluations/revision-loop.md`: gate results before and after, tickets closed, passages changed, strengths preserved, and the verdict `CONTINUE`, `PASSED` or `STOPPED`.
 6. **Count.** Add one to `pipeline.panel_passes` if the panel gate was failing when the pass began, and one to `pipeline.rubric_passes` if the rubric gate was.
+
+## Factual corrections have a correctness check
+
+A wrong name, date, amount or physical fact already settled by the brief or
+continuity canon is not a question of literary taste. A preference panel may
+prefer the wording of an error. Do not invent votes to bypass that result, and
+do not ask the same panel repeatedly until it agrees. Preserve any earlier vote.
+
+For a strictly factual candidate with the same chapter heading, prepare a fresh
+bundle with `scripts/check_correction.py prepare --accepted <chapter-NN.md>
+--candidate <candidate.md> --canon <existing-canon.md> --context <dependent-chapter.md>
+--ticket "<specific factual defect and preserved meaning>" --output-dir <fresh-bundle>`.
+Repeat `--canon` and `--context` as needed. Include every directly dependent scene;
+when linked chapters must change together, stage the complete coherent batch
+first and disclose proposed context as such. An uncommitted companion is not
+accepted canon and does not close a whole-book finding.
+
+Send only `review.packet.md` and `review.schema.json` to a fresh, read-only
+reviewer through the native-call guard. It must check all differences against
+existing canon, reject new canon choices and unrelated creative edits, and
+cite the frozen paragraphs in both versions and the supporting canon. It receives no scores, targets,
+preference votes or prior verdicts. Then run `scripts/check_correction.py decide
+--manifest <bundle>/manifest.private.json --call-dir <completed-native-call-dir>
+--output <fresh-decision.json>`. A blocked or invalid original response produces
+no decision. Keep it and count the attempt; follow the existing retry/pass bounds.
+
+The resulting schema-2 decision goes to the same `scripts/promote_chapter.py`
+guard. It verifies the original response and native receipt, source hashes,
+resolved supporting passages and unchanged evidence before replacing anything. Its
+receipt reports a correction check, with no invented preference panel. The
+reviewer can still miss a semantic error; mechanical validation is not a
+literary score or a guarantee of correctness.
+
+A new canon choice, changed action or motivation, chronology repair that changes
+events, missing payoff, voice edit or scene rewrite stays on the creative
+revision path with blind comparison. A factual label cannot authorize it.
+After any promotion, refresh the affected current-text reader/audit evidence.
+Only the fresh full dependency check may close the broader audit ticket. This
+path does not reset either gate budget or convert an unmet gate to passed.
 
 ## Phase 5 exit: technical proofread
 
@@ -51,6 +90,10 @@ proofread requirement.
 - If a chapter cannot justify its existence, cut or merge it, and update the outline and the ledger.
 
 ## Safe promotion record
+
+The schema-1 record below is for creative revisions. A verified factual correction
+uses the generated schema-2 record above, with its bound original reviewer call;
+it cannot supply hand-written votes or self-certify correctness.
 
 Run `python "<skill-root>/scripts/promote_chapter.py" --accepted manuscript/chapters/chapter-NN.md --candidate work/attempts/chapter-NN/revision-rK.md --decision evaluations/decisions/chapter-NN-rK.json --receipt evaluations/promotions/chapter-NN-rK.json --lock-file manuscript/chapters/.book-genesis-write.lock` from the book folder, replacing `<skill-root>` with the absolute installed skill path (add `--backup-dir` when the project keeps snapshots elsewhere). All manuscript writers and exporters should use this same cooperative lock path. The decision JSON is workflow evidence, not a writer-facing score: it must have `schema_version: 1`, `decision: "promote"`, the chapter number, four distinct reader votes, each with `reader`, `prefers` (`revision` or `accepted`) and `turn_page` (`yes` or `no`), plus the SHA-256 values of both chapter files. For a two-two split it also contains the two non-negative concrete-defect counts. The helper rejects missing or degraded votes, stale hashes, and failed snapshots before changing the canonical file; it does not call a model or a network service.
 

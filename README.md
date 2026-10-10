@@ -14,7 +14,7 @@ Version 5.1.0-dev · unreleased recovery build · MIT licensed · free · runs o
 
 **Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. This branch is not a published release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md). Two rubric calls and four current-draft reader calls passed the revised evidence protocol on their first attempt without editing responses. Initial heading-level defects have a recorded formatting repair that preserves every body byte. The launcher now supplies [tested headless reviewer commands](docs/scoped-transport-20261010.md); 268 automated tests passed. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
+**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md), [tested headless reviewer commands](docs/scoped-transport-20261010.md), and a [separate correctness check for factual repairs](docs/factual-corrections-20261010.md). Real model controls accepted a supported correction and blocked a changed witness account without invented preference votes. The complete automated suite passed 278 tests. Native workflow acceptance still has open findings. A 90/100 product rating has not been established.
 
 ## The goal
 
@@ -25,7 +25,7 @@ A book written with the measured patterns of books readers finish, criticized by
 1. **Intake.** Your idea becomes a brief: genre, reader, length, comparable books in your idea's language, and four simulated readers built for this book.
 2. **Foundation and architecture.** Characters with wounds and contradictions, a theme asked as a question, a voice with a rhythm anchored to real books, a chapter plan, and a ledger that keeps facts straight.
 3. **Drafting.** Every chapter saved as a file. Chapter 1 goes to the four readers before the rest is written; continuity checks follow five-chapter blocks, with reader checkpoints at the opening, around 25 and 50 percent, and before the final movement.
-4. **Audit and revision.** A read-only auditor quotes exact passages. Revision runs against two gates, the readers' and a ten-part rubric, at most three passes each. A revised chapter is kept only under the recorded reader decision rule.
+4. **Audit and revision.** A read-only auditor quotes exact passages. Revision runs against two gates, the readers' and a ten-part rubric, at most three passes each. Creative revisions follow the recorded reader decision rule; narrowly factual corrections require an independent check against existing canon. Both preserve the original and require current evidence.
 5. **Score and package.** A plain report of where the book stands, plus the editorial package, a hook test of alternative titles and blurbs, and the portable `manuscript.md` plus validated EPUB by default. DOCX and PDF are optional when their dependencies already exist. Delivery records any unmet literary gates; it is not publication approval by a human.
 
 Everything lives in a folder you own. Close the session, come back tomorrow in any supported agent, and it picks up from the files.
