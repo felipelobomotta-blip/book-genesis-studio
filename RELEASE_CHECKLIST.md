@@ -1,6 +1,8 @@
 # Release checklist
 
-Copy into an issue when preparing a release and tick as you go.
+Copy into an issue when preparing a release and tick as you go. The current
+checkout is the unreleased 5.1 recovery build. Record the exact commit tested;
+do not transfer acceptance from an earlier snapshot to a later code revision.
 
 ## Checks
 
@@ -16,12 +18,21 @@ Copy into an issue when preparing a release and tick as you go.
 - [ ] `docs/compatibility.md` states exactly what ran where, and nothing more
 - [ ] README and landing numbers (phases, readers, dimensions, targets) match the code
 
-Release bars:
+## Author-journey acceptance
 
-| Release | Needs |
-|---|---|
-| 6.0.0-beta.1 | the structure in this branch, and one complete book by the maintainer in Claude Code |
-| 6.0.0 | one complete book by someone else in any first-class host, and one by the maintainer in each other first-class host |
+- [ ] A fresh, complete idea-to-export run uses the exact release snapshot and records the resolved host, model and effort.
+- [ ] The independent plan check occurs before drafting; the required continuity checks, full audit, bounded revision, proofread and final assessment have actual saved evidence.
+- [ ] No maintainer repairs prompts, manuscripts, receipts, phase state or exports during the claimed autonomous run. Record any intervention and label a checkpoint replay separately.
+- [ ] Interrupt and resume at a real checkpoint: accepted chapters remain unchanged, active children stop, and spent revision or retry budgets do not reset.
+- [ ] Every counted reader and rubric report still matches the final source hashes and its original validation receipt; encoding damage and stale evidence remain failures.
+- [ ] Current Markdown and EPUB exports contain the complete planned chapter set, meet the declared length contract and open successfully in a reader.
+- [ ] A failed literary gate is disclosed in the package; a passing reader preference vote alone does not close a continuity defect.
+- [ ] At least one full-length run and one independent beginner session support the public complete-book claim.
+
+An explicitly supervised beta may disclose outstanding acceptance work. A
+general-ready release requires the complete author journey and the supported
+host checks above. Automated tests, a process exit code, a short-book export or
+a single simulated score cannot substitute for these checks.
 
 ## Docs and version
 
