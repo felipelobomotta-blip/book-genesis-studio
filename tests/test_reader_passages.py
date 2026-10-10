@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -55,6 +56,25 @@ class ReaderPassageTests(unittest.TestCase):
         self.assertEqual(catalog_digest(self.catalog), receipt["catalog_sha256"])
         self.assertEqual(self.report, json.loads(self.report_path.read_text(encoding="utf-8")))
         self.assertEqual(hashlib.sha256(self.report_path.read_bytes()).hexdigest(), receipt["report_sha256"])
+
+    def test_cli_receipt_preserves_unicode_through_legacy_console_encodings(self):
+        self.chapter.write_text('# Two\n\nMara said, “Não, κόσμε 📖.”\n\nShe left alone.\n', encoding="utf-8")
+        self.catalog = build_catalog([self.chapter])
+        self.save_catalog()
+        self.report["catalog_sha256"] = catalog_digest(self.catalog)
+        expected = self.validate()
+        argv = [sys.executable, str(ROOT / "skills/book-genesis/scripts/validate_blind_reader.py"),
+                "--chapter", str(self.chapter), "--report", str(self.report_path),
+                "--catalog", str(self.catalog_path), "--expected-reader", "Lena"]
+        for encoding in ("ascii:strict", "cp1252:strict"):
+            with self.subTest(encoding=encoding):
+                run = subprocess.run(argv, capture_output=True, env={**os.environ, "PYTHONIOENCODING": encoding})
+                self.assertEqual(0, run.returncode, run.stderr)
+                saved = self.root / (encoding.split(":")[0] + ".json")
+                saved.write_text(run.stdout.decode("ascii"), encoding="utf-8")
+                result = json.loads(saved.read_text(encoding="utf-8"))
+                self.assertEqual(expected["resolved_evidence"], result["resolved_evidence"])
+                self.assertEqual("no", self.report["turn_page"])
 
     def test_unknown_id_wrong_digest_and_mixed_quote_shapes_fail(self):
         original = copy.deepcopy(self.report)

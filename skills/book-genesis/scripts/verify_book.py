@@ -253,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--check", choices=("delivery", "reviews", "all"), default="all")
     args = parser.parse_args(argv)
     result = verify_book(args.book_dir, args.review_index)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps(result, ensure_ascii=True, indent=2))
     delivered = result["delivery"]["status"] == "delivered"
     reviewed = result["reviews"]["status"] == "current"
     return 0 if (delivered if args.check == "delivery" else reviewed if args.check == "reviews" else delivered and reviewed) else 1

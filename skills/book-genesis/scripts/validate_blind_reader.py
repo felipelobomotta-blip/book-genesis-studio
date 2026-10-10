@@ -432,7 +432,8 @@ def main(argv: list[str] | None = None) -> int:
         [Path(value) for value in args.chapter], Path(args.report), expected_reader=args.expected_reader,
         catalog_path=args.catalog,
     )
-    json.dump(receipt, sys.stdout, ensure_ascii=False, indent=2)
+    # JSON escapes survive Windows shell code-page conversions losslessly.
+    json.dump(receipt, sys.stdout, ensure_ascii=True, indent=2)
     sys.stdout.write("\n")
     return 0 if receipt["valid"] else 1
 

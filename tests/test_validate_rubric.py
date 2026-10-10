@@ -1,6 +1,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -233,6 +234,33 @@ class PassageReferenceTests(unittest.TestCase):
         changed = self.report()
         changed["dimensions"][0]["score"] = 9.0
         self.assertFalse(self.check(changed, original_receipt=receipt)["complete"])
+
+    def test_corrupted_resolved_text_cannot_reuse_a_passed_receipt(self):
+        original = self.check()
+        original["resolved_evidence"][0]["quote"] = original["resolved_evidence"][0]["quote"].replace("“", "\ufffd")
+        path = self.root / "corrupted.json"
+        path.write_text(json.dumps(original), encoding="utf-8")
+        result = self.check(original_receipt=path)
+        self.assertFalse(result["complete"])
+        self.assertIn("resolved passage evidence differs", " ".join(result["errors"]))
+
+    def test_cli_receipt_preserves_unicode_through_legacy_console_encodings(self):
+        self.chapters[0].write_text('# One\n\nMara said, “Não, κόσμε 📖.”\n', encoding="utf-8")
+        self.catalog = build_catalog(self.chapters)
+        self.catalog_path.write_text(json.dumps(self.catalog), encoding="utf-8")
+        expected = self.check()
+        argv = [sys.executable, str(REPO / "skills/book-genesis/scripts/validate_rubric.py"),
+                "--report", str(self.path), "--catalog", str(self.catalog_path), "--expected-chapters", "2"]
+        for chapter in self.chapters:
+            argv += ["--chapter", str(chapter)]
+        for encoding in ("ascii:strict", "cp1252:strict"):
+            with self.subTest(encoding=encoding):
+                run = subprocess.run(argv, capture_output=True, env={**os.environ, "PYTHONIOENCODING": encoding})
+                self.assertEqual(0, run.returncode, run.stderr)
+                saved = self.root / (encoding.split(":")[0] + ".json")
+                saved.write_text(run.stdout.decode("ascii"), encoding="utf-8")
+                self.assertEqual(expected["resolved_evidence"], json.loads(saved.read_text(encoding="utf-8"))["resolved_evidence"])
+                self.assertTrue(self.check(original_receipt=saved)["complete"])
 
     def test_cli_prepares_new_catalog_and_refuses_overwrite(self):
         target = self.root / "frozen.json"

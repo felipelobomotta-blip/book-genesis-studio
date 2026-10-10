@@ -215,6 +215,8 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
                 raise ValueError("raw report differs from its original validation")
             if original.get("catalog_sha256") != (catalog_digest(catalog) if catalog is not None else None):
                 raise ValueError("evidence catalog differs from the original validation")
+            if catalog is not None and original.get("resolved_evidence") != resolved:
+                raise ValueError("resolved passage evidence differs from the original validation")
             old = original.get("source_chapters")
             if not isinstance(old, list) or sorted((r["chapter"], r["sha256"]) for r in old) != sorted((r["chapter"], r["sha256"]) for r in records):
                 raise ValueError("source chapters differ from the original validation")
@@ -250,7 +252,8 @@ def main() -> int:
         parser.error("--chapter and --report are required unless --schema is used")
     result = validate_rubric([Path(p) for p in args.chapter], args.report, expected_chapters=args.expected_chapters,
                              original_receipt=args.original_receipt, catalog_path=args.catalog)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    # Receipts are often piped through a Windows shell before being saved.
+    print(json.dumps(result, ensure_ascii=True, indent=2))
     return 0 if result["complete"] else 1
 
 
