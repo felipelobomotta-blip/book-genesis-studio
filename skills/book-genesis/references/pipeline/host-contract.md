@@ -18,7 +18,7 @@ When to load: at the start of every session on a book, and whenever you resume o
 
 The author collaborates by agreeing, not by operating. The default `collaboration.mode` is `check-in`.
 
-Stop and show one screen at each of these points:
+In check-in mode, stop and show one screen at each of these points:
 
 - after the outputs of every phase are saved (eight boundaries);
 - after chapter 1 is drafted and read by the reader panel;
@@ -42,7 +42,7 @@ Before showing it, set `collaboration.waiting_for_author: true` and `collaborati
 
 - "ok" or equivalent: clear both fields and continue.
 - A change: write it to `ASSUMPTIONS.md` and to `decisions` in `PROJECT_STATE.yaml`, redo only the affected output, and show the screen again. Redo a step at most twice; after that, record the disagreement in `open_questions` and ask which version to keep.
-- "go to the end" or equivalent: set `collaboration.mode: autonomous`. From then on, write each screen to `RUN_REPORT.md` instead of stopping, and stop only for a missing tool, exhausted quota, or a failure that repeats.
+- "go to the end" or equivalent: set `collaboration.mode: autonomous`. From then on, write each screen to `RUN_REPORT.md` instead of stopping. An audit's `major_rewrite` selects a bounded repair inside the existing brief under `references/prompts/adversarial-audit.md`; exhausted literary gates follow the honest draft-delivery path in `references/prompts/revision-loop.md`. Do not turn those editorial outcomes into another approval request. Missing inputs or tools, denied permissions, exhausted quota or repeated infrastructure failures can still require a preserved blocked checkpoint.
 - "check in again" or equivalent: set the mode back to `check-in`.
 
 If the author does not answer, do nothing. The checkpoint is saved; the next session shows it again.
