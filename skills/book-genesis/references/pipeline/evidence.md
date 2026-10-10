@@ -4,7 +4,7 @@ Load when aggregating readers, freezing Phase 6, exporting or resuming after an 
 
 ## Reader receipts
 
-After a native read completes, save its raw JSON verbatim. Validate the exact assigned chapter files with `scripts/validate_blind_reader.py` and save its stdout as the original receipt. Keep both immutable. The receipt binds the raw report and source chapter bytes.
+After a native read completes, save its raw JSON verbatim. Validate the exact assigned chapter files with `scripts/validate_blind_reader.py --expected-reader <assigned-name>` and save its stdout as the original receipt. Use unique call-id paths for each report and receipt, including retries; never overwrite an earlier invalid report or receipt. The validator rejects an identity mismatch without renaming the raw report. Keep both immutable. The receipt binds the raw report and source chapter bytes. For paired versions, use the anonymous packets and private mapping from `scripts/build_comparison.py`; revealing revision identity invalidates that comparison's blindness.
 
 After any canonical edit, old evidence for that chapter is stale, even when its quotes still exist. Run a fresh read for the affected scope; never regenerate an old report's receipt against new prose to make it current. A comparison vote is not a new single-draft gate read. Invalid reads remain saved and do not enter a majority; retry only within the documented bounds.
 

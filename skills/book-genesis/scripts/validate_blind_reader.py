@@ -257,10 +257,14 @@ def _validate_report(report: Any, sources: list[tuple[Path, str]]) -> list[str]:
     return errors
 
 
-def validate_blind_reader_report(chapter_paths: list[Path], report_path: Path) -> dict[str, Any]:
+def validate_blind_reader_report(
+    chapter_paths: list[Path], report_path: Path, *, expected_reader: str | None = None,
+) -> dict[str, Any]:
     """Return a JSON-serialisable receipt; never mutates source or report."""
 
     errors: list[str] = []
+    if expected_reader is not None and (not isinstance(expected_reader, str) or not expected_reader.strip()):
+        errors.append("expected_reader must be a non-empty assigned reader name")
     source_records: list[dict[str, Any]] = []
     sources: list[tuple[Path, str]] = []
     for path in chapter_paths:
@@ -300,8 +304,11 @@ def validate_blind_reader_report(chapter_paths: list[Path], report_path: Path) -
     else:
         errors.append("report: no readable assigned chapter source")
 
+    if isinstance(report, dict) and expected_reader is not None and report.get("reader") != expected_reader:
+        errors.append("report.reader does not match the assigned reader")
+
     valid = not errors
-    return {
+    receipt = {
         "schema_version": 1,
         "status": "passed" if valid else "invalid",
         "valid": valid,
@@ -309,14 +316,20 @@ def validate_blind_reader_report(chapter_paths: list[Path], report_path: Path) -
         "report_sha256": hashlib.sha256(report_bytes).hexdigest(),
         "errors": errors,
     }
+    if expected_reader is not None:
+        receipt["expected_reader"] = expected_reader
+    return receipt
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chapter", action="append", required=True, help="assigned chapter source; repeatable")
     parser.add_argument("--report", required=True, help="raw JSON report path, or - for stdin")
+    parser.add_argument("--expected-reader", help="exact assigned identity; a mismatch is invalid, never renamed")
     args = parser.parse_args(argv)
-    receipt = validate_blind_reader_report([Path(value) for value in args.chapter], Path(args.report))
+    receipt = validate_blind_reader_report(
+        [Path(value) for value in args.chapter], Path(args.report), expected_reader=args.expected_reader,
+    )
     json.dump(receipt, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
     return 0 if receipt["valid"] else 1

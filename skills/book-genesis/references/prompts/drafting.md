@@ -14,7 +14,7 @@ Assemble `work/briefs/chapter-NN.md` from the approved files:
 - only the continuity facts this chapter uses: current knowledge, location, object custody and any causal rule it depends on;
 - the previous chapter's last 300 words or so.
 
-The orchestrator checks that these facts fit the approved brief before dispatch. Include the manuscript length range as production scope. Do not send the whole pipeline, audit history, reader verdicts, scores, thresholds or rubric. An evolving chapter may depart from the outline when it honors the author's constraints; record the resulting canon after the block.
+The orchestrator checks that these facts fit the approved brief before dispatch. Select the actual chapter-relevant facts; do not paste every character card, the complete outline or future continuity resolutions into each packet. Include the manuscript length range as production scope. Calculate a concrete remaining production allowance from the deterministic cumulative count, reserving the planned work of later chapters. The last chapter's upper allowance must fit the approved ceiling minus the words already accepted. Do not send the whole pipeline, audit history, reader verdicts, scores, thresholds or rubric. An evolving chapter may depart from the outline when it honors the author's constraints; record the resulting canon after the block.
 
 ## Writing
 
@@ -26,13 +26,15 @@ Write before checking. Do not perform line-by-line anti-AI compliance or optimiz
 
 The orchestrator, outside the writing context:
 
-1. Saves the actual returned prose byte-for-byte through a staged attempt, reads it back and accepts it using `references/pipeline/host-contract.md`. Keep the raw response and hashes. An existing accepted chapter is never silently overwritten.
+1. Saves the actual returned prose byte-for-byte through a staged attempt and reads it back before accepting it using `references/pipeline/host-contract.md`. Check the staged file has exactly one initial H1, visible prose, and a deterministic count fitting the remaining production allowance before copying to canonical. Preserve a malformed or over-budget attempt and request a fresh explicit attempt within the retry bound; do not publish first or silently repair its heading or prose. Keep the raw response and hashes. An existing accepted chapter is never silently overwritten.
 2. Runs `scripts/check_progress.py`, updates actual chapters and prose counts from the report, and reruns it before continuing. Check the remaining length projection against the approved floor and ceiling; replan missing scene work before a large deficit accumulates. Do not pad.
 3. Checks that the block has a narrative function, adds something the previous block did not, and keeps names, facts, voice and character knowledge consistent. A factual contradiction uses the bounded continuity path; literary changes wait for Phase 5.
 
 ## Reader checkpoints
 
 Use four creative checkpoints: the opening, about 25 percent, about 50 percent, and before the final movement. At each, run the four simulated readers on the relevant chapter under `references/roles/panel.md`. Save their raw reports and original validation receipts using `references/pipeline/evidence.md`. A failed or stale read is not a vote.
+
+Run each checkpoint when drafting reaches it, before dispatching the next chapter. Running all four after the complete manuscript exists is a retrospective read, not evidence that the checkpoints guided drafting.
 
 At chapter 1, if fewer than three readers would turn the page, permit one staged revision against the supported defects and a complete comparison panel. Keep the accepted text unless the recorded promotion rule passes. In autonomous mode continue with the unresolved opening warning after that bound; never describe it as a passing panel.
 
