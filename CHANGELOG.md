@@ -2,6 +2,7 @@
 
 ## Unreleased — 5.1 recovery build
 
+- Freeze complete manuscript passages for rubric calls and validate source-bound passage references. Critics no longer need to retype quoted prose; raw reports remain unchanged, stale or invented references fail, and legacy exact-quote reports remain supported. Two real Luna/high calls passed evidence validation on their first attempt; this is not a literary-quality pass.
 - Validate rubric evidence before aggregating scores: all ten dimensions, actual chapter coverage, exact excerpts, finite scores and source-bound receipts. Missing assessments stay incomplete; altered reports or prose cannot reuse an earlier pass. This checks evidence, not literary merit.
 - Make revision scope follow the defect: correct dependent factual expressions together, repair missing payoffs at scene level, and reject still-broken candidates before comparison. Re-audit current text before closing tickets; try one materially changed strategy within the original pass budget before declaring a plateau.
 - Trace the central question through evidence, choice and consequence in the adversarial audit. A repeated confession or symbolic ending is not by itself a paid-off story.

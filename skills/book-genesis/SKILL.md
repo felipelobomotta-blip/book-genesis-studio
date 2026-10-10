@@ -71,7 +71,8 @@ Load when the phase calls for them:
 - `references/specialists/causality.md`: a small causal contract and middle-book review when the story depends on a mechanism or mystery
 - `references/pipeline/evidence.md`: original reader receipts, current-text coverage and delivery status
 - `scripts/verify_book.py`: read-only verification of current reader evidence and source-bound deliverables; it never grades prose or approves publication
-- `scripts/validate_rubric.py`: read-only checks of rubric coverage, all ten dimensions and exact source excerpts; invalid or stale evidence cannot support a passing score
+- `scripts/prepare_rubric.py`: freezes all visible manuscript passages with source hashes, so critics can cite passage IDs without recopying prose
+- `scripts/validate_rubric.py`: read-only checks of rubric coverage, all ten dimensions and source evidence; invalid or stale evidence cannot support a passing score
 - `references/specialists/series.md`: only when the book belongs to a series
 
 ## Rules that never bend

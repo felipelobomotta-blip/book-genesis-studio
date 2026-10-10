@@ -10,19 +10,21 @@ import re
 from typing import Any
 
 from export_book import _visible_body
+from prepare_rubric import build_catalog, canonical_json, catalog_digest
 from validate_blind_reader import _normalise_quote, _strip_one_markdown_fence
 
 
 DIMENSIONS = ("Originality", "Theme", "Characters", "Prose", "Pacing", "Emotion", "Coherence", "Market", "Voice", "Opening")
 
 
-def rubric_schema() -> dict[str, Any]:
+def rubric_schema(catalog: dict | None = None) -> dict[str, Any]:
     def obj(properties):
         return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
     string = {"type": "string"}
-    evidence = obj({"chapter": {"type": "integer", "minimum": 1}, "quote": string, "reason": string})
-    return obj({
-        "schema_version": {"type": "integer", "enum": [1]},
+    evidence = (obj({"passage_id": string, "reason": string}) if catalog is not None else
+                obj({"chapter": {"type": "integer", "minimum": 1}, "quote": string, "reason": string}))
+    properties = {
+        "schema_version": {"type": "integer", "enum": [2 if catalog is not None else 1]},
         "coverage": obj({"scope": {"type": "string", "enum": ["full_manuscript", "sample"]},
                          "chapters": {"type": "array", "items": {"type": "integer", "minimum": 1}}}),
         "dimensions": {"type": "array", "items": obj({
@@ -33,7 +35,10 @@ def rubric_schema() -> dict[str, Any]:
         "strongest_passage": evidence, "weakest_passage": evidence,
         "confidence": obj({"level": {"type": "string", "enum": ["low", "medium", "high"]}, "reason": string}),
         "limitations": string,
-    })
+    }
+    if catalog is not None:
+        properties["catalog_sha256"] = {"type": "string", "enum": [catalog_digest(catalog)]}
+    return obj(properties)
 
 
 def _unique_object(pairs):
@@ -50,13 +55,17 @@ def _constant(value):
 
 
 def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_chapters: int | None = None,
-                    original_receipt: Path | None = None) -> dict[str, Any]:
+                    original_receipt: Path | None = None, catalog_path: Path | None = None) -> dict[str, Any]:
     errors: list[str] = []
     records = []
     sources = {}
     raw_report = b""
     unassessed = []
     full = False
+    catalog = None
+    passages = {}
+    resolved = []
+    version = 1
 
     def obj(value, fields, label):
         if not isinstance(value, dict) or set(value) != set(fields):
@@ -71,6 +80,16 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
         return value
 
     def evidence(value, label):
+        if version == 2:
+            item = obj(value, ("passage_id", "reason"), label)
+            reference = text(item.get("passage_id"), label + ".passage_id")
+            reason = text(item.get("reason"), label + ".reason")
+            passage = passages.get(reference)
+            if passage is None:
+                errors.append(f"{label}: unknown passage_id in the frozen manuscript")
+                return ""
+            resolved.append({"location": label, "passage_id": reference, **passage, "reason": reason})
+            return _normalise_quote(passage["quote"])
         item = obj(value, ("chapter", "quote", "reason"), label)
         number = item.get("chapter")
         quote = text(item.get("quote"), label + ".quote")
@@ -102,6 +121,19 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
             errors.append(f"source {path}: {exc}")
     if not sources:
         errors.append("no readable source chapters")
+    if catalog_path is not None:
+        try:
+            catalog = json.loads(catalog_path.read_text(encoding="utf-8-sig"),
+                                 object_pairs_hook=_unique_object, parse_constant=_constant)
+            current = build_catalog(chapter_paths)
+            if canonical_json(catalog) != canonical_json(current):
+                raise ValueError("catalog differs from the complete current manuscript; rebuild and obtain a fresh review")
+            for chapter in catalog["chapters"]:
+                for passage in chapter["passages"]:
+                    passages[passage["id"]] = {"chapter": chapter["chapter"], "quote": passage["text"]}
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            catalog = None
+            errors.append(f"evidence catalog: {exc}")
     try:
         raw_report = report_path.read_bytes()
         report = json.loads(_strip_one_markdown_fence(raw_report.decode("utf-8-sig")),
@@ -112,9 +144,18 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
     if report is None:
         errors.append("report must be a JSON object")
     else:
-        report = obj(report, rubric_schema()["required"], "report")
-        if type(report.get("schema_version")) is not int or report.get("schema_version") != 1:
+        version = report.get("schema_version") if isinstance(report, dict) else None
+        fields = rubric_schema()["required"] + (["catalog_sha256"] if version == 2 else [])
+        report = obj(report, fields, "report")
+        if type(version) is not int or version not in (1, 2):
             errors.append("unsupported report schema")
+        if version == 2:
+            if catalog is None:
+                errors.append("schema 2 requires a valid frozen --catalog")
+            elif report.get("catalog_sha256") != catalog_digest(catalog):
+                errors.append("report is bound to a different evidence catalog")
+        elif catalog_path is not None:
+            errors.append("a catalog requires a schema 2 passage-reference report")
         coverage = obj(report.get("coverage"), ("scope", "chapters"), "coverage")
         supplied = coverage.get("chapters")
         if not isinstance(supplied, list) or any(type(n) is not int for n in supplied) or sorted(supplied) != sorted(sources):
@@ -172,6 +213,8 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
                 raise ValueError("original validation was not complete and passed")
             if original.get("report_sha256") != report_hash:
                 raise ValueError("raw report differs from its original validation")
+            if original.get("catalog_sha256") != (catalog_digest(catalog) if catalog is not None else None):
+                raise ValueError("evidence catalog differs from the original validation")
             old = original.get("source_chapters")
             if not isinstance(old, list) or sorted((r["chapter"], r["sha256"]) for r in old) != sorted((r["chapter"], r["sha256"]) for r in records):
                 raise ValueError("source chapters differ from the original validation")
@@ -181,6 +224,8 @@ def validate_rubric(chapter_paths: list[Path], report_path: Path, *, expected_ch
     return {"schema_version": 1, "status": "invalid" if errors else "passed" if complete else "incomplete",
             "valid": not errors, "complete": complete, "source_chapters": records,
             "report_sha256": report_hash, "unassessed": unassessed,
+            "catalog_sha256": catalog_digest(catalog) if catalog is not None else None,
+            "resolved_evidence": resolved,
             "errors": errors, "literary_quality": "not_assessed_by_this_tool"}
 
 
@@ -190,14 +235,21 @@ def main() -> int:
     parser.add_argument("--report", type=Path)
     parser.add_argument("--expected-chapters", type=int)
     parser.add_argument("--original-receipt", type=Path, help="Reject changed report or prose when reusing an earlier passed validation")
+    parser.add_argument("--catalog", type=Path, help="Frozen manuscript from prepare_rubric.py, for schema 2 passage references")
     parser.add_argument("--schema", action="store_true", help="Print the critic's structured-output schema; no file access")
     args = parser.parse_args()
     if args.schema:
-        print(json.dumps(rubric_schema(), indent=2))
+        try:
+            catalog = (json.loads(args.catalog.read_text(encoding="utf-8-sig"), object_pairs_hook=_unique_object,
+                                  parse_constant=_constant) if args.catalog is not None else None)
+            print(json.dumps(rubric_schema(catalog), indent=2))
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            parser.error(f"cannot read evidence catalog: {exc}")
         return 0
     if not args.chapter or args.report is None:
         parser.error("--chapter and --report are required unless --schema is used")
-    result = validate_rubric([Path(p) for p in args.chapter], args.report, expected_chapters=args.expected_chapters, original_receipt=args.original_receipt)
+    result = validate_rubric([Path(p) for p in args.chapter], args.report, expected_chapters=args.expected_chapters,
+                             original_receipt=args.original_receipt, catalog_path=args.catalog)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["complete"] else 1
 

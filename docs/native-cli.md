@@ -45,7 +45,7 @@ Run `new` only on an empty folder; it never writes into a folder that already ha
 
 `resume --author` supplies an explicit title-page name for that invocation, without rewriting the original project defaults. A newer author credit already saved with the book takes precedence when no override is supplied. Older prepared projects remain supported; when no author is known, the native agent is instructed to collect it at the first checkpoint instead of discovering the missing metadata after drafting. A `--prepare-only` launch plan preserves explicit model, effort and author selections in its displayed resume command, using literal PowerShell arguments on Windows.
 
-`status` prints the project's host, language and collaboration mode, any launcher lock, the number of launches and the last launch receipt, and then runs the installed core's progress and delivery checks. When `evaluations/review-index.json` exists, it supplies that saved index to the core so the original raw reviews are checked against the current prose. It does not regenerate evidence. A missing index, invalid or stale review, or invalid delivery still returns a failure. These checks are separate from literary gates and publication approval.
+`status` prints the project's host, language and collaboration mode, any launcher lock, the number of launches and the last launch receipt, and then runs this checkout's trusted progress and delivery checks. When `evaluations/review-index.json` exists, it supplies that saved index to the core so the original raw reviews are checked against the current prose. It does not regenerate evidence. A missing index, invalid or stale review, or invalid delivery still returns a failure. These checks are separate from literary gates and publication approval.
 
 ## Same core, small launcher
 
@@ -98,7 +98,7 @@ OpenCode, Hermes, OpenClaw, Antigravity and the other installer targets are **no
 
 ## Validation boundaries
 
-The later [October 10 quality-recovery record](quality-recovery-20261010.md) covers the readable status, rubric-evidence checks, 234-test result and staged editorial experiment. The chronological table below remains the original launcher acceptance record; it is not a fresh full-book test of those later changes.
+The later [October 10 quality-recovery record](quality-recovery-20261010.md) covers the readable status, initial rubric-evidence checks and staged editorial experiment. The [passage-evidence update](passage-evidence-20261010.md) records 244 passing tests and two real calls using source-bound references. The chronological table below remains the original launcher acceptance record; it is not a fresh full-book test of those later changes.
 
 `tests/test_native_launcher.py` covers native argument forwarding, account-output redaction, explicit model/effort, preserving an existing manuscript, rollback of a failed preparation, local core verification, changed-snapshot and moved-project rejection, author-checkpoint preservation, one owner, and truthful exit receipts. Lifecycle tests start a real child process in place of the native CLI to check nonzero exits, startup failure, the lock naming the running PID, interruption stopping a child and its descendant before the lock is released, and an unverified shutdown keeping the lock. A long-path test prepares, verifies and launches a Claude project whose installed files exceed 260 characters. These tests establish launcher behavior, not a complete-book result.
 

@@ -14,7 +14,7 @@ Version 5.1.0-dev · unreleased recovery build · MIT licensed · free · runs o
 
 **Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. This branch is not a published release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Latest quality work:** [October 10 evidence and open acceptance checks](docs/quality-recovery-20261010.md). Clearer status, dependency-aware revision and source-checked rubric reports; 234 automated tests passed. Four simulated readers preferred a revised QA manuscript, but its audit remained open and rubric evidence failed validation. A 90/100 product rating has not been established.
+**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md). The rubric's quotation failures were resolved in two fresh native calls without editing their responses; 244 automated tests passed. The [earlier editorial experiment](docs/quality-recovery-20261010.md) still has open audit findings. A 90/100 product rating has not been established.
 
 ## The goal
 
