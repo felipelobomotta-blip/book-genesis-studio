@@ -2,6 +2,8 @@
 
 ## Unreleased — 5.1 recovery build
 
+- Clarify the native handoff: the agent is already the writing session, ordinary commentary is its live terminal output, and the launcher has already verified the installed snapshot. Reuse the saved install record instead of manually transcribing hashes or trying to control the agent's own window.
+- Preserve a failed receipt and partial response on a caught keyboard interruption, stop and reap the owned child, and keep ownership when tree shutdown is unverified. Connectivity canaries now have a short explicit timeout and use the host's normal network-approval flow; force-killed attempts remain explicitly incomplete.
 - Freeze complete manuscript passages for rubric calls and validate source-bound passage references. Critics no longer need to retype quoted prose; raw reports remain unchanged, stale or invented references fail, and legacy exact-quote reports remain supported. Two real Luna/high calls passed evidence validation on their first attempt; this is not a literary-quality pass.
 - Validate rubric evidence before aggregating scores: all ten dimensions, actual chapter coverage, exact excerpts, finite scores and source-bound receipts. Missing assessments stay incomplete; altered reports or prose cannot reuse an earlier pass. This checks evidence, not literary merit.
 - Make revision scope follow the defect: correct dependent factual expressions together, repair missing payoffs at scene level, and reject still-broken candidates before comparison. Re-audit current text before closing tickets; try one materially changed strategy within the original pass budget before declaring a plateau.

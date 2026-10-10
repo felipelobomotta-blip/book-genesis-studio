@@ -448,14 +448,16 @@ def run_host_call(
                         release_lock = False
                         preserve_child_cwd = True
                         process_returncode = process.poll()
-        except Exception as exc:
+        except (Exception, KeyboardInterrupt) as exc:
+            interrupted = isinstance(exc, KeyboardInterrupt)
             termination_error: str | None = None
             if process is not None and process.poll() is None:
                 if not _terminate_and_reap_owned(process):
                     release_lock = False
                     preserve_child_cwd = True
                     termination_error = "owned child could not be terminated and reaped; active lock retained"
-            error = f"native host call failed to start or complete: {exc}"
+            error = ("native host call interrupted" if interrupted else
+                     f"native host call failed to start or complete: {exc}")
             if termination_error:
                 error = f"{error}; {termination_error}"
             receipt = {
@@ -469,13 +471,14 @@ def run_host_call(
                 "response_sha256": _file_hash(paths["response"]),
                 "pending_response_sha256": _file_hash(paths["response_pending"]),
                 "exit_code": None,
+                "interrupted": interrupted,
                 "error": error,
                 "paths": _receipt_paths(book_root, paths),
                 "started_at": started,
                 "finished_at": _now(),
             }
             _write_exclusive(paths["receipt"], _json_bytes(receipt) + b"\n")
-            raise HostCallError(error, receipt=receipt) from exc
+            raise HostCallError(error, receipt=receipt, exit_code=130 if interrupted else 1) from exc
 
         response_read_error: str | None = None
         response_bytes = b""

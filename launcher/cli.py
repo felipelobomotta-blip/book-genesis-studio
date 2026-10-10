@@ -213,7 +213,7 @@ def start_prompt(config: dict[str, object], *, resumed: bool, model: str | None 
             + "; saved native env settings can otherwise override the role's effort. "
         )
     return (
-        "Book Genesis native launcher. " + mode + ". "
+        "Book Genesis writing session. You are already running inside the native CLI; the launcher has completed project setup. " + mode + ". "
         "The book and author-facing language is " + json.dumps(config["language"]) + "; use it from your first public message. "
         "Read .book-genesis/project.json for the author's idea, language and collaboration mode. "
         + author_note +
@@ -227,9 +227,12 @@ def start_prompt(config: dict[str, object], *, resumed: bool, model: str | None 
         "Use the existing run_host_call.py only for scoped independent roles, never for another whole-book orchestrator. "
         "The launch receipt whose native_pid matches launcher.lock names the resolved native executable. "
         "Reuse that executable prefix for scoped native roles instead of resolving a different CLI version from a tool's PATH. "
-        "Use this folder for the book. Verify and record the local installed skill hashes. "
+        "Use this folder for the book. The launcher verified the installed snapshot before starting you. "
+        "Read .book-genesis/skills/.book-genesis-install.json and reference that existing verification record in RUN_REPORT.md. "
+        "Any additional hashes must be computed and saved by a program, never manually transcribed. "
         "Honor saved pending author checkpoints on resume; do not auto-accept them. "
-        "Show public phase, role, chapter and saved-file progress through the native UI. "
+        "Write public phase, role, chapter and saved-file progress as ordinary commentary; the native terminal renders it automatically. "
+        "Use your file and command tools to create the book. Do not inspect or drive your own terminal window, reopen the launcher, or build another UI. "
         "Use the selected native model and effort; verify and propagate explicit selections to scoped calls. "
         "The explicit selections for this invocation are " + json.dumps({"model": model, "effort": effort}) + "; null means the native configured default. "
         "These invocation selections override the original model and effort in project.json when resuming. " + native_role_settings +

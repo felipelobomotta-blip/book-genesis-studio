@@ -318,6 +318,51 @@ class HostCallTests(unittest.TestCase):
     def test_post_launch_lock_metadata_failure_terminates_owned_child(self) -> None:
         self.assert_failed_lock_stops_child(slow_tree=False)
 
+    def test_interrupt_preserves_partial_response_and_stops_owned_child(self) -> None:
+        control = self.root / "control-interrupt"
+        original = host_guard._write_lock
+        owned = []
+
+        def interrupt_after_partial_response(path, value):
+            original(path, value)
+            owned.append(value["child_pid"])
+            deadline = time.monotonic() + 3
+            while not (control / "partial").exists() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertTrue((control / "partial").exists())
+            raise KeyboardInterrupt()
+
+        with patch.object(host_guard, "_write_lock", side_effect=interrupt_after_partial_response):
+            with self.assertRaises(HostCallError) as raised:
+                self.call("interrupted", "partial-wait", control=control)
+        self.assertEqual(130, raised.exception.exit_code)
+        self.assertFalse(self.pid_alive(owned[0]))
+        receipt = json.loads(self.receipt_path("interrupted").read_text(encoding="utf-8"))
+        self.assertTrue(receipt["interrupted"])
+        self.assertEqual("failed", receipt["status"])
+        call_dir = self.receipt_path("interrupted").parent
+        self.assertIn("partial response", (call_dir / "response.pending").read_text(encoding="utf-8"))
+        self.assertFalse((call_dir / "response").exists())
+        self.assertFalse((call_dir.parent / ".active.lock").exists())
+
+    def test_interrupt_with_unverified_shutdown_keeps_ownership(self) -> None:
+        owned = []
+
+        def stop_direct_only(process):
+            owned.append(process.pid)
+            process.terminate()
+            process.wait(timeout=2)
+            return False
+
+        with patch.object(host_guard, "_write_lock", side_effect=KeyboardInterrupt()), \
+             patch.object(host_guard, "_terminate_owned_tree", side_effect=stop_direct_only):
+            with self.assertRaises(HostCallError) as raised:
+                self.call("interrupt-unverified", "wait")
+        self.assertEqual(130, raised.exception.exit_code)
+        self.assertFalse(self.pid_alive(owned[0]))
+        self.assertIn("active lock retained", raised.exception.receipt["error"])
+        self.assertTrue((self.state / "work/host-calls/.active.lock").exists())
+
     def test_metadata_failure_reaps_child_after_full_tree_timeout(self) -> None:
         self.assert_failed_lock_stops_child(slow_tree=True)
 

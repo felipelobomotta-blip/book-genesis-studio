@@ -24,3 +24,11 @@ Both passed a second verification against their original receipts. The frozen ca
 The repository suite passed: **244 tests**, including source mutation, catalog tampering, invented references, repeated evidence, incomplete assessments, original-receipt reuse and overwrite refusal. Installer verification and skill validation also passed. Private manuscripts, native logs and raw responses remain outside Git.
 
 This is evidence that the revised citation protocol worked in two real calls, not a statistically established reliability rate or a passing literary gate. It does not reset the earlier revision budget, promote the staged manuscript, validate a full-length novel or establish a 90/100 product rating. A new complete workflow test uses this updated snapshot separately.
+
+## Issues exposed by the subsequent native run
+
+The real launcher run at `892e96c` spent time trying to inspect its own terminal and manually copying a hash manifest before writing the book. It also encountered Windows socket error 10013 in its first sandboxed isolation call, interrupted that attempt, and obtained an approved fresh retry. The original interrupted call retained its packet and streams but no completion receipt; the recorded helper and child were subsequently verified absent. This is not a successful original call.
+
+The startup message now states that the agent is already inside the native writing session, that commentary renders automatically, and that the launcher has already verified the saved install record. The call guard now catches a keyboard interruption during a running call, preserves a failed receipt and partial output, and verifies owned-child shutdown before releasing the lock. An unverified tree shutdown retains ownership. The host contract gives connectivity/isolation checks a maximum 60-second timeout and directs denied-network retries through ordinary host permissions.
+
+Two new actual-child regression tests cover the interruption paths. The complete suite passed **246 tests in 96.859 seconds**. This test evidence concerns the updated startup/interrupt changes; the ongoing manuscript run still uses its frozen `892e96c` skill snapshot. No already-running book was silently upgraded.
