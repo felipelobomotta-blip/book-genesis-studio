@@ -59,7 +59,7 @@ contradiction pass.
 7. **Structure.** Compare the actual turns against the beat positions in `references/patterns/structure-and-emotion.md` and the outline. Report late, missing or doubled turns with their word positions.
 8. **Continuity.** Check facts, timeline and who knows what against `artifacts/09-continuity-ledger.md`. A character who acts on information before receiving it is a high-severity finding.
 9. **Machine prose.** Count each tell from the tells file per chapter against its ceiling. Report the worst five chapters with quotes.
-10. **Pitch.** Read page 1, page 5, the midpoint and the last page as a skeptical literary agent: would page 1 survive, would page 5, does the ending pay the opening's promise, and is the length inside the contract in `PROJECT_STATE.yaml`.
+10. **Pitch and payoff.** Read page 1, page 5, the midpoint and the last page as a skeptical literary agent: would page 1 survive, would page 5, does the ending pay the opening's promise, and is the length inside the approved contract. Trace the central question from its first setup to the evidence, choice and consequence that answer it on the page. Distinguish purposeful ambiguity from a missing causal answer or a character whose promised decision never happens. A symbolic closing image or repeated confession alone does not establish that a mystery or relationship arc was paid off. Quote the setup and the actual payoff; when the payoff is absent, identify the unresolved dependency and the smallest scene span that could resolve it. Do not require every secondary question to be answered.
 
 ## Tickets
 

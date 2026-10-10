@@ -53,13 +53,13 @@ Ticket classes map onto the four revision classes below:
 | `prose`, `voice`, `line` | 3. Prose |
 | `continuity`, when the smallest fix replaces a wrong value | 4. Factual |
 
-A `continuity` ticket whose smallest fix needs more than replacing a value must carry `structural`, `connective` or `prose` instead. Return it if it does not.
+A `continuity` ticket may include directly dependent values inside its quoted span, such as an age and the age comparison in the same sentence. Read the whole statement before replacing a value. If a coherent repair needs a new event, motivation, knowledge path or joke rather than correcting connected facts, return a proposed `structural`, `connective` or `prose` ticket. Never deliver a knowingly inconsistent partial correction merely because the original instruction named one token.
 
 ## Targeted repair
 
 1. Before you edit a chapter, copy its accepted version to `work/revisions/chapter-NN.pre-rK.md`, where K is the next unused revision number for that chapter (one more than the highest K already there).
 2. Write the revised chapter to `work/attempts/chapter-NN/revision-rK.md`, never to `manuscript/chapters/`. The orchestrator copies it there only after it is accepted: a narrowly factual Phase 3 ticket uses the bounded continuity recheck and hash-verified copy protocol; a Phase 5 literary revision uses the panel's draft comparison and `promote_chapter.py`. The chapter file always holds the last accepted version, and a rejected revision never replaces it.
-3. Change only the quoted passages and their immediate seams: the sentence before and the sentence after each changed span, adjusted only so the join reads (tense, pronoun, transition). When the fix calls for new text, insert it directly next to the named passage. Everything else stays exactly as it was.
+3. Change only the quoted passages and their immediate seams: the sentence before and the sentence after each changed span, adjusted only so the join reads (tense, pronoun, transition). The unit of repair is the smallest passage that resolves the defect coherently. When the fix calls for new text, insert it directly next to the named passage. Everything else stays exactly as it was. If the span excludes a necessary setup or consequence, return that dependency before attempting the edit.
 4. Never rewrite a whole chapter for a local defect. A whole-chapter rewrite needs a structural ticket whose span is the whole chapter.
 5. If the fix needs a change outside the span (a set-up two chapters earlier, a scene the outline does not have), do not make it. Return a proposed follow-up ticket with class, location and quote.
 6. If you find the same defect outside the named passages, list it under "Found outside scope" and leave it. For a wrong value, search the manuscript for it and list every occurrence the ticket missed, so the orchestrator can extend the ticket.
@@ -74,7 +74,7 @@ The revision plan decides which tickets you get; the class decides the order you
 | 1. Structural | the skeleton: the arc does not advance, the chapter does not serve its outline function, scenes in the wrong order, a major character acting against `artifacts/03-characters.md` with no arc reason, a character who behaves correctly too often, a chapter redundant with another | rewrite, move, add or cut scenes inside the named span | ±30% |
 | 2. Connective | the links: an opening that does not bridge from the previous chapter, a closing that does not open toward the next, jarring scene transitions, an argument that skips a step, emotion that jumps (calm to rage with no build), data with no context | rewrite openings, closings and transitions; add build-up before a peak. No new scenes; do not change what happens mid-scene or rewrite its dialogue | ±15% |
 | 3. Prose | the line: voice drift from `artifacts/05-voice.md`, dialogue without subtext, telling, clichés and verbal fat, AI tells, weak metaphors, sentence monotony | change the wording of the named passages. Never touch plot, character decisions or the voice rules | ±10% |
-| 4. Factual | isolated errors: a wrong name, date, place or physical detail (against the ledger), a word repeated at close range, grammar and punctuation, wrong data or citation | replace the literal fact and nothing around it | the words of the fact |
+| 4. Factual | isolated errors: a wrong name, date, place or physical detail (against the ledger), a word repeated at close range, grammar and punctuation, wrong data or citation | correct the fact and its directly dependent factual expressions inside the quoted span; preserve the scene and meaning. Request a broader ticket when that is insufficient | the words of the connected factual expressions |
 
 - After a structural edit, reread the whole chapter and confirm its outline obligations and ledger facts still hold. Structural changes cascade.
 - After a connective edit, read across each seam for rhythm.
@@ -144,7 +144,8 @@ Required:
 - **Scope.** Compare the preserved copy with your revision. Every difference must sit inside a ticketed span, its seams or an insertion next to it. Optional one-line comparison: `diff work/revisions/chapter-07.pre-r1.md work/attempts/chapter-07/revision-r1.md`.
 - **Budget.** The word-count change is within the class budget. Optional count: `wc -w work/revisions/chapter-07.pre-r1.md work/attempts/chapter-07/revision-r1.md`.
 - **Preserve list.** Find each preserved strength in your revision and confirm it survived.
-- **Facts.** Every name, date and physical fact you touched matches the ledger.
+- **Facts.** Every name, date and physical fact you touched matches the ledger. Reread the complete changed statement and its dependencies: arithmetic, ages, durations, comparisons, pronouns and what each person could know. A correct replacement value inside a now-incoherent sentence is a failed repair.
+- **Effect.** State which quoted defect the candidate actually resolves and show the relevant new passage. If it remains unresolved, report that explicitly; a clean diff or a smaller word count is not evidence of repair.
 - **Clean file.** The revision holds the chapter heading and prose only: no comments, editor notes, markers or revision headers. The blind reader must not be able to tell the chapter was revised, and the export turns every character in the file into book text.
 
 Optional self-scan, recommended for prose tickets: reread your changed spans against `references/patterns/ai-tells-en.md` for English books or `references/patterns/ai-tells-pt-br.md` for Portuguese books, and fix any tell your new text introduced. Portable counts can point to candidates; each hit inside your spans stays only if you can say why:

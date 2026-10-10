@@ -23,6 +23,7 @@ The ten dimensions, weights and evidence requirements live in `references/scorin
 ## Calculation
 
 - If any dimension is not assessed or required evidence is missing, report the rubric as incomplete. Do not compute a passing gate from the remaining dimensions.
+- Require passed, current source-bound rubric validations under `references/scoring/evaluator-protocol.md` before calculating a complete-book result. A favorable score cannot close an audit contradiction; keep the unresolved finding and disagreement visible.
 - Floor: the lowest calibrated dimension.
 - Weighted average: the weighted mean of the ten calibrated dimensions.
 - Calibration: see `references/scoring/evaluator-protocol.md` (default minus 0.8).

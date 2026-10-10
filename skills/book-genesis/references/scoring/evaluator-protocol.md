@@ -51,6 +51,10 @@ Where the host's documentation does not guarantee that a subagent cannot see the
 
 ## Aggregation
 
+Before aggregating rubric scores, validate each unmodified JSON report with `scripts/validate_rubric.py --chapter <canonical-chapter> --report <raw-report.json> --expected-chapters <approved-count>`, repeating `--chapter` for the full supplied set. Save the original validation receipt beside that raw response. Only `status: passed` permits a complete-book rubric aggregate: a missing dimension, `null` score, sample, mismatched coverage or unsupported quote cannot become a passing gate. Use the helper's `--schema` output with the host's structured-output facility when supported. A receipt validates source evidence and format, not the truth of a critic's interpretation.
+
+On a failed report, retry that evaluator in a fresh context with the same full criteria and current prose plus only the validation errors. Do not supply prior numeric scores or a desired result. Preserve all attempts; at most two retries, then report the rubric as degraded or incomplete. When reusing a passed report later, revalidate with `--original-receipt <saved-validation.json>` so changed prose or a changed raw report invalidates the old evaluation even if its quoted phrases still survive. Never replace an original receipt to make stale evidence appear current.
+
 1. Panels follow the table in `references/roles/panel.md`.
 2. Rubric: take the median per dimension across evaluators; the lowest median is the floor.
 3. When evaluators disagree by 1.5 points or more on a dimension, run one more evaluator or mark confidence low. Never hide a harsh evaluator inside an average.

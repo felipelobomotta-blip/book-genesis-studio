@@ -73,7 +73,11 @@ Process lifecycle:
 - If shutdown cannot be verified, the receipt says `shutdown_unverified` and the lock is kept. Stale locks are never cleared automatically: check that the recorded PIDs have stopped, then delete the lock file yourself.
 - On macOS and Linux the native CLI runs in its own session so its whole tree can be stopped; the launcher forwards terminal resizes to it, and after the native CLI exits it stops any processes that CLI left running before releasing the lock. These POSIX paths have not yet been exercised on a POSIX machine.
 
-An exit code of zero says that the native session exited successfully. It does **not** mean a book was completed. `status` runs the installed core's existing progress and current-text delivery/review verifiers; it does not manufacture scores, receipt evidence or a publication approval.
+An exit code of zero says that the native session exited successfully. It does **not** mean a book was completed. `status` runs this checkout's read-only progress and current-text delivery/review verifiers; it does not manufacture scores, receipt evidence or a publication approval.
+
+`status` now shows the saved phase, measured chapter and word counts, exported-file status, current-reader evidence, and the saved audit/revision outcomes in a compact English summary. A delivered manuscript with failed literary gates explicitly says that editorial work remains. `status --json` emits one JSON object containing the full verifier reports and launch records for automation. Status exit zero means the technical checks passed, even when the report says `needs_revision`; it is not a quality score.
+
+Status can inspect a project whose installed skill no longer matches this checkout. It uses the verifier scripts shipped here, never a modified script inside that project, and separately reports whether the snapshot permits resume. Resume still requires its verified original snapshot; status does not upgrade or edit the book. Malformed checker output, a contradictory successful exit, a timeout or a permission error remains a visible failed check with diagnostics. Missing evidence never becomes a successful empty result.
 
 ### Windows paths
 
@@ -93,6 +97,8 @@ The official CLIs retain all their authentication methods. `doctor` reports a bi
 OpenCode, Hermes, OpenClaw, Antigravity and the other installer targets are **not subscription connections verified by this prototype**. A host accepting the skill is a separate fact from its providers supporting subscription billing. Each additional launch adapter needs an official supported authentication path, current CLI-contract checks and an actual integration test before it is advertised.
 
 ## Validation boundaries
+
+The later [October 10 quality-recovery record](quality-recovery-20261010.md) covers the readable status, rubric-evidence checks, 234-test result and staged editorial experiment. The chronological table below remains the original launcher acceptance record; it is not a fresh full-book test of those later changes.
 
 `tests/test_native_launcher.py` covers native argument forwarding, account-output redaction, explicit model/effort, preserving an existing manuscript, rollback of a failed preparation, local core verification, changed-snapshot and moved-project rejection, author-checkpoint preservation, one owner, and truthful exit receipts. Lifecycle tests start a real child process in place of the native CLI to check nonzero exits, startup failure, the lock naming the running PID, interruption stopping a child and its descendant before the lock is released, and an unverified shutdown keeping the lock. A long-path test prepares, verifies and launches a Claude project whose installed files exceed 260 characters. These tests establish launcher behavior, not a complete-book result.
 

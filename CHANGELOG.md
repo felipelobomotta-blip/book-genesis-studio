@@ -2,6 +2,10 @@
 
 ## Unreleased — 5.1 recovery build
 
+- Validate rubric evidence before aggregating scores: all ten dimensions, actual chapter coverage, exact excerpts, finite scores and source-bound receipts. Missing assessments stay incomplete; altered reports or prose cannot reuse an earlier pass. This checks evidence, not literary merit.
+- Make revision scope follow the defect: correct dependent factual expressions together, repair missing payoffs at scene level, and reject still-broken candidates before comparison. Re-audit current text before closing tickets; try one materially changed strategy within the original pass budget before declaring a plateau.
+- Trace the central question through evidence, choice and consequence in the adversarial audit. A repeated confession or symbolic ending is not by itself a paid-off story.
+- Replace raw status dumps with a readable phase, manuscript, delivery, reader-evidence and saved-quality summary, plus `--json` for full reports. Keep inspection available across snapshot changes while still blocking unsafe resume; preserve checker failures and diagnostics.
 - Add an optional native CLI launcher for Codex and Claude Code. Prepare and verify a project, collect its author credit up front, preserve checkpoints on resume, and hand the terminal to the unmodified host's own sign-in, live UI and permissions. No second editorial engine or subscription-token proxy.
 - Forward exact native model and effort selections. For Claude Code, use invocation-scoped effort settings so saved environment values cannot silently replace an explicit selection; leave global settings unchanged.
 - Give each launcher one book ownership record and truthful exit receipts. On Windows, assign the suspended native child to a private kill-on-close job before it starts, then verify descendant shutdown before releasing ownership. Atomic preparation and scoped rollback preserve other work.

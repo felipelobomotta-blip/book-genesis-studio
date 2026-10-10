@@ -613,10 +613,14 @@ class LauncherProjectTests(unittest.TestCase):
         index.write_bytes(original)
         for verification_exit, expected in ((0, 0), (1, 1)):
             with self.subTest(verification_exit=verification_exit):
-                results = [subprocess.CompletedProcess([], 0), subprocess.CompletedProcess([], verification_exit)]
+                results = [
+                    subprocess.CompletedProcess([], 0, json.dumps({"schema_version": 1, "ok": True, "canonical": {}, "state": {}}), ""),
+                    subprocess.CompletedProcess([], verification_exit, json.dumps({"schema_version": 1, "delivery": {"status": "delivered"}, "reviews": {"status": "current" if verification_exit == 0 else "stale"}}), ""),
+                ]
                 with patch.object(cli.subprocess, "run", side_effect=results) as run, redirect_stdout(io.StringIO()):
                     self.assertEqual(expected, cli.main(["status", str(self.project)]))
                 command = run.call_args_list[1].args[0]
+                self.assertEqual(str(REPO_ROOT / "skills/book-genesis/scripts/verify_book.py"), command[3])
                 self.assertEqual(str(index), command[command.index("--review-index") + 1])
                 self.assertNotIn("--check", command, "keep the core's default delivery AND review checks")
                 self.assertFalse(run.call_args_list[1].kwargs["shell"])
@@ -625,13 +629,41 @@ class LauncherProjectTests(unittest.TestCase):
     def test_status_with_no_review_index_does_not_skip_required_review_check(self):
         self.prepare()
         (self.project / "PROJECT_STATE.yaml").write_text("saved state\n", encoding="utf-8")
-        results = [subprocess.CompletedProcess([], 0), subprocess.CompletedProcess([], 1)]
+        results = [
+            subprocess.CompletedProcess([], 0, json.dumps({"schema_version": 1, "ok": True, "canonical": {}, "state": {}}), ""),
+            subprocess.CompletedProcess([], 1, json.dumps({"schema_version": 1, "delivery": {"status": "delivered"}, "reviews": {"status": "not_run"}}), ""),
+        ]
         with patch.object(cli.subprocess, "run", side_effect=results) as run, redirect_stdout(io.StringIO()):
             self.assertEqual(1, cli.main(["status", str(self.project)]))
         command = run.call_args_list[1].args[0]
         self.assertNotIn("--review-index", command)
         self.assertNotIn("--check", command, "missing readers must not become a delivery-only pass")
         self.assertFalse((self.project / "evaluations/review-index.json").exists())
+
+    def test_prepared_status_json_is_one_object_and_makes_no_model_call(self):
+        self.prepare()
+        with patch.object(cli.subprocess, "run") as run, redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(1, cli.main(["status", str(self.project), "--json"]))
+        report = json.loads(output.getvalue())
+        self.assertEqual("prepared", report["status"])
+        self.assertFalse(report["technical_checks_passed"])
+        self.assertEqual("not_assessed", report["publication_approval"])
+        self.assertEqual(0, report["launcher"]["launch_count"])
+        run.assert_not_called()
+
+    def test_status_can_inspect_a_changed_snapshot_but_resume_still_rejects_it(self):
+        self.prepare()
+        skill = self.project / cli.SKILLS / "book-genesis/SKILL.md"
+        original = skill.read_bytes()
+        skill.write_bytes(original + b"\nChanged locally.\n")
+        with redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(1, cli.main(["status", str(self.project), "--json"]))
+        report = json.loads(output.getvalue())
+        self.assertEqual("current_checkout", report["verification_engine"])
+        self.assertEqual("blocked", report["resume_snapshot"]["status"])
+        self.assertEqual(original + b"\nChanged locally.\n", skill.read_bytes())
+        with self.assertRaisesRegex(ValueError, "Skill snapshot differs"):
+            cli.read_project(self.project)
 
 
 if __name__ == "__main__":

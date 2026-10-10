@@ -167,7 +167,7 @@ def prepare_project(project: Path, *, host: str, idea: str, language: str = "Eng
     return config
 
 
-def read_project(project: Path) -> dict[str, object]:
+def read_project(project: Path, *, verify_snapshot: bool = True) -> dict[str, object]:
     root = project.expanduser().resolve()
     try:
         data = json.loads(_install_path(root / CONFIG).read_text(encoding="utf-8"))
@@ -184,6 +184,8 @@ def read_project(project: Path) -> dict[str, object]:
         raise ValueError("Invalid collaboration mode in project record")
     if any(not isinstance(data.get(field), str) or not str(data[field]).strip() for field in ("idea", "language")):
         raise ValueError("Invalid idea or language in project record")
+    if not verify_snapshot:
+        return data
     result = verify_install(host, destination=_install_path(root / SKILLS))
     if not result["ok"]:
         raise ValueError("Skill snapshot differs from this checkout or its install record. Resume using the original checkout; no automatic upgrade: " + "; ".join(str(item) for item in result["errors"]))
@@ -360,6 +362,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--autonomous", action="store_true", help="Request the existing core's go-to-the-end mode")
     status = commands.add_parser("status", help="Run the existing core's read-only progress and delivery checks")
     status.add_argument("project", type=Path)
+    status.add_argument("--json", action="store_true", help="Print the full read-only evidence as one JSON object")
     return parser
 
 
@@ -381,22 +384,31 @@ def _run(args: argparse.Namespace) -> int:
         return run_attached(login_argv(args.host))
     root = args.project.expanduser().absolute()
     if args.command == "status":
-        config = read_project(root)
-        print(f"Book Genesis project | {HOST_NAMES[str(config['host'])]} | language: {config['language']} | collaboration: {config['collaboration']}")
-        _print_launcher_state(root)
-        if not (root / "PROJECT_STATE.yaml").is_file():
-            print("Project prepared. No pipeline state has been saved by the native agent yet.")
-            return 1
-        scripts = root / SKILLS / "book-genesis/scripts"
-        progress = subprocess.run([sys.executable, str(scripts / "check_progress.py"), "--book-dir", str(root)], shell=False, check=False)
-        verify_args = [sys.executable, str(scripts / "verify_book.py"), "--book-dir", str(root)]
-        review_index = root / "evaluations/review-index.json"
-        if review_index.is_file():
-            # The core owns the index schema and verifies its original raw
-            # reports against current prose. Missing or stale reads still fail.
-            verify_args.extend(["--review-index", str(review_index)])
-        verification = subprocess.run(verify_args, shell=False, check=False)
-        return 0 if progress.returncode == 0 and verification.returncode == 0 else 1
+        from launcher.status import collect_status, print_status
+
+        config = read_project(root, verify_snapshot=False)
+        # Status inspects saved work using this checkout's trusted read-only
+        # helpers. An old or changed project skill must block resume, not hide
+        # the manuscript or execute a modified installed verifier.
+        scripts = Path(__file__).resolve().parents[1] / "skills/book-genesis/scripts"
+        report = collect_status(root, scripts)
+        report["verification_engine"] = "current_checkout"
+        try:
+            read_project(root)
+            report["resume_snapshot"] = {"status": "verified"}
+        except (OSError, ValueError) as exc:
+            report["resume_snapshot"] = {"status": "blocked", "error": str(exc)}
+        report["project"] = {key: config[key] for key in ("host", "language", "collaboration")}
+        report["launcher"] = _launcher_state(root)
+        if args.json:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            print(f"Book Genesis project | {HOST_NAMES[str(config['host'])]} | language: {config['language']} | collaboration: {config['collaboration']}")
+            _print_launcher_state(report["launcher"])
+            print_status(report)
+            if report["resume_snapshot"]["status"] == "blocked":
+                print(f"Resume is blocked: {report['resume_snapshot']['error']}")
+        return 0 if report["technical_checks_passed"] else 1
     if not args.prepare_only and not _has_terminal():
         raise ValueError("The native agent needs an interactive terminal. " + ("Add --prepare-only to prepare the book without a model call, then run resume from a terminal." if args.command == "new" else "Run resume from your terminal, or add --prepare-only to only verify the project."))
     author_name = _author_name(args.author)
@@ -432,21 +444,33 @@ def _run(args: argparse.Namespace) -> int:
     return launch_project(root, config, host=host, model=model, effort=effort, resumed=args.command == "resume", author_name=author_name)
 
 
-def _print_launcher_state(root: Path) -> None:
+def _launcher_state(root: Path) -> dict[str, object]:
     """Report launcher records only; book progress comes from the core checks."""
     lock = _install_path(root / LOCK)
-    if lock.is_file():
-        print(f"Launcher lock present: {lock.read_text(encoding='utf-8').strip()}")
-        print("  Another launcher may own this book. Remove the lock only after both recorded PIDs have stopped.")
+    lock_record = lock.read_text(encoding="utf-8").strip() if lock.is_file() else None
     receipts = []
+    errors = []
     for path in _install_path(root / ".book-genesis/launches").glob("*.json"):
         try:
-            receipts.append(json.loads(path.read_text(encoding="utf-8")))
+            record = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(record, dict):
+                raise ValueError("receipt is not an object")
+            receipts.append(record)
         except (OSError, ValueError):
-            print(f"Unreadable launch receipt: {path.name}")
-    if receipts:
-        last = max(receipts, key=lambda item: str(item.get("started_at", "")))
-        print(f"Launches: {len(receipts)} | last: {last.get('status')} | native exit: {last.get('native_exit_code')} | book completion: {last.get('book_completion')}")
+            errors.append(f"Unreadable launch receipt: {path.name}")
+    last = max(receipts, key=lambda item: str(item.get("started_at", ""))) if receipts else None
+    return {"lock_record": lock_record, "launch_count": len(receipts), "last": last, "errors": errors}
+
+
+def _print_launcher_state(state: dict[str, object]) -> None:
+    if state["lock_record"] is not None:
+        print(f"Launcher lock present: {state['lock_record']}")
+        print("  Another launcher may own this book. Remove the lock only after both recorded PIDs have stopped.")
+    for error in state["errors"]:
+        print(error)
+    last = state["last"]
+    if last:
+        print(f"Launches: {state['launch_count']} | last: {last.get('status')} | native exit: {last.get('native_exit_code')} | book completion: {last.get('book_completion')}")
     else:
         print("Launches: none yet")
 

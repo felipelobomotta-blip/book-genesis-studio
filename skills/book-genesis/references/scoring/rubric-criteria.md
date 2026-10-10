@@ -32,9 +32,16 @@ Score each dimension from 0 to 10.
 
 ## Required report
 
-1. Coverage: the exact chapters or passages read, and whether this is the full manuscript or a sample.
-2. A score and evidence per assessed dimension, with passage locations and the most important defect to address.
-3. The strongest and weakest passage, quoted with location.
-4. Confidence: low, medium or high, with a brief reason and any limits in the supplied material.
+Return one JSON object, without commentary or a Markdown fence. Use the host-supplied schema when available.
+
+- `schema_version`: `1`.
+- `coverage`: an object with `scope` (`full_manuscript` or `sample`) and `chapters` (the numbers of every chapter actually supplied and read, each once). A named sample is not full coverage.
+- `dimensions`: all ten dimensions above, each exactly once. Each entry has `name`, `score` (a number from 0 to 10, or `null` when not assessed), `evidence` (an array), and `reason` (the assessment, main defect or missing information). Every assessed dimension needs at least one source excerpt; a score above 9.0 needs two distinct excerpts.
+- Each evidence object has `chapter` (the source chapter number), `quote` (an exact contiguous excerpt from that chapter's visible prose), and `reason` (why it supports the assessment). Put locations and explanations outside `quote`; no appended citations, ellipses, invented wording or text from the instructions. Market-position context can guide Market, but textual evidence still comes from the manuscript.
+- `strongest_passage` and `weakest_passage`: each uses that same evidence-object shape.
+- `confidence`: an object with `level` (`low`, `medium` or `high`) and `reason`.
+- `limitations`: a nonempty statement of what this reading cannot establish.
+
+If evidence cannot support a score, use `null` and explain. Do not manufacture a quotation or a complete assessment to satisfy the format. The structured-output schema can be emitted by `scripts/validate_rubric.py --schema`; the host supplies it, not private gate policy.
 
 Do not edit the manuscript. Report observations and proposed fixes; leave their application to the author and revision editor.
