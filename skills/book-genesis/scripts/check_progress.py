@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -518,6 +519,39 @@ def reconcile_book(
     }
 
 
+def phase_context(label: str, *, skill_root: Path | None = None) -> dict[str, Any]:
+    """Return the actual active playbook, rather than an agent-authored phase recap.
+
+    The manifest remains the single source of phase routing. This is read-only
+    context for the owning orchestrator, not permission to skip a gate or a
+    packet that may be forwarded wholesale to a writer or critic.
+    """
+    root = (skill_root or Path(__file__).resolve().parents[1]).resolve()
+    manifest = _parse_yaml_subset((root / "references/pipeline/manifest.yaml").read_text(encoding="utf-8"))
+    matches = [entry for entry in manifest.values() if isinstance(entry, dict) and entry.get("label") == label]
+    if len(matches) != 1:
+        raise ProgressError(f"the installed manifest has no unique phase for {label!r}")
+    phase = matches[0]
+
+    def source(relative: Any) -> tuple[dict[str, str], str]:
+        if not isinstance(relative, str) or not relative.startswith("references/"):
+            raise ProgressError("phase reference must be inside the installed skill's references folder")
+        path = (root / relative).resolve()
+        if not path.is_relative_to(root / "references"):
+            raise ProgressError("phase reference escapes the installed skill's references folder")
+        data = path.read_bytes()
+        return {"path": str(path), "sha256": hashlib.sha256(data).hexdigest()}, data.decode("utf-8-sig")
+
+    prompt, instructions = source(phase.get("prompt"))
+    references = phase.get("references")
+    if not isinstance(references, list):
+        raise ProgressError("phase references must be a list")
+    return {"label": label, "audience": "owning_orchestrator_only",
+            "notice": "A clean progress check verifies saved counts and state, not completion of these instructions. Read the phase references before acting; keep private gate policy out of role packets.",
+            "prompt": prompt, "instructions": instructions,
+            "references": [source(relative)[0] for relative in references]}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read-only Book Genesis progress reconciliation.")
     parser.add_argument("--book-dir", default=".")
@@ -533,6 +567,18 @@ def main(argv: list[str] | None = None) -> int:
         min_words=args.min_words,
         max_words=args.max_words,
     )
+    report["verification_scope"] = "saved_progress_and_manuscript_counts; editorial work is not verified by this check"
+    label = report.get("state", {}).get("current_phase")
+    if label is None and report.get("status") == "empty":
+        label = "Phase 0: Intake"
+    if label is not None:
+        try:
+            report["phase_context"] = phase_context(label)
+        except (OSError, UnicodeError, ProgressError) as exc:
+            report["ok"] = False
+            report["status"] = "invalid_skill"
+            report["phase_context_error"] = str(exc)
+            report["recovery_steps"].append("restore the installed phase prompt and references before continuing")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["ok"] else 1
 

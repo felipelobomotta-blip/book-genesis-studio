@@ -47,6 +47,8 @@ Before showing it, set `collaboration.waiting_for_author: true` and `collaborati
 
 If the author does not answer, do nothing. The checkpoint is saved; the next session shows it again.
 
+During autonomous work, use brief author-facing updates about the chapter, reading, revision or export in progress. Explain a retry in terms of what it means for the book and the next action. Keep hashes, process IDs, schema fields and raw command details in `RUN_REPORT.md` and diagnostic files unless the author needs them to make a decision. A running process is activity, not evidence that a chapter or review has finished.
+
 ## Work safely
 
 - One orchestrator owns `PROJECT_STATE.yaml`. Only one writer or editor touches a chapter at a time. Work sequentially unless the host offers real parallel subagents and the tasks are independent.

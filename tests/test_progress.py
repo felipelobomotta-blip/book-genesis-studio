@@ -2,7 +2,9 @@
 
 from pathlib import Path
 import json
+import hashlib
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -12,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_ROOT = REPO_ROOT / "skills" / "book-genesis" / "scripts"
 sys.path.insert(0, str(SCRIPT_ROOT))
 
-from check_progress import parse_project_state, reconcile_book  # noqa: E402
+from check_progress import ProgressError, parse_project_state, phase_context, reconcile_book  # noqa: E402
 from export_book import count_prose_words, discover_chapters  # noqa: E402
 
 
@@ -73,6 +75,43 @@ class ProgressTests(unittest.TestCase):
         self.assertTrue(report["ok"])
         self.assertEqual("empty", report["status"])
         self.assertEqual([], report["canonical"]["chapter_numbers"])
+
+    def test_cli_delivers_actual_current_phase_instructions_without_marking_editorial_work_verified(self) -> None:
+        self.write_state(_state(phase="Phase 2: Architecture", completed="[]", words=0))
+        before = (self.root / "PROJECT_STATE.yaml").read_bytes()
+        result = subprocess.run([sys.executable, str(SCRIPT_ROOT / "check_progress.py"), "--book-dir", str(self.root)],
+                                capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn("editorial work is not verified", report["verification_scope"])
+        context = report["phase_context"]
+        self.assertEqual("owning_orchestrator_only", context["audience"])
+        self.assertEqual("Phase 2: Architecture", context["label"])
+        actual = Path(context["prompt"]["path"]).read_bytes()
+        self.assertEqual(actual.decode("utf-8"), context["instructions"])
+        self.assertEqual(hashlib.sha256(actual).hexdigest(), context["prompt"]["sha256"])
+        self.assertEqual(before, (self.root / "PROJECT_STATE.yaml").read_bytes())
+
+    def test_phase_context_follows_installed_manifest_and_rejects_missing_or_escaping_references(self) -> None:
+        root = self.root / "fixture-skill"
+        pipeline = root / "references/pipeline"
+        pipeline.mkdir(parents=True)
+        manifest = pipeline / "manifest.yaml"
+        body = 'demo:\n  label: "Phase 2: Architecture"\n  prompt: "references/phase.md"\n  references:\n    - "references/allowed.md"\n'
+        manifest.write_text(body, encoding="utf-8")
+        (root / "references/phase.md").write_text("Exact custom phase instructions.", encoding="utf-8")
+        allowed = root / "references/allowed.md"
+        allowed.write_text("Allowed source", encoding="utf-8")
+        self.assertEqual("Exact custom phase instructions.", phase_context("Phase 2: Architecture", skill_root=root)["instructions"])
+        with self.assertRaises(ProgressError):
+            phase_context("Phase 3: Drafting", skill_root=root)
+        manifest.write_text(body.replace("references/allowed.md", "references/../../outside.md"), encoding="utf-8")
+        with self.assertRaises(ProgressError):
+            phase_context("Phase 2: Architecture", skill_root=root)
+        manifest.write_text(body, encoding="utf-8")
+        allowed.unlink()
+        with self.assertRaises(OSError):
+            phase_context("Phase 2: Architecture", skill_root=root)
 
     def test_stale_chapters_and_words_are_reported_with_recovery(self) -> None:
         self.write_chapter()
