@@ -59,6 +59,33 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+A subsequent frozen `5ff430c` run produced a 46,758-word first draft and an
+initial calibrated score of 70.32/100. Its unchanged opening and midpoint reused
+all eight original reader responses, including an unfavorable opening result.
+Paragraph IDs removed the old `before`-copy failure, but some proposed repairs
+still failed the factual checker. Better transport does not establish better prose.
+
+One rejection exposed a report-contract ambiguity: a reviewer returned `pass`
+and all three checks true, but put a positive summary in the `findings` array.
+The gate correctly refused to treat a nonempty findings list as approval. The
+new packet and schema reserve that array for unresolved blocking defects; positive
+explanations and observations about unchanged unrelated defects belong in evidence
+reasons. A validator now rejects internally contradictory reports and missing
+source coverage before the decision. A fresh format attempt receives no earlier
+verdict. A coherent negative report remains final and never triggers rerating.
+
+After two malformed optional correction checks, the candidate is rejected, its
+original evidence remains bound to the journal, and the accepted chapter stays
+available for the remaining workflow. Transport, authentication and altered
+evidence still block. Regression tests exercise the actual controller decision,
+original report retention, negative verdicts, exhausted attempts, no-call retry
+after exhaustion, evidence tampering and transport failures. This change is
+tested separately and is not injected into the active native trials.
+
+The resulting build passed all 352 automated tests and `installer.py verify-suite`
+on October 11, 2026. Its native Claude transport also passed the separately
+recorded real scoped-response probe. Full-length acceptance remains ongoing.
+
 Deterministic fixtures verify these execution properties. They are explicitly
 synthetic and are not literary or human-usability evidence. The original native
 trial continues to test the frozen build; a subsequent fresh trial must test

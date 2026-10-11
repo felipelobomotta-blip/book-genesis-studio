@@ -17,7 +17,8 @@ import sys
 
 from build_comparison import build_comparison, READERS
 from check_progress import _parse_yaml_subset, parse_project_state, reconcile_book
-from check_correction import prepare as prepare_correction, decision as correction_decision
+from check_correction import (prepare as prepare_correction, decision as correction_decision,
+                              validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
@@ -656,26 +657,15 @@ class BookWorkflow:
         try:
             response, _ = self.call(key, packet, schema, validator, feedback=True, feedback_response=True)
         except WorkflowError:
-            step = self.journal.data["steps"].get(key, {})
-            attempts = step.get("attempts", [])
             # A malformed optional revision cannot destroy the accepted book or
             # stop delivery. Auth, transport, tampering and unverified work still
             # block. A failed draft has no accepted chapter and never uses this.
-            if step.get("status") != "failed" or not attempts or not all(row.get("validation_errors") for row in attempts):
+            evidence = self.rejected_validation_evidence(key)
+            if evidence is None:
                 raise
-            evidence = []
-            for attempt in attempts:
-                folder = self.root / "work/host-calls" / attempt["call_id"]
-                receipt = read_json(folder / "receipt.json")
-                for name in ("packet", "response", "stdout", "stderr"):
-                    if digest((folder / name).read_bytes()) != receipt[name + "_sha256"]:
-                        raise WorkflowError("Rejected revision evidence changed")
-                    evidence.append(self.journal.record_file(folder / name))
-                evidence.append(self.journal.record_file(folder / "receipt.json"))
+            step = self.journal.data["steps"][key]
             outcome = {"chapter": n, "mode": task["mode"], "decision": "reject", "reason": "Both bounded revision attempts failed output validation; accepted text retained.",
-                       "validation_errors": [row["validation_errors"] for row in attempts], "evidence": evidence}
-            step["rejected_evidence"] = evidence
-            self.journal.save()
+                       "validation_errors": [row["validation_errors"] for row in step["attempts"]], "evidence": evidence}
             freeze(outcome_path, encoded(outcome))
             self.log(f"Revision pass {number}, chapter {n} | rejected invalid proposals; accepted chapter retained")
             return outcome
@@ -709,6 +699,25 @@ class BookWorkflow:
         self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {detail}")
         return outcome
 
+    def rejected_validation_evidence(self, key):
+        """Retain verified malformed optional work; never mask transport failure."""
+        step = self.journal.data["steps"].get(key, {})
+        attempts = step.get("attempts", [])
+        if step.get("status") != "failed" or not attempts or not all(row.get("validation_errors") for row in attempts):
+            return None
+        evidence = []
+        for attempt in attempts:
+            folder = self.root / "work/host-calls" / attempt["call_id"]
+            receipt = read_json(folder / "receipt.json")
+            for name in ("packet", "response", "stdout", "stderr"):
+                if digest((folder / name).read_bytes()) != receipt[name + "_sha256"]:
+                    raise WorkflowError("Rejected revision evidence changed")
+                evidence.append(self.journal.record_file(folder / name))
+            evidence.append(self.journal.record_file(folder / "receipt.json"))
+        step["rejected_evidence"] = evidence
+        self.journal.save()
+        return evidence
+
     def check_factual_revision(self, key, task, accepted, candidate, context, decision_path):
         bundle = self.root / f"work/corrections/{key}"
         manifest = bundle / "manifest.private.json"
@@ -716,7 +725,18 @@ class BookWorkflow:
             prepare_correction(accepted, candidate,
                 [self.root / f"artifacts/{name}" for name in ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")],
                 context, task["ticket"], bundle, publication_target=self.root / f"manuscript/chapters/chapter-{task['chapter']:02d}.md")
-        response, _ = self.call(key + "-check", (bundle / "review.packet.md").read_bytes(), read_json(bundle / "review.schema.json"))
+        schema = read_json(bundle / "review.schema.json")
+        try:
+            response, _ = self.call(key + "-check", (bundle / "review.packet.md").read_bytes(), schema,
+                                   lambda p: validate_correction_report(p, schema))
+        except WorkflowError:
+            evidence = self.rejected_validation_evidence(key + "-check")
+            if evidence is None:
+                raise
+            decision = {"decision": "reject", "reason": "Factual checker exhausted bounded output-validation attempts; accepted text retained.",
+                        "evidence": evidence, "manifest": self.journal.record_file(manifest)}
+            freeze(decision_path, encoded(decision))
+            return decision
         report = read_json(response)
         if report["verdict"] == "pass" and all(report[k] for k in ("canon_supported", "factual_only", "dependencies_safe")) and not report["findings"]:
             # This verifies the original native receipt, complete sources and all

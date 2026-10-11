@@ -73,8 +73,31 @@ def response_schema(passages: list[str]) -> dict:
         "evidence": {"type": "array", "items": obj({
             "passage_id": {"type": "string", "enum": passages},
             "reason": {"type": "string"}})},
-        "findings": {"type": "array", "items": {"type": "string"}},
+        "findings": {"type": "array", "items": {"type": "string"},
+                     "description": "Unresolved blocking defects within this correction only. Empty for pass. Put positive explanations or unrelated observations in evidence reasons."},
     })
+
+
+def validate_report(path: Path, schema: dict) -> dict:
+    """Reject inconsistent reports before deciding a candidate's fate.
+
+    A coherent block is valid evidence, not a reason to obtain another review.
+    Malformed reviews use only the caller's original bounded format attempts.
+    """
+    from workflow_roles import validate_json
+    validation = validate_json(path, schema)
+    if validation["valid"]:
+        report = read_json(path)
+        checks = (report[k] for k in ("canon_supported", "factual_only", "dependencies_safe"))
+        if report["verdict"] == "pass" and (not all(checks) or report["findings"]):
+            validation["errors"].append("A pass must have all checks true and findings: []; explanations belong in evidence reasons")
+        if report["verdict"] == "block" and not report["findings"]:
+            validation["errors"].append("A block must identify its unresolved defect in findings")
+        cited = {item["passage_id"].rsplit("-p", 1)[0] for item in report["evidence"]}
+        if not {"accepted", "candidate"}.issubset(cited) or not any(s.startswith("canon-") for s in cited):
+            validation["errors"].append("Evidence must cover both versions and existing canon")
+        validation["valid"] = not validation["errors"]
+    return validation
 
 
 def _packet(ticket: str, texts: dict[str, str]) -> str:
@@ -94,7 +117,10 @@ def _packet(ticket: str, texts: dict[str, str]) -> str:
         "Return the required JSON. Cite the supplied paragraph IDs from accepted, candidate, and at least "
         "one canon source, with an explanation for each. Do not recopy or invent quotations. "
         "Include context evidence when a dependency relies on it. "
-        "A pass requires all three checks true and no unresolved findings within this correction.\n\n"
+        "A pass requires all three checks true and findings: []. The findings array is only for unresolved "
+        "blocking defects within this correction, never a positive summary such as 'no problems remain'. "
+        "Put positive explanations and observations about unrelated unchanged defects in evidence reasons. "
+        "A block must identify its unresolved defect in findings.\n\n"
         + "## Ticket\n\n" + ticket.strip() + "\n"
         + "".join(f"\n## Source {row['source']} / [{key}]\n\n{row['text']}\n"
                   for key, row in _passages(texts).items())
