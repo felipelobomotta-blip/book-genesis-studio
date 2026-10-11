@@ -330,8 +330,10 @@ def _correction_decision(decision: dict, accepted: Path, candidate: Path) -> dic
                 raise PromotionError(f"correction decision {key} differs from its evidence")
         if decision.get("review_report_sha256") != checked["report_sha256"]:
             raise PromotionError("original correction report changed")
-        if Path(checked["accepted_path"]).resolve() != accepted.resolve() or Path(checked["candidate_path"]).resolve() != candidate.resolve():
+        if Path(checked["publication_target"]).resolve() != accepted.resolve() or Path(checked["candidate_path"]).resolve() != candidate.resolve():
             raise PromotionError("correction decision belongs to different chapter files")
+        if digest(accepted) != checked["accepted_sha256"]:
+            raise PromotionError("correction publication target differs from the frozen accepted bytes")
         return checked
     except (KeyError, TypeError, ValueError) as exc:
         raise PromotionError(f"correction verification failed: {exc}") from exc

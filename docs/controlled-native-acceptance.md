@@ -53,6 +53,33 @@ Status now distinguishes an expected pending export from a failed check and
 uses the controlled workflow's final reader index when present. Neither change
 converts a pending book or a failed literary gate into a delivered/approved one.
 
+The third run wrote all 12 chapters (46,000 words before revision). Its first
+calibrated weighted assessment was 7.036/10, with a 5.0 coherence floor. Two
+revisions were promoted and two rejected. It then stopped while staging the
+chapter 5 proposal: JSON validation had accepted XML-invalid control characters,
+so the bounded repair handler was never reached. No complete export was made.
+The original run, negative reviews, accepted chapters and malformed response
+remain preserved. This is a failed unattended acceptance, not a successful book.
+
+The next build validates Unicode before accepting producer responses. Invalid
+optional revision proposals use the same two-attempt budget; if both remain
+invalid, it retains the accepted chapter and records the rejection. Authentication,
+transport, altered evidence and incomplete first drafts still block execution.
+All writers now receive a neutral stable identity/calendar baseline. Every
+chapter editor receives the shared revision strategy. Literal factual edits use
+the existing fresh correctness verifier and atomic publication guard; creative
+edits retain the four-reader comparison. Factual edits run before creative edits.
+
+A separate follow-up check carries all historical continuity, audit and proofread
+findings forward. It can close an allegation only with current manuscript evidence
+from every affected chapter. A new audit omitting an old finding does not close it.
+This history is never sent to blind literary graders or reader panels. Required
+open findings remain gates and must be addressed in the next revision plan.
+Review coverage schemas list exact assigned sources, excluding reference guides.
+The optional `--weighted-quality-target 9.0` now also keeps the revision loop open
+until its calibrated weighted score exceeds 9.0 or its original budget is spent;
+it does not replace the 8.5 per-dimension floor or expose targets to evaluators.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.
@@ -110,7 +137,7 @@ threshold, suppress findings, or change the sample to obtain a pass.
 ## Run it
 
 ```powershell
-python book_genesis.py new C:\Books\MyNovel --host codex --model gpt-5.6-luna --effort high --author "Your Name" --autonomous --chapters 12 --min-words 40000 --max-words 48000 --idea "Your book idea"
+python book_genesis.py new C:\Books\MyNovel --host codex --model gpt-5.6-luna --effort high --author "Your Name" --autonomous --chapters 12 --min-words 40000 --max-words 48000 --weighted-quality-target 9.0 --idea "Your book idea"
 python book_genesis.py resume C:\Books\MyNovel
 python book_genesis.py status C:\Books\MyNovel
 ```

@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from export_book import Chapter, count_prose_words
+from export_book import Chapter, count_prose_words, _XML_INVALID_RE
 from workflow_state import digest, encoded, freeze, read_json
 
 
@@ -37,6 +37,8 @@ def validate_shape(value, schema, where="response"):
         errors.append(f"{where}: invalid enum value")
     if kind == "string" and not value.strip():
         errors.append(f"{where}: empty text")
+    if kind == "string" and (_XML_INVALID_RE.search(value) or re.search(r"[\ud800-\udfff]", value)):
+        errors.append(f"{where}: text contains XML-invalid control characters or unpaired Unicode surrogates; return valid readable Unicode")
     if kind == "object":
         if set(value) != set(schema["properties"]):
             errors.append(f"{where}: missing or unexpected fields")
@@ -65,6 +67,7 @@ def plan_schema(chapters):
     chapter = obj({"number": INTEGER, **{name: TEXT for name in ("title", "point_of_view", "time_window", "purpose",
         "scene_pressure", "events", "characters", "continuity", "opening", "ending")}})
     return obj({"opening_strategy": TEXT,
+        "writer_facts": obj({name: array(TEXT) for name in ("identities", "calendar", "setting")}),
         "chapters": {**array(chapter), "minItems": chapters, "maxItems": chapters},
         "canon": obj({name: array(TEXT) for name in ("characters", "timeline", "world_rules", "objects", "knowledge")})})
 
@@ -81,6 +84,8 @@ def render_plan(data):
         outline += [f"## Chapter {chapter['number']}: {chapter['title']}", ""]
         outline += [f"**{key.replace('_', ' ').capitalize()}:** {value}\n" for key, value in chapter.items() if key not in ("number", "title")]
     ledger = ["# Planned continuity canon", "", "These are planned facts; chapter drafts separately record demonstrated events.", ""]
+    for category, facts in data["writer_facts"].items():
+        ledger += ["## Baseline " + category.title(), ""] + [f"- {fact}" for fact in facts] + [""]
     for category, facts in data["canon"].items():
         ledger += ["## " + category.replace("_", " ").title(), ""] + [f"- {fact}" for fact in facts] + [""]
     return {"artifacts/07-outline.md": "\n".join(outline), "artifacts/08-opening-strategy.md": data["opening_strategy"],
@@ -113,7 +118,15 @@ def validate_prose(path: Path, *, low: int, high: int):
     report = validate_json(path, PROSE_SCHEMA)
     if not report["valid"]:
         return report
-    prose = read_json(path)["prose"]
+    return validate_prose_text(read_json(path)["prose"], path, low=low, high=high, report=report)
+
+
+def validate_prose_text(prose: str, path: Path, *, low: int, high: int, report=None):
+    report = report or {"valid": True, "errors": []}
+    report["errors"] += validate_shape(prose, TEXT, "prose")
+    if report["errors"]:
+        report["valid"] = False
+        return report
     lines = prose.splitlines()
     if not lines or not re.match(r"^#{1,6} \S", lines[0]):
         report["errors"].append("Prose needs a leading Markdown chapter heading")
@@ -130,6 +143,40 @@ def validate_prose(path: Path, *, low: int, high: int):
     return report
 
 
+CORRECTION_SCHEMA = obj({"replacements": {**array(obj({"before": TEXT, "after": TEXT})), "minItems": 1, "maxItems": 64}})
+
+
+def apply_corrections(original: str, replacements: list[dict]) -> str:
+    """Apply disjoint, unambiguous literal edits; no fuzzy matching or rewriting."""
+    spans = []
+    for row in replacements:
+        before, after = row["before"], row["after"]
+        if not before or before == after or original.count(before) != 1:
+            raise ValueError("Each correction must change one unique exact passage from the original chapter")
+        start = original.index(before)
+        spans.append((start, start + len(before), after))
+    spans.sort()
+    if any(left[1] > right[0] for left, right in zip(spans, spans[1:])):
+        raise ValueError("Correction passages overlap")
+    candidate = original
+    for start, end, after in reversed(spans):
+        candidate = candidate[:start] + after + candidate[end:]
+    if candidate == original or candidate.splitlines()[0] != original.splitlines()[0]:
+        raise ValueError("Factual corrections must retain the heading and change the body")
+    return candidate
+
+
+def validate_corrections(path: Path, original: str, *, low: int, high: int):
+    report = validate_json(path, CORRECTION_SCHEMA)
+    if report["valid"]:
+        try:
+            candidate = apply_corrections(original, read_json(path)["replacements"])
+            report = validate_prose_text(candidate, path, low=low, high=high, report=report)
+        except ValueError as exc:
+            report.update(valid=False, errors=[str(exc)])
+    return report
+
+
 def text_catalog(files: dict[str, str]):
     return {"sources": [{"source": name, "sha256": digest(text.encode("utf-8")),
                          "passages": [{"id": f"s{i:02d}p{j:04d}", "text": para}
@@ -140,7 +187,10 @@ def text_catalog(files: dict[str, str]):
 def review_schema(catalog: dict, *, passes: list[str]):
     ids = [p["id"] for source in catalog["sources"] for p in source["passages"]]
     return obj({"verdict": enum(("pass", "revise", "major_rewrite")),
-        "coverage": array(TEXT), "checks": array(obj({"name": enum(passes), "result": enum(("pass", "finding")), "reason": TEXT})),
+        "coverage": {**array(enum(source["source"] for source in catalog["sources"])),
+                     "minItems": len(catalog["sources"]), "maxItems": len(catalog["sources"])},
+        "checks": {**array(obj({"name": enum(passes), "result": enum(("pass", "finding")), "reason": TEXT})),
+                   "minItems": len(passes), "maxItems": len(passes)},
         "findings": array(obj({"severity": enum(("high", "medium", "low")),
             "kind": enum(("continuity", "structural", "character", "voice", "prose", "proofread")),
             "chapters": array(INTEGER), "evidence_ids": array(enum(ids)), "problem": TEXT, "fix": TEXT, "preserve": TEXT})),

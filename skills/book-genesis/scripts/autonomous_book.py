@@ -17,6 +17,7 @@ import sys
 
 from build_comparison import build_comparison, READERS
 from check_progress import _parse_yaml_subset, parse_project_state, reconcile_book
+from check_correction import prepare as prepare_correction, decision as correction_decision
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
@@ -29,7 +30,8 @@ from verify_book import verify_book
 from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEMA, TEXT,
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
     validate_json, validate_prose, validate_review, neutral_contract_schema,
-    plan_schema, validate_neutral, render_plan)
+    plan_schema, validate_neutral, render_plan, CORRECTION_SCHEMA, apply_corrections, validate_corrections)
+from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
 
@@ -54,7 +56,7 @@ def production_allowance(chapters, remaining, used, min_words, max_words):
 
 class BookWorkflow:
     def __init__(self, root: Path, command: dict, *, chapters: int, min_words: int, max_words: int,
-                 quality_target: float = 8.5, transport=None):
+                 quality_target: float = 8.5, weighted_quality_target: float | None = None, transport=None):
         self.root = root.resolve()
         self.skill = Path(__file__).resolve().parents[1]
         self.config = read_json(self.root / ".book-genesis/project.json")
@@ -64,6 +66,8 @@ class BookWorkflow:
             raise WorkflowError("An explicit title-page author is required before unattended execution")
         if not 1 <= chapters <= 100 or min_words < chapters * 100 or max_words < min_words or not 0 <= quality_target <= 9.2:
             raise WorkflowError("Invalid chapter, production length or quality contract")
+        if weighted_quality_target is not None and not 0 <= weighted_quality_target < 9.2:
+            raise WorkflowError("Weighted target must be below the calibrated maximum 9.2")
         self.manifest = list(_parse_yaml_subset(self.ref("pipeline/manifest.yaml")).values())
         self.command = command
         self.transport = transport
@@ -72,6 +76,8 @@ class BookWorkflow:
             "project_sha256": digest((self.root / ".book-genesis/project.json").read_bytes()),
             "install_sha256": digest((self.root / ".book-genesis/skills/.book-genesis-install.json").read_bytes()),
             "runner_sha256": digest(Path(__file__).read_bytes()), "command": command}
+        if weighted_quality_target is not None:
+            self.contract["weighted_quality_target"] = weighted_quality_target
         self.journal = Journal(self.root, self.contract)
         self.state_path = self.root / "PROJECT_STATE.yaml"
         if not self.state_path.exists():
@@ -189,7 +195,12 @@ class BookWorkflow:
                 "give only each chapter's relevant character/voice cards, current knowledge/custody facts and scene work. "
                 "Do not expose future reveals in early packets. Ledger facts must distinguish planned from demonstrated events. "
                 "The program supplies exact per-chapter word allowances. Return only the neutral structured fields: "
-                "chapters, canon and opening_strategy. Keep each chapter entry below 300 words, the full canon below 1500, "
+                "chapters, canon, writer_facts and opening_strategy. writer_facts is the stable baseline supplied to EVERY writer: "
+                "canonical full names and ages (explicitly unstated when unknown), relationships, setting rules and an unambiguous "
+                "calendar anchor mapping story days to weekdays and dated deadlines. Keep it under 600 words. "
+                "Exclude future revelations, secret identities, planned rescues and character arc outcomes from that baseline; "
+                "those belong only in their relevant chapter entries and the full canon. Ensure chapter POV and time windows "
+                "agree with this baseline and the author contract. Keep each chapter entry below 300 words, the full canon below 1500, "
                 "and the opening strategy below 600. The program renders the outline and ledger from those facts. "
                 "Do not include verification claims, process verdicts, a brief-check register, repair history or references to findings. "
                 "An independent verifier and the program supply the separate process record.")
@@ -233,7 +244,8 @@ class BookWorkflow:
         schema = review_schema(catalog, passes=passes)
         packet = ("Read-only independent review. Use only this packet; do not use tools or seek prior reports. "
             "Report evidence by the supplied passage IDs. Read ALL supplied sources in order. "
-            "coverage lists every source name exactly once; checks lists every required check exactly once. "
+            "coverage lists ONLY names from the Complete sources catalog exactly once; do not list the reference guides as sources. "
+            "checks lists every required check exactly once. "
             "No findings is valid only when the checks support it. A negative verdict is valid.\n\n"
             + instructions + "\n\nRequired checks: " + json.dumps(passes) + "\n\nComplete sources:\n" + json.dumps(catalog, ensure_ascii=False))
         response, validation = self.call(key, packet, schema,
@@ -281,6 +293,7 @@ class BookWorkflow:
                     f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
+                        "stable_story_facts": self.plan["writer_facts"],
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                         "previous_tail": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
@@ -318,10 +331,11 @@ class BookWorkflow:
                 rows.append({"chapter": number, "facts": read_json(self.root / step["response"])["continuity_delta"]})
         return rows
 
-    def stage_response(self, key, response):
+    def stage_response(self, key, response, *, corrected_prose=None):
         folder = self.root / "work/attempts" / key
         source = folder / "extracted.md"
-        freeze(source, read_json(response)["prose"].encode("utf-8"))
+        prose = corrected_prose if corrected_prose is not None else read_json(response)["prose"]
+        freeze(source, prose.encode("utf-8"))
         stage = folder / "stage"
         if not (stage / "receipt.json").exists():
             stage_chapter(source, stage)
@@ -329,7 +343,8 @@ class BookWorkflow:
         if receipt["source_sha256"] != digest(source.read_bytes()) or receipt["staged_sha256"] != digest((stage / "chapter.md").read_bytes()):
             raise WorkflowError("Staged chapter changed")
         freeze(folder / "extraction.json", encoded({"response": self.journal.record_file(response), "extracted": self.journal.record_file(source),
-            "stage": self.journal.record_file(stage / "chapter.md")}))
+            "stage": self.journal.record_file(stage / "chapter.md"),
+            "extraction": "verified_literal_replacements" if corrected_prose is not None else "json_prose_field"}))
         return stage / "chapter.md"
 
     def neutral_sources(self, chapters):
@@ -412,10 +427,12 @@ class BookWorkflow:
             dimensions.append({"name": name, "raw_median": raw, "calibrated": round(max(0, raw - .8), 3),
                                "weight": weight, "disagreement": max(scores) - min(scores) >= 1.5})
         floor = min(d["calibrated"] for d in dimensions)
+        weighted = round(sum(d["calibrated"] * d["weight"] for d in dimensions) / sum(weights.values()), 3)
+        weighted_target = self.contract.get("weighted_quality_target")
         return {"readings": rows, "dimensions": dimensions, "floor": floor,
-            "weighted": round(sum(d["calibrated"] * d["weight"] for d in dimensions) / sum(weights.values()), 3),
+            "weighted": weighted,
             "confidence": "low" if any(d["disagreement"] for d in dimensions) else "medium",
-            "passed": floor >= self.contract["quality_target"], "calibration": -0.8}
+            "passed": floor >= self.contract["quality_target"] and (weighted_target is None or weighted > weighted_target), "calibration": -0.8}
 
     def measure(self, number):
         key = f"measure-{number}"
@@ -433,22 +450,29 @@ class BookWorkflow:
         proof = self.review(f"{key}-proof", {p.name: p.read_text(encoding="utf-8") for p in snapshot}, PROOF_PASSES,
             self.ref("specialists/production.md").split("## Part 2")[0] + "\nTechnical proofreading only, no stylistic rewrite. "
             "List actionable corrections with source evidence; do not invent defects to fill the form.")
-        panel_passed = all(panel["passed"] for panel in panels) and not any(f["severity"] == "high" for f in audit["data"]["findings"])
+        issues = reconcile_issues(self, number, snapshot)
+        panel_passed = (all(panel["passed"] for panel in panels)
+            and not any(f["severity"] == "high" for f in audit["data"]["findings"]) and issues["passed"])
         result = {"number": number, "sources": {p.name: digest(p.read_bytes()) for p in snapshot}, "panels": panels,
-            "audit": audit, "rubric": rubric, "proofread": proof, "panel_passed": panel_passed,
+            "audit": audit, "rubric": rubric, "proofread": proof, "issue_ledger": issues, "panel_passed": panel_passed,
             "passed": panel_passed and rubric["passed"] and audit["data"]["verdict"] == "pass"
                       and audit["data"]["ending_resolved"] and not proof["data"]["findings"]}
         prefix = key + "-"
         result["evidence"] = [row for name, step in self.journal.data["steps"].items() if name.startswith(prefix)
                               for row in step.get("evidence", [])]
         result["evidence"].append(self.journal.record_file(self.root / f"work/snapshots/{key}/snapshot.json"))
+        result["evidence"] += issues["evidence"] + ([issues["ledger"]] if "ledger" in issues else [])
         freeze(result_path, encoded(result))
         self.log(f"Review {number} | panel {'passed' if panel_passed else 'needs work'} | audit {audit['data']['verdict']} | calibrated craft floor {rubric['floor']:.2f}/10")
         return result
 
     def revision_plan(self, number, measurement):
+        open_issues = measurement["issue_ledger"]["open"]
+        issue_ids = [issue["id"] for issue in open_issues]
         schema = obj({"strategy": TEXT, "deferred": array(TEXT), "tasks": array(obj({"chapter": INTEGER, "ticket": TEXT,
-            "preserve": TEXT, "revision_class": enum(("continuity", "structural", "character", "voice", "prose", "proofread"))}))})
+            "preserve": TEXT, "mode": enum(("factual", "creative")),
+            "issue_ids": array(enum(issue_ids)) if issue_ids else {**array(TEXT), "maxItems": 0},
+            "revision_class": enum(("continuity", "structural", "character", "voice", "prose", "proofread"))}))})
         # Evaluators keep their scores. Editors get observations, never numbers.
         reasons = [{"dimension": d["name"], "reason": d["reason"], "evidence": d["evidence"]}
                    for reading in measurement["rubric"]["readings"] for d in reading["data"]["dimensions"]]
@@ -456,7 +480,12 @@ class BookWorkflow:
         packet = ("Create one bounded, coherent revision plan. Use only this packet; no tools. "
             "Fix supported high-severity audit defects first, then shared reader stops, then the weakest craft risks. "
             "Address setup AND consequences; do not substitute more explanation for a missing scene. "
-            "Give at most one task per affected chapter, joining its dependent fixes; preserve remembered strengths. "
+            "Give at most one factual task and one creative task per affected chapter. First separate strictly factual "
+            "corrections supported by existing canon (names, established ages/dates, typos) from creative changes. "
+            "Do not mix stylistic edits into a factual task. New canon choices, viewpoint, actions, event order, motivation "
+            "or a missing scene require creative mode. All factual tasks run before any creative task. "
+            "Each task must name the historical issue IDs it addresses. Every required unresolved issue must have a task. "
+            "Join dependent fixes coherently and preserve remembered strengths. "
             "Do not change the approved premise, POV, time window, chapter count or production length. "
             "A later pass must learn from failed earlier strategies rather than repeat them. "
             "A harmless taste difference is not a mandate to rewrite. Defer low-priority suggestions explicitly.\n\n"
@@ -464,21 +493,30 @@ class BookWorkflow:
                 "current_sources": self.neutral_sources(self.snapshot(f"measure-{number - 1}")),
                 "audit_findings": measurement["audit"]["data"]["findings"],
                 "proofread_findings": measurement["proofread"]["data"]["findings"],
+                "unresolved_findings": open_issues,
                 "reader_experience": reports, "craft_observations": reasons,
-                "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]}, ensure_ascii=False))
+                "earlier_revision_outcomes": [row.get("outcomes", []) for row in self.journal.data["passes"][:number - 1]],
+                "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]}, ensure_ascii=False, sort_keys=True))
         def validate(path):
             report = validate_json(path, schema)
             if report["valid"]:
-                ns = [t["chapter"] for t in read_json(path)["tasks"]]
-                if len(ns) != len(set(ns)) or any(not 1 <= n <= self.contract["chapters"] for n in ns):
-                    report.update(valid=False, errors=["Revision tasks require unique planned chapter numbers"])
+                tasks = read_json(path)["tasks"]
+                identities = [(t["chapter"], t["mode"]) for t in tasks]
+                if len(identities) != len(set(identities)) or any(not 1 <= n <= self.contract["chapters"] for n, _ in identities):
+                    report["errors"].append("Revision tasks require unique chapter/mode pairs within the planned chapters")
+                addressed = {identifier for task in tasks for identifier in task["issue_ids"]}
+                required = {issue["id"] for issue in open_issues if issue["requires_resolution"]}
+                if not required.issubset(addressed):
+                    report["errors"].append("Revision plan omits unresolved required issues: " + ", ".join(sorted(required - addressed)))
+                report["valid"] = not report["errors"]
             return report
-        response, _ = self.call(f"revision-plan-{number}", packet, schema, validate)
+        response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
         return read_json(response)
 
-    def revise_chapter(self, number, task):
+    def revise_chapter(self, number, task, strategy):
         n = task["chapter"]
-        key = f"revision-{number}-c{n:02d}"
+        factual = task["mode"] == "factual"
+        key = f"revision-{number}-c{n:02d}" + ("-facts" if factual else "")
         decision_path = self.root / f"evaluations/decisions/{key}.json"
         outcome_path = self.root / f"evaluations/decisions/{key}-outcome.json"
         if outcome_path.exists():
@@ -510,21 +548,96 @@ class BookWorkflow:
             low, high = allowance["low"], allowance["high"]
         else:
             freeze(accepted.parent / "allowance.json", encoded({"low": low, "high": high}))
-            packet = ("Revise this complete chapter to address ONLY the named tickets and their required consequences. "
-                "Use only this packet; no tools. Return the full chapter, including unchanged passages, in prose, "
-                "with its existing heading, and an accurate continuity_delta. Preserve strengths, voice and asymmetry. "
+            output_instruction = ("Return only literal replacements with before/after text. Each before must occur exactly once "
+                "in the original chapter, using enough unchanged surrounding text to be unambiguous. Replacements cannot overlap. "
+                "Preserve all other bytes. Correct only demonstrable facts or typos supported by existing canon, not style, "
+                "actions, motivation, event order or the heading. A fresh correctness checker will inspect every difference. "
+                if factual else "Return the full chapter, including unchanged passages, in prose, with its existing heading, "
+                "and an accurate continuity_delta. Preserve strengths, voice and asymmetry. ")
+            packet = ("Address ONLY the named tickets and their required consequences. Use only this packet; no tools. "
+                + output_instruction +
                 "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
                 "The revision must remain a real scene, not explanatory compliance.\n\n" + self.ref("specialists/revision-editor.md")
-                + "\n\n" + json.dumps({"task": task, "accepted_chapter": original_text,
+                + "\n\n" + json.dumps({"task": task, "shared_revision_strategy": strategy, "accepted_chapter": original_text,
                     "adjacent_context": [p.read_text(encoding="utf-8") for p in context],
                     "brief": (self.root / "artifacts/00-brief.md").read_text(encoding="utf-8"),
                     "characters": (self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}, ensure_ascii=False))
-        response, _ = self.call(key, packet, PROSE_SCHEMA,
-            lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
-        candidate = self.stage_response(key, response)
+        schema = CORRECTION_SCHEMA if factual else PROSE_SCHEMA
+        validator = (lambda p: validate_corrections(p, original_text, low=low, high=high)) if factual else (lambda p: validate_prose(p, low=low, high=high))
+        try:
+            response, _ = self.call(key, packet, schema, validator, feedback=True, feedback_response=True)
+        except WorkflowError:
+            step = self.journal.data["steps"].get(key, {})
+            attempts = step.get("attempts", [])
+            # A malformed optional revision cannot destroy the accepted book or
+            # stop delivery. Auth, transport, tampering and unverified work still
+            # block. A failed draft has no accepted chapter and never uses this.
+            if step.get("status") != "failed" or not attempts or not all(row.get("validation_errors") for row in attempts):
+                raise
+            evidence = []
+            for attempt in attempts:
+                folder = self.root / "work/host-calls" / attempt["call_id"]
+                receipt = read_json(folder / "receipt.json")
+                for name in ("packet", "response", "stdout", "stderr"):
+                    if digest((folder / name).read_bytes()) != receipt[name + "_sha256"]:
+                        raise WorkflowError("Rejected revision evidence changed")
+                    evidence.append(self.journal.record_file(folder / name))
+                evidence.append(self.journal.record_file(folder / "receipt.json"))
+            outcome = {"chapter": n, "mode": task["mode"], "decision": "reject", "reason": "Both bounded revision attempts failed output validation; accepted text retained.",
+                       "validation_errors": [row["validation_errors"] for row in attempts], "evidence": evidence}
+            step["rejected_evidence"] = evidence
+            self.journal.save()
+            freeze(outcome_path, encoded(outcome))
+            self.log(f"Revision pass {number}, chapter {n} | rejected invalid proposals; accepted chapter retained")
+            return outcome
+        corrected = apply_corrections(original_text, read_json(response)["replacements"]) if factual else None
+        candidate = self.stage_response(key, response, corrected_prose=corrected)
+        if factual:
+            decision = self.check_factual_revision(key, task, accepted, candidate, context, decision_path)
+        else:
+            decision = self.compare_revision(key, n, accepted, candidate, context, decision_path)
+        if decision["decision"] == "promote":
+            receipt = self.root / f"evaluations/promotions/{key}.json"
+            self.journal.publish(candidate, target, receipt=receipt, promote=lambda: promote_chapter(target, candidate, decision_path, receipt))
+            self.journal.data.setdefault("revision_chapters", [])
+            if n not in self.journal.data["revision_chapters"]:
+                self.journal.data["revision_chapters"].append(n)
+            self.journal.save()
+            self.sync()
+        outcome = {"chapter": n, "mode": task["mode"], "decision": decision["decision"],
+                   "reason": decision.get("reason", "Fresh evidence-bound factual verification"),
+                   "candidate": self.journal.record_file(candidate), "evidence": self.journal.record_file(decision_path)}
+        freeze(outcome_path, encoded(outcome))
+        detail = "factual correctness check" if factual else f"{decision['revision_votes']}/4 preferred the candidate"
+        self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {detail}")
+        return outcome
+
+    def check_factual_revision(self, key, task, accepted, candidate, context, decision_path):
+        bundle = self.root / f"work/corrections/{key}"
+        manifest = bundle / "manifest.private.json"
+        if not manifest.exists():
+            prepare_correction(accepted, candidate,
+                [self.root / f"artifacts/{name}" for name in ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")],
+                context, task["ticket"], bundle, publication_target=self.root / f"manuscript/chapters/chapter-{task['chapter']:02d}.md")
+        response, _ = self.call(key + "-check", (bundle / "review.packet.md").read_bytes(), read_json(bundle / "review.schema.json"))
+        report = read_json(response)
+        if report["verdict"] == "pass" and all(report[k] for k in ("canon_supported", "factual_only", "dependencies_safe")) and not report["findings"]:
+            # This verifies the original native receipt, complete sources and all
+            # cited evidence again. A model's pass alone never publishes prose.
+            if decision_path.exists():
+                from check_correction import verify
+                verify(manifest, response.parent)
+                return read_json(decision_path)
+            return correction_decision(manifest, response.parent, decision_path)
+        decision = {"decision": "reject", "reason": "Factual checker blocked: " + "; ".join(report["findings"]),
+                    "report": self.journal.record_file(response), "manifest": self.journal.record_file(manifest)}
+        freeze(decision_path, encoded(decision))
+        return decision
+
+    def compare_revision(self, key, n, accepted, candidate, context, decision_path):
         bundle = self.root / f"work/comparisons/{key}"
         if not (bundle / "manifest.private.json").exists():
             build_comparison(accepted, candidate, bundle, context)
@@ -539,19 +652,7 @@ class BookWorkflow:
         freeze(bundle / "index.json", encoded(index))
         decision = decide(bundle / "manifest.private.json", bundle / "index.json", n)
         freeze(decision_path, encoded(decision))
-        if decision["decision"] == "promote":
-            receipt = self.root / f"evaluations/promotions/{key}.json"
-            self.journal.publish(candidate, target, receipt=receipt, promote=lambda: promote_chapter(target, candidate, decision_path, receipt))
-            self.journal.data.setdefault("revision_chapters", [])
-            if n not in self.journal.data["revision_chapters"]:
-                self.journal.data["revision_chapters"].append(n)
-            self.journal.save()
-            self.sync()
-        outcome = {"chapter": n, "decision": decision["decision"], "reason": decision["reason"],
-                   "candidate": self.journal.record_file(candidate), "evidence": self.journal.record_file(decision_path)}
-        freeze(outcome_path, encoded(outcome))
-        self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {decision['revision_votes']}/4 preferred the candidate")
-        return outcome
+        return decision
 
     def revision(self):
         if self.journal.data["phase"] != 5:
@@ -570,7 +671,7 @@ class BookWorkflow:
             if len(plans) < number:
                 plans.append(plan)
                 self.journal.save()
-            outcomes = [self.revise_chapter(number, task) for task in sorted(plan["tasks"], key=lambda t: t["chapter"])]
+            outcomes = [self.revise_chapter(number, task, plan["strategy"]) for task in sorted(plan["tasks"], key=lambda t: (t["mode"] != "factual", t["chapter"]))]
             row.update(status="revisions_saved", outcomes=outcomes)
             self.journal.save()
             measurement = self.measure(number)
@@ -610,7 +711,8 @@ class BookWorkflow:
             f"Panel: {'passed' if result['panel_passed'] else 'not met'}. Proofread findings remaining: {len(result['proofread']['data']['findings'])}.",
             f"Independence B: fresh native {self.config['model']} contexts, effort {self.config['effort']}, one model family. Confidence: {result['rubric']['confidence']}.",
             "No outside human validation, market test or publication approval. No prediction of sales.", "",
-            "## Remaining findings", json.dumps(result["audit"]["data"]["findings"] + result["proofread"]["data"]["findings"], ensure_ascii=False, indent=2)]
+            "## Remaining findings", json.dumps(result["audit"]["data"]["findings"] + result["proofread"]["data"]["findings"], ensure_ascii=False, indent=2),
+            "## Unresolved historical findings", json.dumps(result["issue_ledger"]["open"], ensure_ascii=False, indent=2)]
         path = self.root / "artifacts/11-genesis-score.md"
         freeze(path, ("\n".join(lines) + "\n").encode("utf-8"))
         self.finish(6, [path], "passed" if result["passed"] else "gates_not_met")
@@ -712,10 +814,12 @@ def main():
     parser.add_argument("--min-words", type=int, required=True)
     parser.add_argument("--max-words", type=int, required=True)
     parser.add_argument("--quality-target", type=float, default=8.5)
+    parser.add_argument("--weighted-quality-target", type=float)
     args = parser.parse_args()
     try:
         return BookWorkflow(args.book_dir, read_json(args.command_file), chapters=args.chapters,
-            min_words=args.min_words, max_words=args.max_words, quality_target=args.quality_target).run()
+            min_words=args.min_words, max_words=args.max_words, quality_target=args.quality_target,
+            weighted_quality_target=args.weighted_quality_target).run()
     except (ValueError, OSError, RuntimeError) as exc:
         print(f"Book paused with all evidence preserved: {exc}", file=sys.stderr)
         return 1

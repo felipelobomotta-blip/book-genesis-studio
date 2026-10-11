@@ -44,6 +44,8 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
             "--book-dir", str(root), "--command-file", str(command_file)]
     for name in ("chapters", "min_words", "max_words", "quality_target"):
         argv += ["--" + name.replace("_", "-"), str(contract[name])]
+    if contract.get("weighted_quality_target") is not None:
+        argv += ["--weighted-quality-target", str(contract["weighted_quality_target"])]
     with _ownership(root):
         folder = root / ".book-genesis/launches"
         folder.mkdir(exist_ok=True)

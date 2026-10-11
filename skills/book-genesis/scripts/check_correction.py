@@ -111,7 +111,7 @@ def _check_versions(texts: dict, accepted: Path) -> int:
 
 
 def prepare(accepted: Path, candidate: Path, canon: list[Path], context: list[Path],
-            ticket: str, output: Path) -> dict:
+            ticket: str, output: Path, *, publication_target: Path | None = None) -> dict:
     if not ticket.strip() or not canon:
         raise CorrectionError("a factual ticket and at least one existing canon source are required")
     entries = [(accepted, "accepted"), (candidate, "candidate")]
@@ -125,6 +125,12 @@ def prepare(accepted: Path, candidate: Path, canon: list[Path], context: list[Pa
     if len({r["path"] for r in records}) != len(records):
         raise CorrectionError("correction sources must be distinct files")
     chapter = _check_versions(texts, accepted)
+    target_record = None
+    if publication_target is not None:
+        publication_target = publication_target.resolve()
+        if publication_target.name != accepted.name or digest(publication_target) != records[0]["sha256"]:
+            raise CorrectionError("publication target must be the same chapter and match the frozen accepted bytes")
+        target_record = {"path": str(publication_target), "sha256": records[0]["sha256"]}
     packet = _packet(ticket, texts)
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -134,6 +140,8 @@ def prepare(accepted: Path, candidate: Path, canon: list[Path], context: list[Pa
                 "ticket": ticket, "sources": records,
                 "packet_sha256": digest(output / "review.packet.md"),
                 "schema_sha256": digest(output / "review.schema.json")}
+    if target_record is not None:
+        manifest["publication_target"] = target_record
     for row in records:
         if digest(Path(row["path"])) != row["sha256"]:
             raise CorrectionError("source changed while preparing the correction")
@@ -215,11 +223,17 @@ def verify(manifest_path: Path, call_dir: Path) -> dict:
     passed = report["verdict"] == "pass" and all(report[k] for k in ("canon_supported", "factual_only", "dependencies_safe")) and not report["findings"]
     if not passed:
         raise CorrectionError("fresh reviewer blocked this correction: " + "; ".join(report["findings"]))
+    target = manifest.get("publication_target", {"path": by_source["accepted"]["path"], "sha256": by_source["accepted"]["sha256"]})
+    if (not isinstance(target, dict) or set(target) != {"path", "sha256"}
+            or target["sha256"] != by_source["accepted"]["sha256"]
+            or Path(target["path"]).name != Path(by_source["accepted"]["path"]).name):
+        raise CorrectionError("invalid frozen publication target")
     recheck(guarded)
     return {"rule": "fresh_verified_factual_correction", "chapter": manifest["chapter"],
             "ticket": manifest["ticket"], "accepted_sha256": by_source["accepted"]["sha256"],
             "candidate_sha256": by_source["candidate"]["sha256"],
             "accepted_path": by_source["accepted"]["path"], "candidate_path": by_source["candidate"]["path"],
+            "publication_target": target["path"],
             "report_sha256": receipt["response_sha256"], "resolved_evidence": resolved, "guarded_sources": guarded}
 
 

@@ -201,6 +201,8 @@ def fixture_response(call_id, packet, schema, root):
         return value
     if "canon" in props:
         return {"opening_strategy": "Begin with the stolen letter arriving at the door.",
+            "writer_facts": {name: ["The courier is Ada Vale, aged thirty; the recipient is Jo Vale; it is Monday."]
+                             for name in props["writer_facts"]["properties"]},
             "chapters": [{"number": n, "title": f"Chapter {n}", **{key: "A consequential choice with a complete ending."
                 for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)],
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
@@ -233,7 +235,14 @@ def fixture_response(call_id, packet, schema, root):
             "confidence": {"level": "medium", "reason": "Test fixture."}, "limitations": "Synthetic test only, not literary evidence."}
     if "strategy" in props:
         return {"strategy": "Repair the missing confession.", "deferred": [], "tasks": [{"chapter": 1,
-            "ticket": "Confess before the opened door.", "preserve": "Letter and door.", "revision_class": "character"}]}
+            "ticket": "Confess before the opened door.", "preserve": "Letter and door.", "revision_class": "character", "mode": "creative",
+            "issue_ids": props["tasks"]["items"]["properties"]["issue_ids"]["items"].get("enum", [])}]}
+    if "statuses" in props:
+        catalog = json.loads(packet.split("Current complete sources:\n", 1)[1])
+        chapter = next(source for source in catalog["sources"] if source["source"] == "chapter-01.md")
+        return {"statuses": [{"id": identifier, "status": "open" if "issue-check-0" in call_id else "resolved",
+            "reason": "The confession is absent in the original and present after the synthetic edit.",
+            "evidence_ids": [chapter["passages"][1]["id"]]} for identifier in props["statuses"]["items"]["properties"]["id"]["enum"]]}
     if "editorial_package" in props:
         return {"editorial_package": "# Package\n\nA full synthetic editorial package for the letter story.",
                 "positioning": "# Positioning\n\nUnverified positioning hypothesis.",
@@ -318,6 +327,13 @@ class FullWorkflowTests(unittest.TestCase):
             plan_packet = (root / "work/workflow/plan-check-1/packet.md").read_text(encoding="utf-8")
             neutral_sources = json.loads(plan_packet.split("Complete sources:\n", 1)[1])
             self.assertEqual([], validate_neutral(neutral_sources))
+            writer = (root / "work/workflow/draft-01/packet.md").read_text(encoding="utf-8")
+            self.assertIn("Ada Vale, aged thirty", writer)
+            editor = (root / "work/workflow/revision-1-c01/packet.md").read_text(encoding="utf-8")
+            self.assertIn('"shared_revision_strategy": "Repair the missing confession."', editor)
+            issues = read_json(root / "evaluations/issues-measure-1.json")
+            self.assertTrue(issues["passed"])
+            self.assertIn("audit-original-f001", [row["id"] for row in issues["issues"]])
             calls = len(list((root / "work/host-calls").iterdir()))
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(0, BookWorkflow(root, COMMAND, **kwargs).run())

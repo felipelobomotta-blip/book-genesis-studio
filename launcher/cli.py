@@ -380,6 +380,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--min-words", type=int, default=40000)
             command.add_argument("--max-words", type=int, default=48000)
             command.add_argument("--quality-target", type=float, default=8.5, help="Private calibrated craft floor; never sent to writers or critics")
+            command.add_argument("--weighted-quality-target", type=float, help="Optional calibrated weighted score to exceed; also private from writers and critics")
     status = commands.add_parser("status", help="Run the existing core's read-only progress and delivery checks")
     status.add_argument("project", type=Path)
     status.add_argument("--json", action="store_true", help="Print the full read-only evidence as one JSON object")
@@ -455,6 +456,10 @@ def _run(args: argparse.Namespace) -> int:
             if not 1 <= args.chapters <= 100 or args.min_words < 100 * args.chapters or args.max_words < args.min_words or not 0 <= args.quality_target <= 9.2:
                 raise ValueError("Invalid unattended chapter, length or quality contract")
             contract = {"chapters": args.chapters, "min_words": args.min_words, "max_words": args.max_words, "quality_target": args.quality_target}
+            if args.weighted_quality_target is not None:
+                if not 0 <= args.weighted_quality_target < 9.2:
+                    raise ValueError("Weighted quality target must be between 0 and less than the calibrated maximum 9.2")
+                contract["weighted_quality_target"] = args.weighted_quality_target
         config = prepare_project(root, host=host, idea=idea, language=args.language, model=args.model, effort=args.effort, autonomous=args.autonomous, author_name=author_name, autonomous_contract=contract)
     else:
         config = saved

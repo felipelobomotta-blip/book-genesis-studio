@@ -79,6 +79,33 @@ class CorrectionGateTests(unittest.TestCase):
                 self.assertIn("Jonah Vale", self.accepted.read_text())
                 self.assertFalse(self.decision.exists())
 
+    def test_snapshot_correction_is_bound_to_one_unchanged_publication_target(self):
+        target = self.root / "manuscript" / self.accepted.name
+        target.parent.mkdir()
+        target.write_bytes(self.accepted.read_bytes())
+        self.bundle = self.root / "snapshot-bundle"
+        correction.prepare(self.accepted, self.candidate, [self.canon], [self.context], "Correct surname.",
+                           self.bundle, publication_target=target)
+        self.manifest = self.bundle / "manifest.private.json"
+        self.write_call()
+        self.freeze()
+        different = self.root / "different" / self.accepted.name
+        different.parent.mkdir()
+        different.write_bytes(target.read_bytes())
+        with self.assertRaisesRegex(PromotionError, "different chapter files"):
+            promote_chapter(different, self.candidate, self.decision, self.receipt)
+        baseline = target.read_bytes()
+        target.write_bytes(baseline + b"Concurrent user edit.")
+        with self.assertRaisesRegex(PromotionError, "frozen accepted bytes"):
+            promote_chapter(target, self.candidate, self.decision, self.receipt)
+        self.assertFalse(self.receipt.exists())
+        target.write_bytes(baseline)
+        promote_chapter(target, self.candidate, self.decision, self.receipt)
+        self.assertEqual(baseline, self.accepted.read_bytes())
+        self.assertEqual(self.candidate.read_bytes(), target.read_bytes())
+        # The frozen source remains verifiable after the canonical promotion.
+        correction.verify(self.manifest, self.call)
+
     def test_invented_or_missing_canon_evidence_and_malformed_reports_fail(self):
         valid = copy.deepcopy(self.report)
         bad = []

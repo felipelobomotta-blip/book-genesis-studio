@@ -53,6 +53,8 @@ def verify_execution(root: Path, *, required_phase: int = 7) -> dict:
         if step["status"] == "completed":
             for row in step["evidence"]:
                 check(row)
+        for row in step.get("rejected_evidence", []):
+            check(row)
     canonical = {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in (root / "manuscript/chapters").glob("*.md")}
     if canonical != data.get("canonical"):
         raise WorkflowError("Controlled manuscript differs from its publication journal")
