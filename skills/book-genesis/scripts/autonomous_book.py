@@ -37,7 +37,7 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
     validate_json, validate_prose, validate_prose_text, validate_review, neutral_contract_schema,
     plan_schema, validate_neutral, render_plan,
-    plan_repair_schema, apply_plan_edits, validate_shape, character_context, production_facts)
+    plan_repair_schema, plan_edit_items, apply_plan_edits, validate_shape, character_context, production_facts)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
@@ -47,17 +47,21 @@ def production_allowance(chapters, remaining, used, min_words, max_words):
 
     Local bounds allow an ordinary long or short chapter. The feasibility bounds
     reserve the remaining chapters' minimum and maximum capacity, so every
-    accepted chapter leaves a route to the unchanged whole-book contract.
+    accepted chapter leaves a route to the unchanged whole-book contract. The
+    ending may be shorter once the book floor is met; its preferred target still
+    aims for an ordinary chapter rather than the shortest permitted fragment.
     """
     if not 1 <= remaining <= chapters or used < 0:
         raise WorkflowError("Invalid remaining production scope")
     local_min = max(100, math.floor(min_words / chapters * .8))
     local_max = math.ceil(max_words / chapters * 1.25)
-    low = max(local_min, min_words - used - (remaining - 1) * local_max)
+    low = max(100 if remaining == 1 else local_min,
+              min_words - used - (remaining - 1) * local_max)
     high = min(local_max, max_words - used - (remaining - 1) * local_min)
     if high < low:
         raise WorkflowError("No feasible chapter allowance within the frozen book length")
-    target = min(high, max(low, round(((min_words + max_words) / 2 - used) / remaining)))
+    target = min(high, max(low, local_min,
+                          round(((min_words + max_words) / 2 - used) / remaining)))
     return low, high, target
 
 
@@ -252,13 +256,14 @@ class BookWorkflow:
                 if attempt == 3:
                     raise WorkflowError("Independent architecture verification still blocks drafting after three bounded plan repairs")
                 repair_schema = plan_repair_schema(data)
-                repair = packet + "\n\nReturn ONLY named text-field edits in the repair schema, not a replacement whole plan. "
-                repair += "Give each allowed field path and its complete new after value. The program retains the exact original "
-                repair += "from this frozen plan; do not repeat it. Change all necessary dependent fields, "
+                repair = packet + "\n\nReturn the fixed edits OBJECT specified by the schema, not an array or a replacement plan. "
+                repair += "Each property is one existing field path. Supply its complete replacement text when changing it; "
+                repair += "use null to retain the exact original. Include all schema properties exactly once, including unchanged "
+                repair += "ones as null. Do not retype unchanged text. Change all necessary dependent fields, "
                 repair += "including promise setup/resolution text and ledger facts. Preserve every unrelated event, detail and physical outcome; "
                 repair += "do not shorten unaffected scenes. The chapter count, numbering and promise chapter assignments are fixed. "
-                repair += "Each field path occurs exactly once. If several defects affect a field, consolidate their changes "
-                repair += "into one complete after value, not alternative values or sequential patches. "
+                repair += "If several defects affect a field, consolidate their changes into its single replacement value, "
+                repair += "not alternative values or sequential patches. At least one field must change substantively. "
                 repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
                 repair += "\nProposed plan:\n" + json.dumps(data, ensure_ascii=False, sort_keys=True)
                 repair += "\nSupported defects:\n" + json.dumps(review["data"]["findings"], ensure_ascii=False, sort_keys=True)
@@ -283,7 +288,7 @@ class BookWorkflow:
                     "base_sha256": digest(encoded(data)), "result_sha256": digest(encoded(proposed)),
                     "response": self.journal.record_file(response),
                     "edits": [{"path": edit["path"], "before": original_fields[edit["path"]], "after": edit["after"]}
-                              for edit in read_json(response)["edits"]]}))
+                              for edit in plan_edit_items(read_json(response)["edits"])]}))
                 data = proposed
             data["files"] = render_plan(data)
             self.publish_artifacts(data)

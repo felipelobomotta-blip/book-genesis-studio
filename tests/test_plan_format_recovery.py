@@ -10,7 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 from autonomous_book import BookWorkflow
-from workflow_roles import apply_plan_edits, plan_schema
+from workflow_roles import apply_plan_edits, plan_schema, plan_repair_schema, plan_text_fields, validate_json
 from workflow_state import digest, encoded, freeze, read_json
 from test_autonomous_workflow import COMMAND, fixture_response, receipt_transport
 
@@ -43,7 +43,8 @@ class PlanFormatRecoveryTests(unittest.TestCase):
                 if "architecture-repair-1" in call_id:
                     repair_packets.append(packet)
                     if len(repair_packets) == 1:
-                        result["edits"].append({**result["edits"][0], "after": "The courier must depart while the door stays closed."})
+                        result["edits"] = [{"path": "/chapters/0/events", "after": result["edits"]["/chapters/0/events"]},
+                            {"path": "/chapters/0/events", "after": "The courier must depart while the door stays closed."}]
                         rejected = result
                 return result
             options = dict(chapters=2, min_words=240, max_words=600, transport=receipt_transport(generate))
@@ -53,7 +54,7 @@ class PlanFormatRecoveryTests(unittest.TestCase):
                 count = len(calls)
                 BookWorkflow(root, COMMAND, **options).planning()
             self.assertEqual(2, len(repair_packets))
-            self.assertIn("Duplicate plan edit paths", repair_packets[1])
+            self.assertIn("edits", repair_packets[1])
             self.assertIn("The courier must depart while the door stays closed.", repair_packets[1])
             self.assertIn(rejected["edits"][0]["after"], repair_packets[1])
             step = workflow.journal.data["steps"]["architecture-repair-1"]
@@ -62,6 +63,42 @@ class PlanFormatRecoveryTests(unittest.TestCase):
             original = root / "work/host-calls/wf-architecture-repair-1-1"
             self.assertEqual(rejected, read_json(original / "response"))
             self.assertEqual(digest((original / "response").read_bytes()), read_json(original / "receipt.json")["response_sha256"])
+
+    def test_nullable_map_retains_unmodified_fields_and_rejects_all_null_rerating(self):
+        plan = fixture_response("architecture", "", plan_schema(2), Path('.'))
+        edits = dict.fromkeys(plan_text_fields(plan))
+        with self.assertRaisesRegex(ValueError, "No substantive plan edit"):
+            apply_plan_edits(plan, edits)
+        edits["/chapters/0/events"] = "The courier physically returns the letter before departure."
+        fixed = apply_plan_edits(plan, edits)
+        self.assertEqual(edits["/chapters/0/events"], fixed["chapters"][0]["events"])
+        self.assertEqual(plan["chapters"][1], fixed["chapters"][1])
+        self.assertEqual(plan["canon"], fixed["canon"])
+        self.assertEqual(plan["promises"], fixed["promises"])
+
+    def test_native_schema_rejects_lists_missing_fields_unknown_fields_and_nontext_edits(self):
+        plan = fixture_response("architecture", "", plan_schema(2), Path('.'))
+        schema = plan_repair_schema(plan)
+        slots = dict.fromkeys(plan_text_fields(plan))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "response.json"
+            path.write_bytes(encoded({"edits": slots}))
+            self.assertTrue(validate_json(path, schema)["valid"])
+            invalid = [[], {**slots, "/chapters/0/number": 42},
+                       {**slots, "/chapters/0/events": ["Alternative one", "Alternative two"]}]
+            missing = dict(slots)
+            missing.pop("/chapters/0/events")
+            invalid.append(missing)
+            for edits in invalid:
+                path.write_bytes(encoded({"edits": edits}))
+                self.assertFalse(validate_json(path, schema)["valid"])
+
+    def test_duplicate_json_keys_never_select_a_replacement_by_position(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "response.json"
+            path.write_text('{"edits":{"/chapters/0/events":"One scene","/chapters/0/events":"Another scene"}}',encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Duplicate JSON key"):
+                read_json(path)
 
 
 if __name__ == "__main__":

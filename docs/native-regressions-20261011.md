@@ -447,3 +447,40 @@ is not a passing result. The corrected full-suite result is recorded separately.
 
 
 The corrected candidate passed all 435 automated tests in 373.804 seconds and the installer suite check. Full native candidate acceptance remains pending; no quality score follows from these automated tests.
+
+## One unambiguous plan edit per field and a feasible ending length
+
+The real native component cases for the preceding candidate passed: complete
+producer-format feedback, rejection of an unrelated creative change, and a
+coordinated route repair accepted by all four anonymous readers. Its full trial
+22 nevertheless failed before drafting. Both architecture-repair responses
+assigned conflicting values to `/chapters/6/continuity`. The original responses
+and failed trial are preserved. A component success does not establish book
+reliability, and repeated instructions did not eliminate this ambiguity.
+
+The new repair schema is a fixed object with one required property for each
+existing editable text path. Each value is replacement text or null to retain
+the original. Lists, alternative values, unknown or missing fields, duplicate
+JSON keys, and no-op repair rounds are rejected. The controller does not choose
+among conflicting edits. Historical list-shaped helper inputs remain readable,
+but new native responses must satisfy the fixed object schema. Five focused
+checks cover these cases, actual format retry, and unchanged completed replay.
+The map-only candidate passed all 438 tests in 376.283 seconds and verify-suite.
+
+Separately, the older frozen Claude trial 19 stopped at its final chapter. Its
+eleven saved chapters contained 45,159 words; a final 2,607-word proposal would
+have produced 47,766 words, inside the agreed 40,000–48,000 range. It was still
+rejected by an artificial 2,666-word chapter floor. The earlier 3,288-word
+proposal did exceed the remaining whole-book ceiling and was correctly rejected.
+Both rejected originals remain unpromoted, and trial 19 remains failed.
+
+The last chapter may now be shorter when the book floor is already met. Its
+preferred target still aims for an ordinary chapter; the whole-book floor,
+ceiling, chapter count and minimum of 100 prose words remain enforced. Two
+regressions cover the observed valid ending, the actual oversized proposal,
+an unmet book floor and insufficient remaining space. All 20 tests in the
+workflow module passed, including complete synthetic revision, both exports,
+completed replay and tampering detection. A fresh full native run is required;
+this fix does not retroactively complete either failed book or raise a score.
+
+The final candidate passed all 440 automated tests in 380.685 seconds and the installer suite check. Fresh native fixed-map checks and full books remain required before claiming native delivery or a literary score.

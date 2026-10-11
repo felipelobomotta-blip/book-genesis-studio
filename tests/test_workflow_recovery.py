@@ -216,8 +216,8 @@ class RecoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "No substantive plan edit"):
             apply_plan_edits(data, [unchanged])
         schema = plan_repair_schema(data)
-        self.assertNotIn("before", schema["properties"]["edits"]["items"]["properties"])
-        self.assertNotIn("/chapters/0/number", schema["properties"]["edits"]["items"]["properties"]["path"]["enum"])
+        self.assertEqual("object", schema["properties"]["edits"]["type"])
+        self.assertNotIn("/chapters/0/number", schema["properties"]["edits"]["properties"])
         with self.assertRaises(ValueError):
             apply_plan_edits(data, edits + edits)
         with self.assertRaises(ValueError):

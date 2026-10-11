@@ -73,11 +73,15 @@ def enum(values):
 
 def validate_shape(value, schema, where="response"):
     """Validate the small schema subset used here; the provider is not trusted."""
+    if "anyOf" in schema:
+        return ([] if any(not validate_shape(value, option, where) for option in schema["anyOf"])
+                else [f"{where}: does not match any permitted type or value"])
     errors = []
     kind = schema.get("type")
     valid_type = {"object": isinstance(value, dict), "array": isinstance(value, list),
                   "string": isinstance(value, str), "integer": type(value) is int,
-                  "boolean": type(value) is bool, "number": type(value) in (int, float)}.get(kind, False)
+                  "boolean": type(value) is bool, "number": type(value) in (int, float),
+                  "null": value is None}.get(kind, False)
     if not valid_type:
         return [f"{where}: expected {kind}"]
     if "enum" in schema and value not in schema["enum"]:
@@ -160,13 +164,29 @@ def plan_repair_schema(data):
     # The journal binds this response to the exact input plan. The controller
     # already owns the original value; asking the model to retype it adds no
     # concurrency protection and makes valid edits fail on typographic drift.
-    return obj({"edits": {**array(obj({"path": enum(plan_text_fields(data)), "after": TEXT})), "minItems": 1}})
+    # Every editable field has exactly one slot. Null retains the original.
+    # A native structured-output decoder can enforce unique object properties;
+    # an array of {path, after} cannot prevent two conflicting values for a path.
+    return obj({"edits": obj({path: {"anyOf": [TEXT, {"type": "null"}]}
+                               for path in sorted(plan_text_fields(data))})})
+
+
+def plan_edit_items(edits):
+    """Literal map application; never select between conflicting alternatives.
+
+    The list form is retained for explicit historical/helper callers. The new
+    native response schema permits only the fixed nullable map.
+    """
+    if isinstance(edits, dict):
+        return [{"path": path, "after": after} for path, after in sorted(edits.items()) if after is not None]
+    return edits
 
 
 def apply_plan_edits(data, edits):
     """Change named text fields only; preserve every other approved plan value."""
     import copy
     from collections import Counter
+    edits = plan_edit_items(edits)
     fields = plan_text_fields(data)
     result = copy.deepcopy(data)
     duplicates = sorted(path for path, count in Counter(e["path"] for e in edits).items() if count > 1)

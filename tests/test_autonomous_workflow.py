@@ -210,8 +210,9 @@ def fixture_response(call_id, packet, schema, root):
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
     if "edits" in props:
         data = json.loads(packet.split("\nProposed plan:\n", 1)[1].split("\nSupported defects:\n", 1)[0])
-        return {"edits": [{"path": "/chapters/0/events",
-                           "after": data["chapters"][0]["events"] + " The courier confesses before the door opens."}]}
+        edits = dict.fromkeys(props["edits"]["properties"])
+        edits["/chapters/0/events"] = data["chapters"][0]["events"] + " The courier confesses before the door opens."
+        return {"edits": edits}
     if "prose" in props:
         revision = "revision-" in call_id
         number = 2 if "draft-02" in call_id else 1
@@ -285,6 +286,24 @@ def fixture_response(call_id, packet, schema, root):
 
 
 class ProductionAllowanceTests(unittest.TestCase):
+    def test_shorter_final_chapter_can_finish_the_observed_in_range_book(self):
+        low, high, target = production_allowance(12, 1, 45159, 40000, 48000)
+        self.assertEqual((100, 2841, 2666), (low, high, target))
+        self.assertLessEqual(low, 2607)
+        self.assertLessEqual(2607, high)
+        self.assertGreater(3288, high)
+        self.assertEqual(47766, 45159 + 2607)
+
+    def test_final_chapter_still_meets_the_book_floor_and_has_prose(self):
+        low, high, target = production_allowance(12, 1, 37000, 40000, 48000)
+        self.assertEqual(3000, low)
+        self.assertLessEqual(low, target)
+        self.assertLessEqual(target, high)
+        low, high, target = production_allowance(12, 1, 47900, 40000, 48000)
+        self.assertEqual((100, 100, 100), (low, high, target))
+        with self.assertRaisesRegex(WorkflowError, "No feasible chapter allowance"):
+            production_allowance(12, 1, 47901, 40000, 48000)
+
     def test_observed_variable_chapters_fit_without_changing_the_book_contract(self):
         low, high, target = production_allowance(12, 12, 0, 40000, 48000)
         self.assertLess(low, 4818)
