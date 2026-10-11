@@ -192,6 +192,48 @@ class RecoveryTests(unittest.TestCase):
         self.assertNotIn("weighted_quality_target", packet)
         self.assertNotIn("quality_target", packet)
 
+    def test_plan_repairs_cannot_rewrite_unrelated_fields_or_change_chapter_numbers(self):
+        from workflow_roles import plan_schema, plan_repair_schema, apply_plan_edits
+        data = fixture_response("architecture", "", plan_schema(2), self.root)
+        after = data["chapters"][0]["events"] + " The rescue physically reaches safety."
+        edits = [{"path": "/chapters/0/events", "before": data["chapters"][0]["events"], "after": after}]
+        repaired = apply_plan_edits(data, edits)
+        self.assertEqual(data["chapters"][1], repaired["chapters"][1])
+        self.assertEqual(data["canon"], repaired["canon"])
+        self.assertEqual(data["writer_facts"], repaired["writer_facts"])
+        self.assertNotEqual(data["chapters"][0]["events"], repaired["chapters"][0]["events"])
+        schema = plan_repair_schema(data)
+        self.assertNotIn("/chapters/0/number", schema["properties"]["edits"]["items"]["properties"]["path"]["enum"])
+        with self.assertRaises(ValueError):
+            apply_plan_edits(data, edits + edits)
+        with self.assertRaises(ValueError):
+            apply_plan_edits(data, [{"path": "/chapters/0/events", "before": "invented original", "after": after}])
+
+    def test_multiple_plan_defects_are_repaired_with_a_durable_three_repair_limit(self):
+        root = self.root
+        freeze(root / ".book-genesis/project.json", encoded({"host": "codex", "collaboration": "autonomous", "author_name": "QA",
+            "model": "exact-test-model", "effort": "high", "idea": "A letter returns.", "language": "English"}))
+        freeze(root / ".book-genesis/skills/.book-genesis-install.json", b'{}')
+        calls = []
+        def generate(call_id, packet, schema, book):
+            calls.append(call_id)
+            if "plan-check-" in call_id:
+                return fixture_response("wf-plan-check-0-1", packet, schema, book)
+            return fixture_response(call_id, packet, schema, book)
+        with redirect_stdout(io.StringIO()):
+            workflow = BookWorkflow(root, COMMAND, chapters=2, min_words=240, max_words=600, transport=receipt_transport(generate))
+            from workflow_state import WorkflowError
+            with self.assertRaisesRegex(WorkflowError, "three bounded plan repairs"):
+                workflow.planning()
+            before = len(calls)
+            resumed = BookWorkflow(root, COMMAND, chapters=2, min_words=240, max_words=600, transport=receipt_transport(generate))
+            with self.assertRaisesRegex(WorkflowError, "three bounded plan repairs"):
+                resumed.planning()
+        self.assertEqual(before, len(calls))
+        self.assertEqual(3, sum("architecture-repair" in call for call in calls))
+        self.assertEqual(4, sum("plan-check-" in call for call in calls))
+        self.assertFalse(list((root / "manuscript/chapters").glob("*.md")))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -68,6 +68,8 @@ def plan_schema(chapters):
         "scene_pressure", "events", "characters", "continuity", "opening", "ending")}})
     return obj({"opening_strategy": TEXT,
         "writer_facts": obj({name: array(TEXT) for name in ("identities", "calendar", "setting")}),
+        "promises": {**array(obj({"promise": TEXT, "setup_action": TEXT, "on_page_resolution": TEXT,
+            "setup_chapters": {**array(INTEGER), "minItems": 1}, "payoff_chapters": {**array(INTEGER), "minItems": 1}})), "minItems": 1},
         "chapters": {**array(chapter), "minItems": chapters, "maxItems": chapters},
         "canon": obj({name: array(TEXT) for name in ("characters", "timeline", "world_rules", "objects", "knowledge")})})
 
@@ -83,6 +85,11 @@ def render_plan(data):
     for chapter in data["chapters"]:
         outline += [f"## Chapter {chapter['number']}: {chapter['title']}", ""]
         outline += [f"**{key.replace('_', ' ').capitalize()}:** {value}\n" for key, value in chapter.items() if key not in ("number", "title")]
+    outline += ["## Story promises and causal payoffs", ""]
+    for promise in data["promises"]:
+        outline += [f"**Promise:** {promise['promise']}",
+            f"**Setup, chapters {promise['setup_chapters']}:** {promise['setup_action']}",
+            f"**Resolution, chapters {promise['payoff_chapters']}:** {promise['on_page_resolution']}", ""]
     ledger = ["# Planned continuity canon", "", "These are planned facts; chapter drafts separately record demonstrated events.", ""]
     for category, facts in data["writer_facts"].items():
         ledger += ["## Baseline " + category.title(), ""] + [f"- {fact}" for fact in facts] + [""]
@@ -90,6 +97,39 @@ def render_plan(data):
         ledger += ["## " + category.replace("_", " ").title(), ""] + [f"- {fact}" for fact in facts] + [""]
     return {"artifacts/07-outline.md": "\n".join(outline), "artifacts/08-opening-strategy.md": data["opening_strategy"],
             "artifacts/09-continuity-ledger.md": "\n".join(ledger)}
+
+
+def plan_text_fields(data, prefix=""):
+    fields = {}
+    if isinstance(data, str):
+        return {prefix: data}
+    for key, value in (enumerate(data) if isinstance(data, list) else data.items()):
+        if isinstance(value, (str, dict, list)):
+            fields.update(plan_text_fields(value, prefix + "/" + str(key)))
+    return fields
+
+
+def plan_repair_schema(data):
+    return obj({"edits": {**array(obj({"path": enum(plan_text_fields(data)), "before": TEXT, "after": TEXT})), "minItems": 1}})
+
+
+def apply_plan_edits(data, edits):
+    """Change named text fields only; preserve every other approved plan value."""
+    import copy
+    fields = plan_text_fields(data)
+    result = copy.deepcopy(data)
+    seen = set()
+    for edit in edits:
+        path = edit["path"]
+        if path in seen or path not in fields or edit["before"] != fields[path] or edit["before"] == edit["after"]:
+            raise ValueError("Plan edit must name one unchanged original text field and a different replacement")
+        seen.add(path)
+        parts = path.strip("/").split("/")
+        target = result
+        for part in parts[:-1]:
+            target = target[int(part)] if isinstance(target, list) else target[part]
+        target[int(parts[-1]) if isinstance(target, list) else parts[-1]] = edit["after"]
+    return result
 
 
 def validate_json(path: Path, schema: dict):

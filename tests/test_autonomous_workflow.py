@@ -203,9 +203,15 @@ def fixture_response(call_id, packet, schema, root):
         return {"opening_strategy": "Begin with the stolen letter arriving at the door.",
             "writer_facts": {name: ["The courier is Ada Vale, aged thirty; the recipient is Jo Vale; it is Monday."]
                              for name in props["writer_facts"]["properties"]},
+            "promises": [{"promise": "Return the letter and confess.", "setup_action": "Ada carries the stolen letter to Jo.",
+                          "on_page_resolution": "Ada confesses and Jo takes the letter.", "setup_chapters": [1], "payoff_chapters": [1, 2]}],
             "chapters": [{"number": n, "title": f"Chapter {n}", **{key: "A consequential choice with a complete ending."
                 for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)],
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
+    if "edits" in props:
+        data = json.loads(packet.split("\nProposed plan:\n", 1)[1].split("\nSupported defects:\n", 1)[0])
+        return {"edits": [{"path": "/chapters/0/events", "before": data["chapters"][0]["events"],
+                           "after": data["chapters"][0]["events"] + " The courier confesses before the door opens."}]}
     if "prose" in props:
         revision = "revision-" in call_id
         number = 2 if "draft-02" in call_id else 1

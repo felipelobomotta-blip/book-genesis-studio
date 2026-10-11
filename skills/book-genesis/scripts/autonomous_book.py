@@ -30,7 +30,8 @@ from verify_book import verify_book
 from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEMA, TEXT,
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
     validate_json, validate_prose, validate_review, neutral_contract_schema,
-    plan_schema, validate_neutral, render_plan, CORRECTION_SCHEMA, apply_corrections, validate_corrections)
+    plan_schema, validate_neutral, render_plan, CORRECTION_SCHEMA, apply_corrections, validate_corrections,
+    plan_repair_schema, apply_plan_edits, validate_shape)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
@@ -195,7 +196,12 @@ class BookWorkflow:
                 "give only each chapter's relevant character/voice cards, current knowledge/custody facts and scene work. "
                 "Do not expose future reveals in early packets. Ledger facts must distinguish planned from demonstrated events. "
                 "The program supplies exact per-chapter word allowances. Return only the neutral structured fields: "
-                "chapters, canon, writer_facts and opening_strategy. writer_facts is the stable baseline supplied to EVERY writer: "
+                "chapters, canon, writer_facts, promises and opening_strategy. The promises array maps each indispensable "
+                "part of the author's idea to an on-page setup action and a concrete causal resolution, with chapter numbers. "
+                "Specify who physically does what, by what available route or means, and the resulting state; 'enables rescue' "
+                "or 'truth permits resolution' alone is not a rescue or resolution. Do not replace literal requested events "
+                "with thematic equivalents. Include emotional consequences without letting them substitute for physical outcomes. "
+                "writer_facts is the stable baseline supplied to EVERY writer: "
                 "canonical full names and ages (explicitly unstated when unknown), relationships, setting rules and an unambiguous "
                 "calendar anchor mapping story days to weekdays and dated deadlines. Keep it under 600 words. "
                 "Exclude future revelations, secret identities, planned rescues and character arc outcomes from that baseline; "
@@ -209,12 +215,18 @@ class BookWorkflow:
                 if report["valid"] and [c["number"] for c in read_json(path)["chapters"]] != list(range(1, self.contract["chapters"] + 1)):
                     report.update(valid=False, errors=["Plan must contain every approved chapter in order"])
                 if report["valid"]:
+                    for promise in read_json(path)["promises"]:
+                        if any(not 1 <= n <= self.contract["chapters"] for n in promise["setup_chapters"] + promise["payoff_chapters"]):
+                            report["errors"].append("Story promise names a chapter outside the approved plan")
                     report["errors"] += validate_neutral(read_json(path))
                     report["valid"] = not report["errors"]
                 return report
             response, _ = self.call("architecture", packet, schema, validate_plan, feedback=True)
             data = read_json(response)
-            for attempt in range(2):
+            # Three bounded, substantive repairs. Each edits named plan fields;
+            # no unchanged plan is rerated in search of a favorable verdict.
+            for attempt in range(4):
+                freeze(self.root / f"work/plan-candidates/plan-{attempt}.json", encoded(data))
                 rendered = render_plan(data)
                 review = self.review(f"plan-check-{attempt}", {"approved-brief": inputs["artifacts/00-brief.md"],
                     "outline": rendered["artifacts/07-outline.md"], "ledger": rendered["artifacts/09-continuity-ledger.md"]}, PLAN_PASSES,
@@ -224,13 +236,29 @@ class BookWorkflow:
                     "Return concise evidence-bound findings, not a new outline. ending_resolved means the planned resolution is causal and complete.")
                 if review["data"]["verdict"] == "pass" and review["data"]["ending_resolved"]:
                     break
-                if attempt == 1:
-                    raise WorkflowError("Independent architecture verification still blocks drafting after one whole-plan repair")
-                repair = packet + "\n\nCurrent proposed plan and supported defects:\n" + json.dumps({"plan": data, "findings": review["data"]["findings"]}, ensure_ascii=False)
-                repair += "\nRepair the entire dependency chain in one batch. Preserve the approved brief and chapter count. Return the same neutral schema. "
-                repair += "The resulting fields must contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail labels or any process history."
-                response, _ = self.call("architecture-repair", repair, schema, validate_plan, feedback=True)
-                data = read_json(response)
+                if attempt == 3:
+                    raise WorkflowError("Independent architecture verification still blocks drafting after three bounded plan repairs")
+                repair_schema = plan_repair_schema(data)
+                repair = packet + "\n\nReturn ONLY named text-field edits in the repair schema, not a replacement whole plan. "
+                repair += "Each before value must match the original field exactly. Change all necessary dependent fields, "
+                repair += "including promise setup/resolution text and ledger facts. Preserve every unrelated event, detail and physical outcome; "
+                repair += "do not shorten unaffected scenes. The chapter count, numbering and promise chapter assignments are fixed. "
+                repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
+                repair += "\nProposed plan:\n" + json.dumps(data, ensure_ascii=False, sort_keys=True)
+                repair += "\nSupported defects:\n" + json.dumps(review["data"]["findings"], ensure_ascii=False, sort_keys=True)
+                def validate_repair(path):
+                    report = validate_json(path, repair_schema)
+                    if report["valid"]:
+                        try:
+                            proposed = apply_plan_edits(data, read_json(path)["edits"])
+                            report["errors"] += validate_shape(proposed, schema) + validate_neutral(proposed)
+                            report["plan_sha256"] = digest(encoded(proposed))
+                        except ValueError as exc:
+                            report["errors"].append(str(exc))
+                        report["valid"] = not report["errors"]
+                    return report
+                response, _ = self.call(f"architecture-repair-{attempt + 1}", repair, repair_schema, validate_repair, feedback=True)
+                data = apply_plan_edits(data, read_json(response)["edits"])
             data["files"] = render_plan(data)
             self.publish_artifacts(data)
             freeze(self.root / "work/approved-plan.json", encoded(data))
@@ -294,6 +322,10 @@ class BookWorkflow:
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
                         "stable_story_facts": self.plan["writer_facts"],
+                        "promises_to_set_up_here": [{"promise": p["promise"], "action": p["setup_action"]}
+                            for p in self.plan["promises"] if number in p["setup_chapters"]],
+                        "promises_to_resolve_here": [{"promise": p["promise"], "resolution": p["on_page_resolution"]}
+                            for p in self.plan["promises"] if number in p["payoff_chapters"]],
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                         "previous_tail": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,

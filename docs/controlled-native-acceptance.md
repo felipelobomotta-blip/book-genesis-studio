@@ -80,6 +80,22 @@ The optional `--weighted-quality-target 9.0` now also keeps the revision loop op
 until its calibrated weighted score exceeds 9.0 or its original budget is spent;
 it does not replace the 8.5 per-dimension floor or expose targets to evaluators.
 
+The fourth run stopped before drafting. Its first verifier found a third POV
+outside the approved two-person contract. A whole-plan repair corrected the POV
+but shortened unrelated late-chapter events, weakening explicit physical rescue
+into wording that merely permitted one. The second verifier blocked the plan
+for missing evacuation refusal and incomplete extraction. That build's single
+plan-repair allowance was exhausted: zero chapters, no export, no score.
+
+The next build maps each indispensable author promise to a setup action and
+concrete on-page causal resolution. Writers receive only the setup or resolution
+assigned to their chapter. Plan repairs now edit named text fields against their
+exact original values; unrelated fields, chapter numbering and assigned promise
+chapters stay unchanged. Three substantive plan repairs are permitted, each
+followed by a fresh verification. An unchanged plan is never rerated to seek a
+favorable verdict. This separate architecture budget is fixed before the new
+trial; prior failed trials and their original budgets remain unchanged.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.
