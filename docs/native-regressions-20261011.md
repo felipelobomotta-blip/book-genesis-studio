@@ -59,6 +59,19 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+The first full Claude trial from `28334cc` stopped in foundation after two native
+responses wrapped their JSON in Markdown fences. The JSON content was present,
+but the strict transport treated presentation syntax as part of the document.
+Its earlier intake had recovered automatically from the same first-attempt error.
+The failed run is retained; no successful foundation or book delivery is claimed.
+
+The Claude bridge now decodes one complete outer JSON fence while retaining the
+native envelope byte-for-byte and the exact enclosed document. It does not edit
+JSON values, prose, scores or findings. A second block, extra explanation,
+malformed JSON or fenced non-object is rejected. Common role schemas and evidence
+validators still run afterward. Real failed replies are replayed read-only into
+separate QA files; a fresh native book must test the updated transport.
+
 The same running Luna trial later made a false length allegation: its audit
 treated a chapter's planning estimate as a hard limit and inferred a whole-book
 overflow. The complete measured manuscript contained 45,088 prose words within

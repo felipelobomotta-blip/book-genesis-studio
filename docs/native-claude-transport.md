@@ -49,9 +49,21 @@ adds a fallback model. Existing guided native sessions retain their own behavior
 
 The native JSON envelope is retained byte-for-byte as stdout, including a failed
 response. Its `modelUsage` must identify exactly the frozen model before the
-public result field can be extracted. The caller receives that field verbatim;
-the existing schema, prose and evidence validators decide whether it is usable.
+public result field can be extracted. Plain JSON is passed verbatim. When the
+entire field is one JSON Markdown fence, the bridge removes only that outer
+presentation wrapper and passes its exact enclosed JSON document. It records
+which presentation was decoded; the original envelope and result field remain
+unchanged in stdout. Extra prose, multiple blocks and non-object fenced payloads
+are not salvaged. JSON string values, negative findings and story wording are
+never edited. The existing schema, prose and evidence validators still decide
+whether the response is usable.
 Selected effort is supplied in both native argv and the child-only environment.
+
+The wrapper regression was reproduced with all three original failed native
+replies, without changing their hashes. A new real Opus call returned a fenced
+negative response and passed on its first attempt, with unchanged verdict and
+finding values. The updated full automated suite passed 359 tests; a fresh
+full-length book run is required to establish delivery with this transport.
 
 Passage-reference schemas can exceed Windows command-line limits. The bridge
 sends the role packet and schema through UTF-8 stdin, then uses the common host
@@ -68,7 +80,8 @@ chapters or passing votes.
 
 Subprocess fixtures cover Unicode and large schemas, actual model metadata,
 subscription checks, unexpected provider routing, failed native envelopes,
-output preservation and capability checks. A synthetic complete-book fixture
+output preservation, fenced JSON without changed values, rejected ambiguous
+wrappers and capability checks. A synthetic complete-book fixture
 exercises all eight phases, revision, export and no-call resume with a Claude
 project contract. Neither fixture establishes native literary quality or human
 usability. A full native run must still pass the separately recorded acceptance

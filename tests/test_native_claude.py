@@ -93,6 +93,41 @@ raise SystemExit(settings.get("exit", 0))
         self.assertFalse(self.output.exists())
         self.assertIn(b"no API or provider fallback", result.stderr)
 
+    def test_single_native_json_fence_preserves_exact_document_and_original_envelope(self):
+        document = '{\r\n  "verdict": "block", "text": "café — 星", "findings": ["A real unresolved defect."]\r\n}'
+        payload = "```json\r\n" + document + "\r\n```"
+        result = self.run_bridge(payload=payload)
+        self.assertEqual(0, result.returncode, result.stderr.decode("utf-8"))
+        self.assertEqual(document.encode("utf-8"), self.output.read_bytes())
+        self.assertEqual(payload, json.loads(result.stdout)["result"])
+        self.assertEqual("block", json.loads(self.output.read_bytes())["verdict"])
+        self.assertIn(b"response presentation: single_json_fence", result.stderr)
+
+    def test_ambiguous_or_non_json_fences_are_not_salvaged(self):
+        for payload in ('```json\n{"text":"one"}\n```\n```json\n{"text":"two"}\n```',
+                        '```json\n{"text":"one"}\n```\nAn extra explanation.',
+                        '```json\n["not an object"]\n```',
+                        '```json\n{"text":"unfinished"\n```'):
+            with self.subTest(payload=payload):
+                result = self.run_bridge(payload=payload)
+                self.assertNotEqual(0, result.returncode)
+                self.assertFalse(self.output.exists())
+                self.assertEqual(payload, json.loads(result.stdout)["result"])
+
+    def test_fences_inside_story_strings_are_preserved_as_content(self):
+        content = {"prose": "# A sign\n\nThe sign read ```json and café.\n\nShe said, ‘No.’", "continuity_delta": "She refuses."}
+        document = json.dumps(content, ensure_ascii=False, indent=2)
+        result = self.run_bridge(payload="```json\n" + document + "\n```")
+        self.assertEqual(0, result.returncode, result.stderr.decode("utf-8"))
+        self.assertEqual(document.encode("utf-8"), self.output.read_bytes())
+        self.assertEqual(content, json.loads(self.output.read_bytes()))
+
+    def test_decoding_presentation_does_not_bypass_response_shape_validation(self):
+        from workflow_roles import validate_json
+        result = self.run_bridge(payload='```json\n{"verdict":"pass","invented_field":"not an approval"}\n```')
+        self.assertEqual(0, result.returncode)
+        self.assertFalse(validate_json(self.output, read_json(self.schema))["valid"])
+
     def test_explicit_api_environment_cannot_silently_override_subscription_auth(self):
         result = self.run_bridge(env_overrides={"ANTHROPIC_API_KEY": "synthetic-not-a-credential"})
         self.assertNotEqual(0, result.returncode)

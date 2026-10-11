@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -17,6 +18,32 @@ import sys
 def require_exact_model(model):
     if not model or model.lower() in {"opus", "sonnet", "haiku", "fable", "default"} or model.startswith("-"):
         raise ValueError("Unattended Claude requires an exact model ID; resolve native aliases before starting the book")
+
+
+def decode_role_payload(payload):
+    """Remove one presentation wrapper, never repair a verdict or story value.
+
+    Native CLI JSON envelopes can contain a Markdown-fenced JSON result. Keep
+    the native envelope verbatim and preserve the exact enclosed document. The
+    existing host validator still checks every field and source reference.
+    """
+    if not isinstance(payload, str) or not payload.strip():
+        raise ValueError("Native Claude returned no public role response")
+    if not payload.lstrip().startswith("```"):
+        return payload, "native_result"
+    wrapper = re.fullmatch(r"\s*```(?:json)?[ \t]*\r?\n(?P<document>[\s\S]+?)\r?\n```\s*", payload, re.I)
+    if not wrapper:
+        raise ValueError("Native result is not one complete JSON fence; original response retained")
+    document = wrapper["document"]
+    # A second block, explanation, malformed string or non-object is not a
+    # presentation wrapper. Never select one fragment from an ambiguous reply.
+    try:
+        parsed = json.loads(document)
+    except ValueError as exc:
+        raise ValueError("Fenced native result does not contain one JSON document; original response retained") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("Fenced native result must contain a JSON object; original response retained")
+    return document, "single_json_fence"
 
 
 def run(prefix, *, model, effort, schema_path, output, packet):
@@ -72,9 +99,9 @@ def run(prefix, *, model, effort, schema_path, output, packet):
     sys.stderr.buffer.flush()
     if result.returncode or data.get("is_error") is not False or data.get("subtype") != "success":
         raise ValueError("Native Claude reported an unsuccessful result; original output retained")
-    payload = data.get("result")
-    if not isinstance(payload, str) or not payload.strip():
-        raise ValueError("Native Claude returned no public role response")
+    payload, presentation = decode_role_payload(data.get("result"))
+    sys.stderr.buffer.write(f"response presentation: {presentation}\n".encode("utf-8"))
+    sys.stderr.buffer.flush()
     payload_bytes = payload.encode("utf-8")
     with output.open("xb") as handle:
         handle.write(payload_bytes)
