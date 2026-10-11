@@ -59,6 +59,28 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+One native run reached a complete manuscript but stopped when the revision
+planner exhausted its bounded attempts: a timeout followed by a response that
+omitted a mandatory historical finding. The timeout remains a transport failure,
+and that original run is still blocked. It is not relabelled a completed book.
+
+For the separately verified case where both attempts return intact native
+responses that fail only output validation, the controller now retains the
+current complete manuscript, its original reviews and all unresolved findings,
+then delivers it explicitly as an unapproved draft. It never executes incomplete
+revision tasks or rerates unchanged prose. The failed attempts remain hashed
+evidence, and resume cannot create a third planning attempt or another pass.
+Authentication, transport and altered evidence still block delivery.
+
+An actual controller interruption test also reproduced unstable generated
+reports at the end of Phase 5. The journal writes sorted JSON keys, while the
+Markdown reports embedded insertion-order JSON. Resuming after reports were
+saved but before the phase advanced could therefore reject the controller's own
+unchanged content. Those reports now serialize deterministically. Tests cover
+both a valid revision and an exhausted invalid plan, byte-identical reports on
+resume, no repeated revision or evaluation calls, original evidence tampering,
+and an authentication failure that must remain blocked.
+
 The controlled panel caller also omitted an existing input supported by the
 packet builder: the blind-reader role specifies the previous chapter's final
 300 words, but the caller never supplied `context_chapter`. Readers consequently

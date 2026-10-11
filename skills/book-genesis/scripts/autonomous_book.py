@@ -801,8 +801,26 @@ class BookWorkflow:
                 self.journal.verify_files([row["measurement"]])
                 measurement = read_json(self.root / row["measurement"]["path"])
                 self.journal.verify_files(measurement["evidence"])
+                if row.get("stop_reason") == "invalid_revision_plan":
+                    self.journal.verify_files(row["evidence"])
+                    break
                 continue
-            plan = self.revision_plan(number, measurement)
+            try:
+                plan = self.revision_plan(number, measurement)
+            except WorkflowError:
+                # A fully drafted, reviewed manuscript can still be delivered
+                # when both plan responses are invalid. Never invent tasks or
+                # rerate unchanged prose. Transport/auth/tampering still block.
+                evidence = self.rejected_validation_evidence(f"revision-plan-{number}")
+                if evidence is None:
+                    raise
+                row.update(status="completed", stop_reason="invalid_revision_plan", outcomes=[],
+                           evidence=evidence, measurement=self.journal.record_file(
+                               self.root / f"evaluations/measure-{measurement['number']}.json"))
+                self.journal.save()
+                self.log(f"Revision pass {number} | both revision plans failed validation; "
+                         "keeping the reviewed manuscript and its unresolved findings for draft delivery")
+                break
             plans = self.journal.data.setdefault("strategies", [])
             if len(plans) < number:
                 plans.append(plan)
@@ -819,10 +837,10 @@ class BookWorkflow:
             self.journal.save()
         result_path = self.root / "evaluations/final-measurement.json"
         freeze(result_path, encoded(measurement))
-        freeze(self.root / "evaluations/revision-plan.md", ("# Revision strategies\n\n" + json.dumps(self.journal.data.get("strategies", []), ensure_ascii=False, indent=2)).encode("utf-8"))
-        freeze(self.root / "evaluations/revision-loop.md", ("# Bounded revision record\n\n" + json.dumps(self.journal.data["passes"], ensure_ascii=False, indent=2)
+        freeze(self.root / "evaluations/revision-plan.md", ("# Revision strategies\n\n" + json.dumps(self.journal.data.get("strategies", []), ensure_ascii=False, sort_keys=True, indent=2)).encode("utf-8"))
+        freeze(self.root / "evaluations/revision-loop.md", ("# Bounded revision record\n\n" + json.dumps(self.journal.data["passes"], ensure_ascii=False, sort_keys=True, indent=2)
             + "\n\n" + ("PASSED" if measurement["passed"] else "STOPPED: the bounded quality gates remain unmet; deliver the complete draft honestly.")).encode("utf-8"))
-        freeze(self.root / "evaluations/proofread.md", ("# Current manuscript technical proofreading\n\n" + json.dumps(measurement["proofread"], ensure_ascii=False, indent=2)).encode("utf-8"))
+        freeze(self.root / "evaluations/proofread.md", ("# Current manuscript technical proofreading\n\n" + json.dumps(measurement["proofread"], ensure_ascii=False, sort_keys=True, indent=2)).encode("utf-8"))
         index = {"schema_version": 1, "scopes": [{k: p[k] for k in ("scope", "chapters", "readers")} for p in measurement["panels"]]}
         freeze(self.root / "evaluations/final-reader-index.json", encoded(index))
         self.finish(5, [result_path, self.root / "evaluations/revision-loop.md", self.root / "evaluations/revision-plan.md",
@@ -853,6 +871,10 @@ class BookWorkflow:
             "No outside human validation, market test or publication approval. No prediction of sales.", "",
             "## Remaining findings", json.dumps(result["audit"]["data"]["findings"] + result["proofread"]["data"]["findings"], ensure_ascii=False, indent=2),
             "## Unresolved historical findings", json.dumps(result["issue_ledger"]["open"], ensure_ascii=False, indent=2)]
+        if any(row.get("stop_reason") == "invalid_revision_plan" for row in self.journal.data["passes"]):
+            lines += ["", "Revision stopped after two invalid revision plans. No corrections from those plans "
+                      "were applied. The original negative reviews and unresolved findings remain current; "
+                      "this export is an unapproved draft. See evaluations/revision-loop.md for the preserved attempts."]
         path = self.root / "artifacts/11-genesis-score.md"
         freeze(path, ("\n".join(lines) + "\n").encode("utf-8"))
         self.finish(6, [path], "passed" if result["passed"] else "gates_not_met")
