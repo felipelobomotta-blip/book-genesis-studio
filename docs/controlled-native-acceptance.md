@@ -104,6 +104,15 @@ each chapter entry. A regression uses a future-only sentinel in a multi-chapter
 promise and verifies that the plan critic sees it while the opening writer does
 not. The complete proposed plan and stopped process evidence remain preserved.
 
+The sixth trial stopped during the first targeted plan repair. Its first native
+proposal contained nine real field changes plus two unchanged entries; the retry
+contained six real changes plus one unchanged entry. Requiring every listed entry
+to change rejected both entire batches. The next validator accepts harmless
+unchanged entries alongside real changes, but rejects a wholly unchanged plan,
+duplicate paths, changed originals and unknown fields. It never rewrites the raw
+native response or rerates an identical plan. Both failed native responses remain
+preserved, and this run delivered no manuscript or export.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.

@@ -60,6 +60,10 @@ class RecoveryTests(unittest.TestCase):
         original = "# One\n\nJune Venn arrived on Tuesday.\n\nThe piano stayed shut.\n"
         edits = [{"before": "June Venn", "after": "June Vale"}, {"before": "on Tuesday", "after": "on Thursday"}]
         self.assertEqual(original.replace("June Venn", "June Vale").replace("on Tuesday", "on Thursday"), apply_corrections(original, edits))
+        unchanged = {"before": "The piano stayed shut.", "after": "The piano stayed shut."}
+        self.assertEqual(apply_corrections(original, edits), apply_corrections(original, edits + [unchanged]))
+        with self.assertRaises(ValueError):
+            apply_corrections(original, [unchanged])
         for bad in ([{"before": " ", "after": "_"}],
                     [{"before": "June Venn", "after": "June Vale"}, {"before": "Venn", "after": "Vale"}],
                     [{"before": "# One", "after": "# Another"}]):
@@ -202,6 +206,10 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(data["canon"], repaired["canon"])
         self.assertEqual(data["writer_facts"], repaired["writer_facts"])
         self.assertNotEqual(data["chapters"][0]["events"], repaired["chapters"][0]["events"])
+        unchanged = {"path": "/chapters/1/events", "before": data["chapters"][1]["events"], "after": data["chapters"][1]["events"]}
+        self.assertEqual(repaired, apply_plan_edits(data, edits + [unchanged]))
+        with self.assertRaisesRegex(ValueError, "No substantive plan edit"):
+            apply_plan_edits(data, [unchanged])
         schema = plan_repair_schema(data)
         self.assertNotIn("/chapters/0/number", schema["properties"]["edits"]["items"]["properties"]["path"]["enum"])
         with self.assertRaises(ValueError):

@@ -121,14 +121,22 @@ def apply_plan_edits(data, edits):
     seen = set()
     for edit in edits:
         path = edit["path"]
-        if path in seen or path not in fields or edit["before"] != fields[path] or edit["before"] == edit["after"]:
-            raise ValueError("Plan edit must name one unchanged original text field and a different replacement")
+        if path in seen:
+            raise ValueError(f"Duplicate plan edit path: {path}")
+        if path not in fields:
+            raise ValueError(f"Plan edit does not name an existing text field: {path}")
+        if edit["before"] != fields[path]:
+            raise ValueError(f"Plan edit before value differs from the frozen original at {path}")
         seen.add(path)
+        if edit["after"] == edit["before"]:
+            continue  # Harmless repeated context is not a substantive repair.
         parts = path.strip("/").split("/")
         target = result
         for part in parts[:-1]:
             target = target[int(part)] if isinstance(target, list) else target[part]
         target[int(parts[-1]) if isinstance(target, list) else parts[-1]] = edit["after"]
+    if result == data:
+        raise ValueError("No substantive plan edit; an unchanged plan cannot be rerated")
     return result
 
 
@@ -191,8 +199,8 @@ def apply_corrections(original: str, replacements: list[dict]) -> str:
     spans = []
     for row in replacements:
         before, after = row["before"], row["after"]
-        if not before or before == after or original.count(before) != 1:
-            raise ValueError("Each correction must change one unique exact passage from the original chapter")
+        if not before or original.count(before) != 1:
+            raise ValueError("Each correction must name one unique exact passage from the original chapter")
         start = original.index(before)
         spans.append((start, start + len(before), after))
     spans.sort()
