@@ -42,16 +42,16 @@ def source_passages(original):
     return passages
 
 
-def correction_schema(original):
+def correction_schema(original, *, allow_unchanged=False):
     ids = [row["id"] for row in source_passages(original)]
     fields = {"from_passage": {"type": "string", "enum": ids},
               "through_passage": {"type": "string", "enum": ids}, "after": {"type": "string"}}
-    return {"type": "object", "properties": {"corrections": {"type": "array", "minItems": 1, "maxItems": len(ids),
+    return {"type": "object", "properties": {"corrections": {"type": "array", "minItems": 0 if allow_unchanged else 1, "maxItems": len(ids),
             "items": {"type": "object", "properties": fields, "required": list(fields), "additionalProperties": False}}},
             "required": ["corrections"], "additionalProperties": False}
 
 
-def apply_passage_corrections(original, corrections):
+def apply_passage_corrections(original, corrections, *, allow_unchanged=False):
     passages = {row["id"]: row for row in source_passages(original)}
     spans = []
     for correction in corrections:
@@ -71,7 +71,7 @@ def apply_passage_corrections(original, corrections):
     candidate = original
     for start, end, after in reversed(spans):
         candidate = candidate[:start] + after + candidate[end:]
-    if candidate == original:
+    if candidate == original and not allow_unchanged:
         raise ValueError("No substantive correction; the accepted chapter is unchanged")
     if (not candidate.startswith("# ") or not original.startswith("# ")
             or not retains_title(original.splitlines()[0][2:], candidate.splitlines()[0][2:])):

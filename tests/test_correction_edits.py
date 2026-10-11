@@ -12,6 +12,16 @@ from workflow_roles import validate_shape
 
 
 class CorrectionEditTests(unittest.TestCase):
+    def test_explicit_group_retention_keeps_every_original_byte_without_weakening_default(self):
+        original = '# One\r\n\r\n  The gate is mesh.  \r\n'
+        self.assertTrue(validate_shape({"corrections": []}, correction_schema(original)))
+        with self.assertRaisesRegex(ValueError, "No substantive correction"):
+            apply_passage_corrections(original, [])
+        self.assertFalse(validate_shape({"corrections": []}, correction_schema(original, allow_unchanged=True)))
+        self.assertEqual(original, apply_passage_corrections(original, [], allow_unchanged=True))
+        with self.assertRaisesRegex(ValueError, "outside the frozen chapter"):
+            apply_passage_corrections(original, [{"from_passage": "p9999", "through_passage": "p9999", "after": "X"}], allow_unchanged=True)
+
     def test_repeated_passage_is_addressable_and_every_other_byte_is_preserved(self):
         original = '# One\r\n\r\n  —Wait.  \r\n \r\n—Wait.\r\n\r\nThe door stayed shut.\r\n'
         rows = source_passages(original)

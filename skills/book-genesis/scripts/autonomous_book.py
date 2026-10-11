@@ -638,6 +638,10 @@ class BookWorkflow:
     def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None, staged_companions=None):
         n = task["chapter"]
         factual = task["mode"] == "factual"
+        # A broad factual ticket may include already-correct chapters. A group
+        # reviewer must still check them, but they must not be changed just to
+        # satisfy an artificial per-member edit requirement.
+        allow_unchanged = factual and stage_only
         key = f"revision-{number}-c{n:02d}" + ("-facts" if factual else "")
         decision_path = self.root / f"evaluations/decisions/{key}.json"
         outcome_path = self.root / f"evaluations/decisions/{key}-outcome.json"
@@ -690,6 +694,10 @@ class BookWorkflow:
                 "A fresh correctness checker will inspect every difference. "
                 if factual else "Return the full chapter, including unchanged passages, in prose, with its existing heading, "
                 "and an accurate continuity_delta. Preserve strengths, voice and asymmetry. ")
+            if allow_unchanged:
+                output_instruction += ("If this chapter already satisfies its factual tickets, return corrections: [] "
+                    "and retain it byte for byte. The group checker will verify that claim against the entire proposed book. "
+                    "Do not invent an edit to make every group member different. ")
             packet = ("Address ONLY the named tickets and their required consequences. Use only this packet; no tools. "
                 + output_instruction +
                 "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
@@ -711,12 +719,12 @@ class BookWorkflow:
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}, ensure_ascii=False))
-        schema = correction_schema(original_text) if factual else PROSE_SCHEMA
+        schema = correction_schema(original_text, allow_unchanged=allow_unchanged) if factual else PROSE_SCHEMA
         def validate_factual(path):
             report = validate_json(path, schema)
             if report["valid"]:
                 try:
-                    proposed = apply_passage_corrections(original_text, read_json(path)["corrections"])
+                    proposed = apply_passage_corrections(original_text, read_json(path)["corrections"], allow_unchanged=allow_unchanged)
                     report = validate_prose_text(proposed, path, low=low, high=high, report=report)
                 except ValueError as exc:
                     report.update(valid=False, errors=[str(exc)])
@@ -738,8 +746,11 @@ class BookWorkflow:
             freeze(outcome_path, encoded(outcome))
             self.log(f"Revision pass {number}, chapter {n} | rejected invalid proposals; accepted chapter retained")
             return outcome
-        corrected = apply_passage_corrections(original_text, read_json(response)["corrections"]) if factual else None
+        corrected = apply_passage_corrections(original_text, read_json(response)["corrections"], allow_unchanged=allow_unchanged) if factual else None
         candidate = self.stage_response(key, response, corrected_prose=corrected)
+        if allow_unchanged:
+            return {"key": key, "task": task, "accepted": accepted, "candidate": candidate,
+                    "target": target, "manuscript": manuscript, "outcome_path": outcome_path}
         if candidate.read_bytes() == accepted.read_bytes():
             decision = {"decision": "reject", "reason": "Proposal is identical to the accepted chapter; no new preference panel is needed."}
             freeze(decision_path, encoded(decision))
@@ -810,7 +821,7 @@ class BookWorkflow:
             failed = [row for row in prepared if "decision" in row]
             if failed:
                 decision = "reject"
-                reason = "A member of this interdependent correction group produced no valid change; all accepted chapters retained."
+                reason = "A member of this interdependent correction group produced no valid proposal; all accepted chapters retained."
                 evidence = []
                 for row in prepared:
                     if "decision" in row:
@@ -827,10 +838,12 @@ class BookWorkflow:
             sources.update({"proposed/" + row["target"].name: row["candidate"] for row in prepared})
             sources.update({"contract/" + name: self.root / "artifacts" / name for name in
                             ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")})
-            manifest = {"schema_version": 1, "kind": "factual_correction_group", "tasks": score_blind(tasks),
+            members = [{"chapter": row["task"]["chapter"], "target": row["target"].relative_to(self.root).as_posix(),
+                "before": digest(row["accepted"].read_bytes()), "candidate": self.journal.record_file(row["candidate"])} for row in prepared]
+            manifest = {"schema_version": 2, "kind": "factual_correction_group", "tasks": score_blind(tasks),
                 "sources": {name: self.journal.record_file(path) for name, path in sources.items()},
-                "publications": [{"chapter": row["task"]["chapter"], "target": row["target"].relative_to(self.root).as_posix(),
-                    "before": digest(row["accepted"].read_bytes()), "candidate": self.journal.record_file(row["candidate"])} for row in prepared]}
+                "publications": [row for row in members if row["before"] != row["candidate"]["sha256"]],
+                "unchanged_members": [row for row in members if row["before"] == row["candidate"]["sha256"]]}
             freeze(manifest_path, encoded(manifest))
             # Serialization defines source order; reloading keeps paragraph IDs
             # byte-identical after a crash or journal reload.
@@ -863,22 +876,31 @@ class BookWorkflow:
                     reason = ("Fresh correctness review authorized the complete factual group." if decision == "promote" else
                               "Factual group blocked: " + "; ".join(report["findings"]))
                     if decision == "promote":
-                        publish(self.journal, manifest_path, call_key, receipt_path)
+                        if manifest["publications"]:
+                            publish(self.journal, manifest_path, call_key, receipt_path)
+                        else:
+                            decision, reason = "unchanged", "The fresh group review confirmed no factual changes were needed; original chapters retained."
         evidence = [self.journal.record_file(manifest_path)] + list(manifest["sources"].values())
         step = self.journal.data["steps"].get(call_key, {})
         evidence += step.get("evidence", []) + step.get("rejected_evidence", [])
         if decision == "promote":
             evidence.append(self.journal.record_file(receipt_path))
             chapters = self.journal.data.setdefault("revision_chapters", [])
-            for task in tasks:
-                if task["chapter"] not in chapters:
-                    chapters.append(task["chapter"])
+            for publication in manifest["publications"]:
+                if publication["chapter"] not in chapters:
+                    chapters.append(publication["chapter"])
             self.journal.save()
             self.sync()
-        outcomes = [{"chapter": t["chapter"], "mode": "factual", "decision": decision,
-                     "reason": reason, "group": key, "evidence": evidence} for t in tasks]
+        unchanged = {row["chapter"] for row in manifest.get("unchanged_members", [])}
+        outcomes = [{"chapter": t["chapter"], "mode": "factual",
+                     "decision": "unchanged" if decision == "promote" and t["chapter"] in unchanged else decision,
+                     "reason": ("Fresh group review confirmed this chapter already satisfied its factual tickets; original text retained."
+                                if decision == "promote" and t["chapter"] in unchanged else reason),
+                     "group": key, "evidence": evidence} for t in tasks]
         freeze(result_path, encoded({"outcomes": outcomes, "evidence": evidence}))
-        self.log(f"Revision pass {number} | {decision} factual group | chapters " + ", ".join(str(t["chapter"]) for t in tasks))
+        affected = [row["chapter"] for row in manifest["publications"]] if decision == "promote" else [t["chapter"] for t in tasks]
+        retained = f" | {len(unchanged)} reviewed chapters retained unchanged" if decision == "promote" and unchanged else ""
+        self.log(f"Revision pass {number} | {decision} factual group | chapters " + ", ".join(map(str, affected)) + retained)
         return outcomes
 
     def check_creative_viability(self, key, task, accepted, candidate, manuscript):

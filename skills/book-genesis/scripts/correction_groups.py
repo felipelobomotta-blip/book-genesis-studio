@@ -32,6 +32,7 @@ def connected_tasks(tasks, *, mode="factual"):
 
 
 def schema_for(catalog, members):
+    members = sorted(members)
     names = [s["source"] for s in catalog["sources"]]
     ids = [p["id"] for s in catalog["sources"] for p in s["passages"]]
     return obj({
@@ -101,24 +102,35 @@ result is valid and must be preserved. Return only the required JSON.
 
 def packet_for(manifest, catalog):
     import json
-    return (INSTRUCTIONS + "\nTasks:\n" + json.dumps(manifest["tasks"], ensure_ascii=False, sort_keys=True)
+    instructions = INSTRUCTIONS
+    if manifest.get("schema_version") == 2:
+        instructions += ("\nSome proposed members may be byte-identical to their originals. Verify that each unchanged member "
+            "already satisfies its assigned factual ticket and remains consistent with every changed companion. "
+            "An unchanged member is valid evidence of retained text, not an automatic pass or an edit. "
+            "Block the group if an unchanged member still requires the assigned correction. "
+            "Do not demand unrelated changes just to make every member different.\n")
+    return (instructions + "\nTasks:\n" + json.dumps(manifest["tasks"], ensure_ascii=False, sort_keys=True)
             + "\nSources:\n" + json.dumps(catalog, ensure_ascii=False, sort_keys=True)).encode("utf-8")
 
 
 def verify(journal, manifest_path, call_key):
     """Bind a pass to the exact source catalog and its original native receipt."""
     manifest = read_json(manifest_path)
-    if manifest.get("kind") != "factual_correction_group" or manifest.get("schema_version") != 1:
+    if manifest.get("kind") != "factual_correction_group" or manifest.get("schema_version") not in (1, 2):
         raise WorkflowError("Unsupported correction group")
+    unchanged = manifest.get("unchanged_members", [])
+    if manifest["schema_version"] == 1 and unchanged:
+        raise WorkflowError("Legacy correction groups cannot claim unchanged members")
+    reviewed = manifest["publications"] + unchanged
     journal.verify_files(list(manifest["sources"].values()))
     catalog = text_catalog({name: (journal.root / row["path"]).read_bytes().decode("utf-8")
                             for name, row in manifest["sources"].items()})
-    members = [row["chapter"] for row in manifest["publications"]]
+    members = sorted(row["chapter"] for row in reviewed)
     if len(members) < 2 or len(set(members)) != len(members):
         raise WorkflowError("Correction group requires distinct chapters")
     if (sorted(t["chapter"] for t in manifest["tasks"]) != sorted(members)
             or any(t["mode"] != "factual" for t in manifest["tasks"])):
-        raise WorkflowError("Correction group publications differ from the reviewed tasks")
+        raise WorkflowError("Correction group members differ from the reviewed tasks")
     if {name for name in manifest["sources"] if name.startswith("proposed/")} != {
             f"proposed/chapter-{n:02d}.md" for n in members}:
         raise WorkflowError("Correction group contains missing or extra companion proposals")
@@ -144,12 +156,16 @@ def verify(journal, manifest_path, call_key):
             raise WorkflowError("Correction group's original native evidence changed")
     if (response.parent / "response.pending").exists():
         raise WorkflowError("Correction group still has a pending native response")
-    for row in manifest["publications"]:
+    for row in reviewed:
         name = f"chapter-{row['chapter']:02d}.md"
         if row["target"] != f"manuscript/chapters/{name}" or row["before"] != manifest["sources"]["original/" + name]["sha256"]:
             raise WorkflowError("Correction group publication differs from its original source")
         if row["candidate"] != manifest["sources"]["proposed/" + name]:
             raise WorkflowError("Correction group publication differs from its proposed source")
+    if manifest["schema_version"] == 2:
+        if (any(row["before"] == row["candidate"]["sha256"] for row in manifest["publications"])
+                or any(row["before"] != row["candidate"]["sha256"] for row in unchanged)):
+            raise WorkflowError("Correction group mislabels changed and unchanged members")
     return manifest
 
 
@@ -166,6 +182,8 @@ def verified_group(journal, manifest_path, call_key):
 
 def verify_receipt(journal, manifest_path, call_key, receipt_path):
     manifest = verified_group(journal, manifest_path, call_key)
+    if not manifest["publications"]:
+        raise WorkflowError("An unchanged group cannot have a promotion receipt")
     receipt = read_json(receipt_path)
     if (receipt.get("schema_version") != 1 or receipt.get("kind") != manifest["kind"]
             or receipt.get("status") != "promoted" or receipt.get("review_key") != call_key
@@ -279,6 +297,13 @@ def recover(journal):
 def publish(journal, manifest_path, call_key, receipt_path):
     journal.check_canonical()
     manifest = verified_group(journal, manifest_path, call_key)
+    if not manifest["publications"]:
+        raise WorkflowError("An unchanged group cannot be published as a revision")
+    if manifest["kind"] == "factual_correction_group" and manifest["schema_version"] == 2:
+        original = {"manuscript/chapters/" + name.removeprefix("original/"): row["sha256"]
+                    for name, row in manifest["sources"].items() if name.startswith("original/")}
+        if journal.data["canonical"] != original:
+            raise WorkflowError("Correction group's complete reviewed manuscript is stale")
     for row in manifest["publications"]:
         if journal.data["canonical"].get(row["target"]) != row["before"]:
             raise WorkflowError("Correction group's accepted manuscript is stale")

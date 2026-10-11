@@ -48,26 +48,25 @@ class CorrectionGroupTests(unittest.TestCase):
         self.packets[call_id] = packet
         if "corrections" in schema["properties"]:
             context = json.loads(packet.rsplit("\n\n", 1)[1])
-            self.assertEqual(1, len(context["companion_tasks"]))
-            p = next(p for p in context["accepted_chapter"] if "plastic gate" in p["text"])
+            self.assertEqual(len(self.tasks) - 1, len(context["companion_tasks"]))
+            p = next((p for p in context["accepted_chapter"] if "plastic gate" in p["text"]), None)
+            if p is None:
+                return {"corrections": []}
             return {"corrections": [{"from_passage": p["id"], "through_passage": p["id"],
                                      "after": p["text"].replace("plastic", "galvanised mesh")}]}
         if self.malformed:
             return {"verdict": "pass"}
         catalog = json.loads(packet.split("\nSources:\n", 1)[1])
         by_name = {s["source"]: s for s in catalog["sources"]}
-        self.assertIn("original/chapter-04.md", by_name)
-        self.assertIn("proposed/chapter-02.md", by_name)
-        self.assertIn("proposed/chapter-04.md", by_name)
-        for n in (2, 4):
-            self.assertIn("plastic gate", str(by_name[f"original/chapter-{n:02d}.md"]))
+        for n in [task["chapter"] for task in self.tasks]:
+            self.assertIn(f"original/chapter-{n:02d}.md", by_name)
             self.assertNotIn("plastic gate", str(by_name[f"proposed/chapter-{n:02d}.md"]))
         return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
                 "verdict": "block" if self.block else "pass", "coverage": list(by_name),
                 "chapters": [{"chapter": n, "canon_supported": not self.block, "factual_only": True,
                     "dependencies_safe": True, "reason": "Receipt supports this material in both corrected references.",
                     "evidence_ids": [by_name[name]["passages"][1]["id"] for name in
-                        (f"original/chapter-{n:02d}.md", f"proposed/chapter-{n:02d}.md", "original/chapter-01.md")]} for n in (2, 4)],
+                        (f"original/chapter-{n:02d}.md", f"proposed/chapter-{n:02d}.md", "contract/09-continuity-ledger.md")]} for n in [t["chapter"] for t in self.tasks]],
                 "findings": ["Unsupported material."] if self.block else [], "limitations": "Synthetic transport exercises code, not literary quality."}
 
     def run_group(self):
@@ -97,6 +96,71 @@ class CorrectionGroupTests(unittest.TestCase):
         self.workflow = self.new_workflow()
         self.assertEqual(result, self.run_group())
         self.assertEqual(count, len(self.packets))
+
+    def test_already_correct_member_is_reviewed_but_never_rewritten_or_counted_as_promoted(self):
+        self.tasks.insert(0, {**self.tasks[0], "chapter": 1})
+        with patch.object(groups, "replace_verified", wraps=groups.replace_verified) as replace:
+            result = self.run_group()
+        self.assertEqual(["unchanged", "promote", "promote"], [r["decision"] for r in result])
+        self.assertEqual(2, replace.call_count)
+        self.assertEqual(self.originals["chapter-01.md"], (self.root / "manuscript/chapters/chapter-01.md").read_bytes())
+        self.assertEqual([2, 4], self.workflow.journal.data["revision_chapters"])
+        manifest_path = self.root / "work/correction-groups/revision-1-facts-group-1-2-4/manifest.json"
+        manifest = groups.verify(self.workflow.journal, manifest_path, "revision-1-facts-group-1-2-4-check")
+        self.assertEqual([1], [r["chapter"] for r in manifest["unchanged_members"]])
+        self.assertEqual([2, 4], [r["chapter"] for r in manifest["publications"]])
+        calls = len(self.packets)
+        self.workflow = self.new_workflow()
+        self.assertEqual(result, self.run_group())
+        self.assertEqual(calls, len(self.packets))
+
+    def test_all_unchanged_group_requires_review_and_creates_no_fake_promotion(self):
+        self.tasks = [{**self.tasks[0], "chapter": n} for n in (1, 3)]
+        with patch.object(groups, "replace_verified", wraps=groups.replace_verified) as replace:
+            result = self.run_group()
+        self.assertEqual(["unchanged", "unchanged"], [r["decision"] for r in result])
+        self.assertEqual(0, replace.call_count)
+        self.assertEqual(3, len(self.packets))
+        self.assert_original()
+        self.assertFalse(list((self.root / "evaluations/promotions").glob("*.json")))
+        manifest = self.root / "work/correction-groups/revision-1-facts-group-1-3/manifest.json"
+        with self.assertRaisesRegex(WorkflowError, "cannot be published"):
+            groups.publish(self.workflow.journal, manifest, "revision-1-facts-group-1-3-check", self.root / "fake-receipt.json")
+        self.workflow = self.new_workflow()
+        self.assertEqual(result, self.run_group())
+        self.assertEqual(3, len(self.packets))
+
+    def test_false_unchanged_claim_is_not_an_automatic_approval(self):
+        original = self.generate
+        def incomplete(call_id, packet, schema, root):
+            self.packets[call_id] = packet
+            if "corrections" in schema["properties"] and "c04-facts" in call_id:
+                return {"corrections": []}
+            if "chapters" in schema["properties"]:
+                catalog = json.loads(packet.split("\nSources:\n", 1)[1])
+                by_name = {s["source"]: s for s in catalog["sources"]}
+                self.assertIn("plastic gate", str(by_name["proposed/chapter-04.md"]))
+                return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
+                    "verdict": "block", "coverage": list(by_name),
+                    "chapters": [{"chapter": n, "canon_supported": n != 4, "factual_only": True,
+                        "dependencies_safe": n != 4, "reason": "Chapter 4 still contradicts the original material receipt.",
+                        "evidence_ids": [by_name[name]["passages"][1]["id"] for name in
+                            (f"original/chapter-{n:02d}.md", f"proposed/chapter-{n:02d}.md", "contract/09-continuity-ledger.md")]} for n in (2, 4)],
+                    "findings": ["The unchanged chapter 4 still needs its assigned correction."], "limitations": "Synthetic gate check."}
+            return original(call_id, packet, schema, root)
+        self.workflow.transport = receipt_transport(incomplete)
+        self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
+        self.assert_original()
+        self.assertEqual(3, len(self.packets))
+
+    def test_retained_member_tampering_is_detected_before_crash_recovery(self):
+        self.tasks.insert(0, {**self.tasks[0], "chapter": 1})
+        self.interrupt_between_members()
+        target = self.root / "manuscript/chapters/chapter-01.md"
+        target.write_bytes(b"Author changed the retained chapter.")
+        with self.assertRaisesRegex(WorkflowError, "collided with another manuscript edit"):
+            self.new_workflow()
+        self.assertEqual(b"Author changed the retained chapter.", target.read_bytes())
 
     def test_one_negative_group_review_rejects_every_member_without_repolling(self):
         self.block = True
@@ -182,6 +246,12 @@ class CorrectionGroupTests(unittest.TestCase):
 
 class FullGroupDeliveryTests(unittest.TestCase):
     def test_group_reaches_both_exports_and_completed_resume_rechecks_its_sources(self):
+        self.run_group_delivery(retain_second=False)
+
+    def test_mixed_retention_and_correction_reaches_export_and_unchanged_completed_resume(self):
+        self.run_group_delivery(retain_second=True)
+
+    def run_group_delivery(self, *, retain_second):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             freeze(root / ".book-genesis/project.json", encoded({"host": "codex", "collaboration": "autonomous",
@@ -194,7 +264,9 @@ class FullGroupDeliveryTests(unittest.TestCase):
                 props = schema["properties"]
                 if "corrections" in props:
                     context = json.loads(packet.rsplit("\n\n", 1)[1])
-                    p = next(p for p in context["accepted_chapter"] if "Ida Vale" in p["text"])
+                    p = next((p for p in context["accepted_chapter"] if "Ida Vale" in p["text"]), None)
+                    if p is None:
+                        return {"corrections": []}
                     return {"corrections": [{"from_passage": p["id"], "through_passage": p["id"],
                                              "after": p["text"].replace("Ida Vale", "Ada Vale")}]}
                 if "catalog_sha256" in props and "chapters" in props:
@@ -208,7 +280,8 @@ class FullGroupDeliveryTests(unittest.TestCase):
                         "findings": [], "limitations": "Synthetic flow check, not model or literary validation."}
                 result = fixture_response(call_id, packet, schema, book)
                 if "prose" in props and "draft-" in call_id:
-                    result["prose"] = result["prose"].replace("The courier", "Ida Vale", 1)
+                    name = "Ada Vale" if retain_second and "draft-02" in call_id else "Ida Vale"
+                    result["prose"] = result["prose"].replace("The courier", name, 1)
                 if "strategy" in props:
                     task = result["tasks"][0]
                     task.update(mode="factual", ticket="Correct Ida Vale to established Ada Vale.", revision_class="continuity")
@@ -231,12 +304,15 @@ class FullGroupDeliveryTests(unittest.TestCase):
             self.assertTrue(list((root / "delivery").glob("*.md")))
             for n in (1, 2):
                 self.assertIn("Ada Vale", (root / f"manuscript/chapters/chapter-{n:02d}.md").read_text())
+            receipt = read_json(next((root / "evaluations/promotions").glob("*.json")))
+            self.assertEqual([1] if retain_second else [1, 2], [r["chapter"] for r in receipt["publications"]])
             before = len(calls)
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(0, BookWorkflow(root, COMMAND, **options).run())
             self.assertEqual(before, len(calls))
             manifest_path = next((root / "work/correction-groups").glob("*/manifest.json"))
-            source = root / read_json(manifest_path)["sources"]["original/chapter-01.md"]["path"]
+            source_name = "original/chapter-02.md" if retain_second else "original/chapter-01.md"
+            source = root / read_json(manifest_path)["sources"][source_name]["path"]
             source.write_bytes(source.read_bytes() + b"Tampered original.")
             with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
                 verify_execution(root, required_phase=8)
