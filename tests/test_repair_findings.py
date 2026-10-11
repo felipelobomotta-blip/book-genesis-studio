@@ -47,7 +47,8 @@ class RepairFindingTests(unittest.TestCase):
     def test_changed_mechanism_can_support_a_negative_repair_check_without_approving_its_meaning(self):
         self.assertEqual([], self.errors(self.finding()))
         schema = schema_for(self.catalog, [1, 2])
-        packet = "\nSources:\n" + encoded(self.catalog).decode()
+        from catalog_wire import render_catalog
+        packet = "\nCatalog wire:\n" + render_catalog(self.catalog)
         report = group_report(packet, schema, blocked=True)
         report["findings"] = [self.finding()]
         with tempfile.TemporaryDirectory() as tmp:

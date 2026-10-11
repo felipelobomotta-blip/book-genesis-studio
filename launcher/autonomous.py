@@ -7,12 +7,15 @@ from uuid import uuid4
 from launcher.native import codex_scoped_command, find_native, run_attached
 
 
-def controlled_command(executable, *, model, effort, host="codex", bridge=None):
+def controlled_command(executable, *, model, effort, host="codex", bridge=None, context_window=None):
     """Capability-check the installed CLI; auth and execpolicy remain native."""
     if not model or not effort:
         raise ValueError("Unattended isolation requires an explicit --model and --effort; no silent native-default substitution")
     if host not in {"codex", "claude"}:
         raise ValueError("Unsupported controlled native host")
+    if context_window is not None and (host != "codex" or type(context_window) is not int
+            or not 8192 <= context_window <= 1050000):
+        raise ValueError("An explicit native context window requires Codex and 8192--1050000 tokens")
     help_result = subprocess.run(list(executable) + (["exec", "--help"] if host == "codex" else ["--help"]), capture_output=True,
                                  text=True, encoding="utf-8", timeout=15, shell=False)
     if host == "claude":
@@ -32,6 +35,11 @@ def controlled_command(executable, *, model, effort, host="codex", bridge=None):
     command = codex_scoped_command(executable, model=model, effort=effort)
     index = command["argv"].index("exec") + 1
     command["argv"][index:index] = ["--ignore-user-config", "--ephemeral"]
+    if context_window is not None:
+        # Per-book overrides only. This declares the requested native capacity;
+        # successful native calls, not this flag, establish account support.
+        command["argv"][index:index] = ["-c", f"model_context_window={context_window}",
+            "-c", f"model_auto_compact_token_limit={int(context_window * .95)}"]
     return command
 
 
@@ -47,7 +55,8 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
     if not config.get("author_name"):
         raise ValueError("Unattended execution needs --author when preparing the new project")
     command = controlled_command(find_native(host), model=model, effort=effort, host=host,
-        bridge=root / ".book-genesis/skills/book-genesis/scripts/native_claude.py")
+        bridge=root / ".book-genesis/skills/book-genesis/scripts/native_claude.py",
+        context_window=config["autonomous_contract"].get("native_context_window"))
     command_file = root / ".book-genesis/native-command.json"
     if command_file.exists():
         import json

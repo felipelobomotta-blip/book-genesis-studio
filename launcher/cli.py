@@ -379,6 +379,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--chapters", type=int, default=12, help="Unattended native production contract (default 12)")
             command.add_argument("--min-words", type=int, default=40000)
             command.add_argument("--max-words", type=int, default=48000)
+            command.add_argument("--native-context-window", type=int, help="Explicit per-book Codex context capacity; requires native account support")
             command.add_argument("--quality-target", type=float, default=8.5, help="Private calibrated craft floor; never sent to writers or critics")
             command.add_argument("--weighted-quality-target", type=float, help="Optional calibrated weighted score to exceed; also private from writers and critics")
     status = commands.add_parser("status", help="Run the existing core's read-only progress and delivery checks")
@@ -450,12 +451,17 @@ def _run(args: argparse.Namespace) -> int:
             # account-derived identity or a placeholder deferred until export.
             author_name = _author_name(input("Name on the title page [Anonymous]: ").strip() or "Anonymous")
         contract = None
+        if args.native_context_window is not None and (not args.autonomous or host != "codex"
+                or not 8192 <= args.native_context_window <= 1050000):
+            raise ValueError("A native context window requires an autonomous Codex book and 8192--1050000 tokens")
         if args.autonomous:
             if not args.model or not args.effort:
                 raise ValueError("Pass --model and --effort for the controlled unattended run; no model is silently substituted")
             if not 1 <= args.chapters <= 100 or args.min_words < 100 * args.chapters or args.max_words < args.min_words or not 0 <= args.quality_target <= 9.2:
                 raise ValueError("Invalid unattended chapter, length or quality contract")
             contract = {"chapters": args.chapters, "min_words": args.min_words, "max_words": args.max_words, "quality_target": args.quality_target}
+            if args.native_context_window is not None:
+                contract["native_context_window"] = args.native_context_window
             if args.weighted_quality_target is not None:
                 if not 0 <= args.weighted_quality_target < 9.2:
                     raise ValueError("Weighted quality target must be between 0 and less than the calibrated maximum 9.2")

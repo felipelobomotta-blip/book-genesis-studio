@@ -17,6 +17,7 @@ from typing import Any
 
 from validate_blind_reader import CONFIDENCE, FLAGS, TURN_PAGES, MAX_EMOTION_LENGTH
 from prepare_rubric import catalog_digest
+from evidence_passages import evidence_passages
 
 
 READERS = {
@@ -106,7 +107,7 @@ def comparison_catalog(entries: list[tuple[str, dict, str]]) -> dict:
     """Complete anonymous prose only: no filenames, titles or revision identity."""
     sources = []
     for label, record, body in entries:
-        paragraphs = [p for p in re.split(r"\n[ \t]*\n", body) if p.strip()]
+        paragraphs = evidence_passages(body)
         sources.append({"label": label, "sha256": record["sha256"],
                         "passages": [{"id": f"{label}:p{i:04d}", "text": paragraph}
                                      for i, paragraph in enumerate(paragraphs, 1)]})

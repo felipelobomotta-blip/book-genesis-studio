@@ -122,3 +122,8 @@ uncertain knowledge routes, and addresses the demonstrated hook identity and
 Windows schema-size failures without changing literary targets or old runs.
 
 `verify_book.py` checks original reader receipts and raw reports against current chapter hashes before final aggregation. Old passes do not survive a prose edit. It also derives technical delivery from the source-bound export receipt and actual files. Export commits `STATUS.json` with the deliverables; the host reconciles its YAML from verified delivery, without changing literary gates or human publication approval.
+
+[compact-review-catalogs-20261011.md](compact-review-catalogs-20261011.md)
+describes complete, lossless evidence blocks that reduce native context overhead
+and the explicit per-book native context request. Larger native capacity must
+be demonstrated with the signed-in account before a full-book test.

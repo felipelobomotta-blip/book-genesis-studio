@@ -12,13 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 import correction_groups as transactions
 import creative_groups as groups
+from catalog_wire import parse_catalog
 from autonomous_book import BookWorkflow
 from workflow_state import WorkflowError, encoded, freeze, read_json, verify_execution
 from test_autonomous_workflow import COMMAND, receipt_transport, fixture_response
 
 
 def group_report(packet, schema, blocked=False):
-    catalog = json.JSONDecoder().raw_decode(packet.split("\nSources:\n", 1)[1])[0]
+    catalog = parse_catalog(packet.split("\nCatalog wire:\n", 1)[1].split("\n\nDeterministic output validation rejected", 1)[0])
     sources = {s["source"]: s for s in catalog["sources"]}
     members = schema["properties"]["chapters"]["items"]["properties"]["chapter"]["enum"]
     return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],

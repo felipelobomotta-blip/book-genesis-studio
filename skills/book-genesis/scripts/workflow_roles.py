@@ -328,9 +328,10 @@ def validate_corrections(path: Path, original: str, *, low: int, high: int):
 
 
 def text_catalog(files: dict[str, str]):
+    from evidence_passages import evidence_passages
     return {"sources": [{"source": name, "sha256": digest(text.encode("utf-8")),
                          "passages": [{"id": f"s{i:02d}p{j:04d}", "text": para}
-                                      for j, para in enumerate(re.split(r"\n\s*\n", text.strip()), 1) if para.strip()]}
+                                      for j, para in enumerate(evidence_passages(text, separator=r"\n\s*\n"), 1)]}
                         for i, (name, text) in enumerate(files.items(), 1)]}
 
 
