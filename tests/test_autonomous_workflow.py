@@ -286,6 +286,40 @@ def fixture_response(call_id, packet, schema, root):
 
 
 class ProductionAllowanceTests(unittest.TestCase):
+    def test_observed_long_chapter_leaves_room_for_every_remaining_chapter(self):
+        low, high, target = production_allowance(12, 9, 12493, 40000, 48000)
+        self.assertLess(target, 5000)
+        for observed in (6414, 5604):
+            self.assertLessEqual(low, observed)
+            self.assertLessEqual(observed, high)
+            used = 12493 + observed
+            for remaining in range(8, 0, -1):
+                next_low, next_high, next_target = production_allowance(12, remaining, used, 40000, 48000)
+                self.assertLessEqual(next_low, next_target)
+                self.assertLessEqual(next_target, next_high)
+                self.assertLessEqual(next_target, 5000)
+                used += next_target
+            self.assertGreaterEqual(used, 40000)
+            self.assertLessEqual(used, 48000)
+
+    def test_short_chapter_is_allowed_only_while_future_capacity_meets_the_book_floor(self):
+        low, high, target = production_allowance(12, 11, 3988, 40000, 48000)
+        self.assertLessEqual(low, 1500)
+        self.assertLessEqual(1500, high)
+        self.assertGreater(target, 1500)
+        low, _, _ = production_allowance(12, 2, 32000, 40000, 48000)
+        self.assertEqual(3000, low)
+
+    def test_global_ceiling_keeps_space_for_remaining_ordinary_chapters(self):
+        low, high, target = production_allowance(12, 9, 12493, 40000, 48000)
+        self.assertEqual(48000, 12493 + high + 8 * 2666)
+        self.assertLessEqual(low, target)
+        self.assertLessEqual(target, high)
+        last_low, last_high, last_target = production_allowance(12, 1, 35000, 40000, 48000)
+        self.assertEqual(5000, last_low)
+        self.assertEqual(13000, last_high)
+        self.assertEqual(5000, last_target)
+
     def test_shorter_final_chapter_can_finish_the_observed_in_range_book(self):
         low, high, target = production_allowance(12, 1, 45159, 40000, 48000)
         self.assertEqual((100, 2841, 2666), (low, high, target))
@@ -316,7 +350,7 @@ class ProductionAllowanceTests(unittest.TestCase):
     def test_adversarial_long_short_and_mixed_chapters_preserve_global_feasibility(self):
         import random
         rng = random.Random(81026)
-        for count, floor, ceiling in ((1, 100, 100), (2, 380, 700), (12, 40000, 48000), (34, 80000, 95000)):
+        for count, floor, ceiling in ((1, 100, 100), (2, 380, 700), (12, 40000, 48000), (12, 48000, 48000), (34, 80000, 95000)):
             for strategy in ("short", "long", "target", "mixed"):
                 with self.subTest(count=count, strategy=strategy):
                     used = 0

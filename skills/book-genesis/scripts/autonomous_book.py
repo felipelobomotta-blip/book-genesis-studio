@@ -45,23 +45,22 @@ from workflow_state import Journal, WorkflowError, atomic, digest, encoded, free
 def production_allowance(chapters, remaining, used, min_words, max_words):
     """Reserve room for every remaining chapter without imposing equal lengths.
 
-    Local bounds allow an ordinary long or short chapter. The feasibility bounds
-    reserve the remaining chapters' minimum and maximum capacity, so every
-    accepted chapter leaves a route to the unchanged whole-book contract. The
-    ending may be shorter once the book floor is met; its preferred target still
-    aims for an ordinary chapter rather than the shortest permitted fragment.
+    Ordinary chapter lengths guide the target and reserve future capacity; they
+    are not extra author contracts. A longer or shorter chapter is acceptable
+    when the remaining ordinary chapters can still meet the whole-book range.
+    Every chapter contains prose, and the ending must meet the actual book floor.
     """
     if not 1 <= remaining <= chapters or used < 0:
         raise WorkflowError("Invalid remaining production scope")
-    local_min = max(100, math.floor(min_words / chapters * .8))
-    local_max = math.ceil(max_words / chapters * 1.25)
-    low = max(100 if remaining == 1 else local_min,
-              min_words - used - (remaining - 1) * local_max)
-    high = min(local_max, max_words - used - (remaining - 1) * local_min)
+    preferred_min = max(100, math.floor(min_words / chapters * .8))
+    preferred_max = math.ceil(max_words / chapters * 1.25)
+    low = max(100, min_words - used - (remaining - 1) * preferred_max)
+    high = max_words - used - (remaining - 1) * preferred_min
     if high < low:
         raise WorkflowError("No feasible chapter allowance within the frozen book length")
-    target = min(high, max(low, local_min,
-                          round(((min_words + max_words) / 2 - used) / remaining)))
+    preferred_target = min(preferred_max, max(preferred_min,
+        round(((min_words + max_words) / 2 - used) / remaining)))
+    target = min(high, max(low, preferred_target))
     return low, high, target
 
 
@@ -363,6 +362,7 @@ class BookWorkflow:
                     "A character arc is direction, not permission to perform a later chapter's resolution now. "
                     "No outline, summary, placeholder or word-count claim in the prose. "
                     f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
+                    "That interval protects the whole-book budget, not a suggested chapter length; do not expand toward its upper bound. "
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
                         "craft_knowledge": draft_knowledge(self.skill),

@@ -484,3 +484,35 @@ completed replay and tampering detection. A fresh full native run is required;
 this fix does not retroactively complete either failed book or raise a score.
 
 The final candidate passed all 440 automated tests in 380.685 seconds and the installer suite check. Fresh native fixed-map checks and full books remain required before claiming native delivery or a literary score.
+
+## Chapter targets are preferences, not extra whole-book contracts
+
+Both native fixed-map checks passed on the first response, with all 201 fields
+present, unchanged original sources and no-call completed replay. Full trials
+23 (Luna high) and 24 (Opus 5.5 medium) then independently passed architecture
+after two valid repair rounds apiece. Trial 23 nevertheless stopped at chapter
+4: its 6,414-word proposal and 5,604-word retry exceeded the local 5,000-word
+ceiling, although either left ample room to complete the unchanged twelve-
+chapter 40,000–48,000-word book. Its three canonical chapters total 12,493 words;
+both rejected responses remain unchanged and unpromoted. Trial 24 continues on
+its frozen original source and receives no code changes.
+
+The next allocator distinguishes the preferred chapter size from feasibility.
+It reserves an ordinary chapter's space for every remaining chapter, and enough
+future capacity to reach the book floor. The current chapter is not separately
+capped at 1.25 times the average or forced above 0.8 times it. The preferred
+target stays within ordinary chapter sizes, and the writer is explicitly told
+that the feasible upper bound is not a length goal. The final chapter still
+must complete the unchanged book range, and no chapter may be empty or shorter
+than 100 prose words. No text is truncated, generated counts are not trusted,
+and the two-attempt generation budget remains unchanged.
+
+Three regressions cover both observed long outputs and their feasible remaining
+chapters, shorter chapters with adequate future capacity, and preservation of
+space under the whole-book ceiling. The adversarial path checks also include a
+book whose minimum and maximum are exactly equal. All 23 tests in the workflow
+module passed in 10.400 seconds. A read-only replay of the original native prose
+and a fresh full-book trial follow the full regression suite and source freeze;
+neither changes or retroactively approves the failed trial.
+
+The final production-budget candidate passed all 443 automated tests in 385.151 seconds and the installer suite check. Full native acceptance remains pending; passing these checks does not establish a literary score.
