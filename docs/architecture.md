@@ -89,6 +89,10 @@ Both must pass. Each gets at most three revision passes, and a revised chapter i
 
 ## Current-text receipts
 
+[windows-state-publication-20261011.md](windows-state-publication-20261011.md)
+describes bounded atomic replacement retries for demonstrated Windows sharing
+denial, with byte and file-identity guards that preserve concurrent changes.
+
 The causal-evidence and delivery candidate is described in
 [causal-evidence-delivery-20261011.md](causal-evidence-delivery-20261011.md).
 It extends existing source review with acquisition/use/payoff traces, preserves

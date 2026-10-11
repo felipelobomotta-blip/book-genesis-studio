@@ -138,6 +138,24 @@ def read_json(path: Path):
                       parse_constant=lambda value: (_ for _ in ()).throw(WorkflowError(f"Nonfinite JSON: {value}")))
 
 
+REPLACE_RETRY_DELAYS = (.01, .02, .04, .08, .16, .20, .25)
+
+
+def _target_revision(path):
+    """Bind a retry to the same file identity and bytes, including absence."""
+    try:
+        with path.open("rb") as handle:
+            before = os.fstat(handle.fileno())
+            content = handle.read()
+            after = os.fstat(handle.fileno())
+    except FileNotFoundError:
+        return None
+    fingerprint = lambda stat: (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+    if fingerprint(before) != fingerprint(after):
+        raise WorkflowError("Atomic write target changed while recording its revision")
+    return fingerprint(after), digest(content)
+
+
 def atomic(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + "." + uuid4().hex + ".tmp")
@@ -146,7 +164,22 @@ def atomic(path: Path, data: bytes) -> None:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp, path)
+        original = _target_revision(path)
+        for attempt in range(len(REPLACE_RETRY_DELAYS) + 1):
+            if attempt:
+                time.sleep(REPLACE_RETRY_DELAYS[attempt - 1])
+                if _target_revision(path) != original:
+                    raise WorkflowError("Atomic write target changed during a Windows sharing retry; current file preserved")
+            try:
+                os.replace(tmp, path)
+                break
+            except OSError as exc:
+                # Windows can report ERROR_ACCESS_DENIED for a reader that
+                # permits reads/writes but not deletion. Retry only these
+                # native errors, for <1s, using the same prepared bytes. Never
+                # delete the target, change permissions or hide a final error.
+                if getattr(exc, "winerror", None) not in {5, 32, 33} or attempt == len(REPLACE_RETRY_DELAYS):
+                    raise
     finally:
         tmp.unlink(missing_ok=True)
 
