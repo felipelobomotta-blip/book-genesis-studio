@@ -239,6 +239,15 @@ def fixture_response(call_id, packet, schema, root):
         result = {"verdict": "revise" if defective else "pass", "coverage": names,
                 "checks": [{"name": name, "result": "finding" if defective else "pass", "reason": "Checked the assigned sources."} for name in passes],
                 "findings": findings, "ending_resolved": True, "limitations": "Synthetic response for deterministic integration tests only."}
+        if "chapter_checks" in props:
+            from plan_verification import chapter_requirements
+            result["chapter_checks"] = [{"chapter": row["chapter"], "checks": [
+                {"name": check["name"], "result": "finding" if defective and row["chapter"] == 1 and
+                    check["name"] == row["checks"][0]["name"] else "pass",
+                 "evidence_ids": check["required_evidence_ids"], "reason": "Synthetic exact field coverage only."}
+                for check in row["checks"]]} for row in chapter_requirements(catalog)]
+            if defective:
+                findings[0]["evidence_ids"] += result["chapter_checks"][0]["checks"][0]["evidence_ids"]
         if "causal_traces" in props:
             ids = [p["id"] for s in catalog["sources"] if s["source"].startswith("chapter-") for p in s["passages"][1:]]
             result["causal_traces"] = [{"id": f"t{n}", "kind": kind, "subject": "The courier carries a stolen letter.",

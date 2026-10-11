@@ -180,6 +180,9 @@ class BookWorkflow:
                 "author": self.config["author_name"], "collaboration": "autonomous; make reasonable creative assumptions and record them"})
             packet += "\nReturn the neutral story contract separately; the program renders the brief from it and the author's exact idea/length. "
             packet += "Keep the market map under 700 words and story engine under 800. No process verdicts, gate outcomes or quality scores in story fields."
+            packet += (" Preserve every explicit author requirement. Where the author leaves POV or timing open, "
+                "choose a coherent creative default without inventing an unnecessary exact deadline or rigid viewpoint cycle. "
+                "Describe ordinary durations as approximate; distinguish the central action's deadline from a later aftermath.")
             def validate_intake(path):
                 report = validate_json(path, schema)
                 if report["valid"]:
@@ -267,6 +270,19 @@ class BookWorkflow:
                 repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
                 repair += "\nProposed plan:\n" + json.dumps(data, ensure_ascii=False, sort_keys=True)
                 repair += "\nSupported defects:\n" + json.dumps(review["data"]["findings"], ensure_ascii=False, sort_keys=True)
+                earlier = []
+                for previous in range(attempt):
+                    step = self.journal.data["steps"][f"plan-check-{previous}"]
+                    self.journal.verify_files(step["evidence"])
+                    earlier.append({"original_plan": self.journal.record_file(
+                        self.root / f"work/plan-candidates/plan-{previous}.json"),
+                        "review": self.journal.record_file(self.root / step["response"]),
+                        "findings": read_json(self.root / step["response"])["findings"]})
+                repair += ("\nEarlier repair findings (writer context only):\n" + json.dumps(earlier, ensure_ascii=False, sort_keys=True)
+                    + "\nThese describe earlier plan versions, not new defects when already resolved. Preserve their earned "
+                    "repairs. Before returning edits, check the complete current brief, every chapter's POV and start/end "
+                    "time, knowledge acquisition, object custody, world-rule first demonstration and promise payoff. "
+                    "Propagate each chosen resolution through all dependent fields. Do not put this repair history into story facts.")
                 def validate_repair(path):
                     report = validate_json(path, repair_schema)
                     if report["valid"]:
@@ -301,6 +317,9 @@ class BookWorkflow:
     def review(self, key, sources, passes, instructions):
         catalog = text_catalog(sources)
         schema = review_schema(catalog, passes=passes)
+        if passes == PLAN_PASSES:
+            from plan_verification import INSTRUCTIONS, chapter_requirements
+            instructions += "\n\n" + INSTRUCTIONS + "\nChapter coverage map:\n" + json.dumps(chapter_requirements(catalog), ensure_ascii=False)
         packet = ("Read-only independent review. Use only this packet; do not use tools or seek prior reports. "
             "Report evidence by the supplied passage IDs. Read ALL supplied sources in order. "
             "coverage lists ONLY names from the Complete sources catalog exactly once; do not list the reference guides as sources. "

@@ -89,6 +89,10 @@ Both must pass. Each gets at most three revision passes, and a revised chapter i
 
 ## Current-text receipts
 
+[plan-chapter-verification-20261011.md](plan-chapter-verification-20261011.md)
+describes source-bound checks for every plan chapter and isolated repair history
+after a real full-book run exhausted its architecture repairs.
+
 [windows-state-publication-20261011.md](windows-state-publication-20261011.md)
 describes bounded atomic replacement retries for demonstrated Windows sharing
 denial, with byte and file-identity guards that preserve concurrent changes.

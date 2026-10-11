@@ -242,6 +242,11 @@ class FullCreativeGroupDeliveryTests(unittest.TestCase):
                 if "checks" in props:
                     for finding in result.get("findings", []):
                         finding["chapters"] = [1, 2]
+                        if "chapter_checks" in result:
+                            for row in result["chapter_checks"]:
+                                row["checks"][0]["result"] = "finding"
+                                finding["evidence_ids"] = list(dict.fromkeys(
+                                    finding["evidence_ids"] + row["checks"][0]["evidence_ids"]))
                 if "statuses" in props:
                     catalog = json.loads(packet.split("Current complete sources:\n", 1)[1])
                     ids = [s["passages"][1]["id"] for s in catalog["sources"] if s["source"].startswith("chapter-")]

@@ -331,6 +331,9 @@ def review_schema(catalog: dict, *, passes: list[str]):
         "ending_resolved": {"type": "boolean"}, "limitations": TEXT}
     if passes == AUDIT_PASSES:
         fields["causal_traces"] = trace_schema(catalog)
+    if passes == PLAN_PASSES:
+        from plan_verification import chapter_check_schema
+        fields["chapter_checks"] = chapter_check_schema(catalog)
     return obj(fields)
 
 
@@ -352,6 +355,9 @@ def validate_review(path: Path, schema: dict, catalog: dict, passes: list[str], 
                 report["errors"].append("Finding references an unplanned chapter")
         if "causal_traces" in schema["properties"]:
             report["errors"] += validate_traces(data, catalog)
+        if "chapter_checks" in schema["properties"]:
+            from plan_verification import validate_chapter_checks
+            report["errors"] += validate_chapter_checks(data, catalog)
         report["catalog_sha256"] = digest(encoded(catalog))
     report["valid"] = not report["errors"]
     return report
