@@ -166,18 +166,19 @@ def plan_repair_schema(data):
 def apply_plan_edits(data, edits):
     """Change named text fields only; preserve every other approved plan value."""
     import copy
+    from collections import Counter
     fields = plan_text_fields(data)
     result = copy.deepcopy(data)
-    seen = set()
+    duplicates = sorted(path for path, count in Counter(e["path"] for e in edits).items() if count > 1)
+    if duplicates:
+        raise ValueError("Duplicate plan edit paths: " + ", ".join(duplicates)
+                         + ". Consolidate each into one complete after value; do not choose a value by list order.")
     for edit in edits:
         path = edit["path"]
-        if path in seen:
-            raise ValueError(f"Duplicate plan edit path: {path}")
         if path not in fields:
             raise ValueError(f"Plan edit does not name an existing text field: {path}")
         if "before" in edit and edit["before"] != fields[path]:
             raise ValueError(f"Plan edit before value differs from the frozen original at {path}")
-        seen.add(path)
         if edit["after"] == fields[path]:
             continue  # Harmless repeated context is not a substantive repair.
         parts = path.strip("/").split("/")

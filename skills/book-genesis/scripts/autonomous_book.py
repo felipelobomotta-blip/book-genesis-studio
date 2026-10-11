@@ -257,6 +257,8 @@ class BookWorkflow:
                 repair += "from this frozen plan; do not repeat it. Change all necessary dependent fields, "
                 repair += "including promise setup/resolution text and ledger facts. Preserve every unrelated event, detail and physical outcome; "
                 repair += "do not shorten unaffected scenes. The chapter count, numbering and promise chapter assignments are fixed. "
+                repair += "Each field path occurs exactly once. If several defects affect a field, consolidate their changes "
+                repair += "into one complete after value, not alternative values or sequential patches. "
                 repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
                 repair += "\nProposed plan:\n" + json.dumps(data, ensure_ascii=False, sort_keys=True)
                 repair += "\nSupported defects:\n" + json.dumps(review["data"]["findings"], ensure_ascii=False, sort_keys=True)
@@ -272,7 +274,8 @@ class BookWorkflow:
                             report["errors"].append(str(exc))
                         report["valid"] = not report["errors"]
                     return report
-                response, _ = self.call(f"architecture-repair-{attempt + 1}", repair, repair_schema, validate_repair, feedback=True)
+                response, _ = self.call(f"architecture-repair-{attempt + 1}", repair, repair_schema, validate_repair,
+                                        feedback=True, feedback_response=True)
                 proposed = apply_plan_edits(data, read_json(response)["edits"])
                 from workflow_roles import plan_text_fields
                 original_fields = plan_text_fields(data)
@@ -594,6 +597,9 @@ class BookWorkflow:
             "Factual tasks sharing an issue ID are staged and checked as one complete group. Include EVERY affected "
             "chapter needed for that correction; do not rely on a later creative task to make a factual group coherent. "
             "Resolving competing on-page chronologies is a creative continuity decision, not a factual typo. "
+            "Creative tasks sharing an issue ID also form one coordinated revision: specify one consistent resolution "
+            "in shared strategy, all affected chapters, and the setup and consequence each must supply. The complete "
+            "proposed book must resolve these dependencies before any member can be published. "
             "Each task must name the historical issue IDs it addresses. Every required unresolved issue must have a task. "
             "Join dependent fixes coherently and preserve remembered strengths. "
             "Do not change the approved premise, POV, time window, chapter count or production length. "
@@ -624,7 +630,7 @@ class BookWorkflow:
         response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
         return read_json(response)
 
-    def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None):
+    def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None, staged_companions=None):
         n = task["chapter"]
         factual = task["mode"] == "factual"
         key = f"revision-{number}-c{n:02d}" + ("-facts" if factual else "")
@@ -645,6 +651,13 @@ class BookWorkflow:
         from export_book import Chapter, count_prose_words
         original_text = accepted.read_bytes().decode("utf-8")
         original_words = count_prose_words(Chapter(n, accepted, original_text.splitlines()[0][2:], "\n".join(original_text.splitlines()[1:]), digest(accepted.read_bytes())))
+        # Reserve length for earlier proposals in the same unpublished group.
+        # They remain proposed context, never silently accepted manuscript.
+        for name, proposed_text in (staged_companions or {}).items():
+            old = (self.root / "manuscript/chapters" / name).read_text(encoding="utf-8")
+            for sign, text in ((-1, old), (1, proposed_text)):
+                current_words += sign * count_prose_words(Chapter(int(name[8:-3]), accepted,
+                    text.splitlines()[0][2:], "\n".join(text.splitlines()[1:]), digest(text.encode("utf-8"))))
         low = max(100, self.contract["min_words"] - (current_words - original_words))
         high = self.contract["max_words"] - (current_words - original_words)
         context = []
@@ -677,9 +690,13 @@ class BookWorkflow:
                 "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
                 "The revision must remain a real scene, not explanatory compliance. "
                 "Use the complete current manuscript to check distant facts and consequences. "
+                "If companion tasks and unaccepted companion proposals are supplied, coordinate with their explicit "
+                "shared resolution. They are proposed changes, not established canon. Your chapter and every companion "
+                "must form a consistent complete book before any of them can be accepted. "
                 "Planning notes do not prove that a planned event actually happened.\n\n" + self.ref("specialists/revision-editor.md")
                 + "\n\n" + json.dumps({"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
                     "companion_tasks": score_blind(companion_tasks or []),
+                    "unaccepted_companion_proposals": staged_companions or {},
                     "craft_knowledge": None if factual else revision_knowledge(self.skill, self.config["language"]),
                     "accepted_chapter": [{"id": p["id"], "text": p["text"]} for p in source_passages(original_text)] if factual else original_text,
                     "other_current_chapters": {p.name: p.read_bytes().decode("utf-8") for p in manuscript if p.name != target.name},
@@ -727,8 +744,6 @@ class BookWorkflow:
             self.log(f"Revision pass {number}, chapter {n} | unchanged proposal; accepted text retained")
             return outcome
         if stage_only:
-            if not factual:
-                raise WorkflowError("Only factual corrections support grouped staging")
             return {"key": key, "task": task, "accepted": accepted, "candidate": candidate,
                     "target": target, "manuscript": manuscript, "outcome_path": outcome_path}
         if factual:
@@ -1023,8 +1038,10 @@ class BookWorkflow:
             for group in connected_tasks([t for t in plan["tasks"] if t["mode"] == "factual"]):
                 outcomes.extend(self.revise_factual_group(number, group, plan["strategy"]) if len(group) > 1 else
                                 [self.revise_chapter(number, group[0], plan["strategy"])])
-            outcomes.extend(self.revise_chapter(number, t, plan["strategy"]) for t in
-                            sorted((t for t in plan["tasks"] if t["mode"] == "creative"), key=lambda t: t["chapter"]))
+            from creative_groups import execute as revise_creative_group
+            for group in connected_tasks([t for t in plan["tasks"] if t["mode"] == "creative"], mode="creative"):
+                outcomes.extend(revise_creative_group(self, number, group, plan["strategy"]) if len(group) > 1 else
+                                [self.revise_chapter(number, group[0], plan["strategy"])])
             row.update(status="revisions_saved", outcomes=outcomes)
             self.journal.save()
             current = {p.name: digest(p.read_bytes()) for p in (self.root / "manuscript/chapters").glob("*.md")}
@@ -1043,7 +1060,8 @@ class BookWorkflow:
         index = {"schema_version": 1, "scopes": [{k: p[k] for k in ("scope", "chapters", "readers")} for p in measurement["panels"]]}
         freeze(self.root / "evaluations/final-reader-index.json", encoded(index))
         group_evidence = []
-        for path in sorted((self.root / "evaluations/decisions").glob("revision-*-facts-group-*.json")):
+        for path in sorted((self.root / "evaluations/decisions").glob("revision-*-group-*-outcomes.json")) + sorted(
+                (self.root / "evaluations/decisions").glob("revision-*-facts-group-*.json")):
             records = read_json(path)["evidence"]
             self.journal.verify_files(records)
             group_evidence += [path] + [self.root / row["path"] for row in records]
@@ -1147,6 +1165,8 @@ class BookWorkflow:
     def run(self):
         try:
             if self.journal.data["phase"] == 8:
+                from workflow_state import verify_execution
+                verify_execution(self.root, required_phase=8)
                 verified = verify_book(self.root, "evaluations/final-reader-index.json")
                 if verified["delivery"]["status"] != "delivered" or verified["reviews"]["status"] != "current":
                     raise WorkflowError("Previously completed delivery is missing or stale")

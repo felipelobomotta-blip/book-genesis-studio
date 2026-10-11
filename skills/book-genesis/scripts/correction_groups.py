@@ -13,12 +13,14 @@ from workflow_roles import TEXT, INTEGER, array, enum, obj, text_catalog, valida
 from workflow_state import WorkflowError, digest, encoded, freeze, read_json
 
 
-def connected_tasks(tasks):
-    """Shared historical issue IDs connect factual tasks, including transitively."""
+def connected_tasks(tasks, *, mode="factual"):
+    """Shared historical issue IDs connect tasks of one kind transitively."""
+    if mode not in {"factual", "creative"}:
+        raise WorkflowError("Unsupported revision group mode")
     groups = []
     for task in sorted(tasks, key=lambda t: t["chapter"]):
-        if task["mode"] != "factual":
-            raise WorkflowError("Only factual tasks use the correction-group gate")
+        if task["mode"] != mode:
+            raise WorkflowError("A revision group cannot mix factual and creative tasks")
         ids = set(task["issue_ids"])
         joined = [g for g in groups if ids.intersection(i for t in g for i in t["issue_ids"])]
         group = [task]
@@ -151,10 +153,21 @@ def verify(journal, manifest_path, call_key):
     return manifest
 
 
+def verified_group(journal, manifest_path, call_key):
+    """Each group kind retains its own required evidence before publication."""
+    kind = read_json(manifest_path).get("kind")
+    if kind == "factual_correction_group":
+        return verify(journal, manifest_path, call_key)
+    if kind == "creative_revision_group":
+        from creative_groups import verify as verify_creative
+        return verify_creative(journal, manifest_path, call_key)
+    raise WorkflowError("Unsupported revision group")
+
+
 def verify_receipt(journal, manifest_path, call_key, receipt_path):
-    manifest = verify(journal, manifest_path, call_key)
+    manifest = verified_group(journal, manifest_path, call_key)
     receipt = read_json(receipt_path)
-    if (receipt.get("schema_version") != 1 or receipt.get("kind") != "factual_correction_group"
+    if (receipt.get("schema_version") != 1 or receipt.get("kind") != manifest["kind"]
             or receipt.get("status") != "promoted" or receipt.get("review_key") != call_key
             or receipt.get("manifest") != journal.record_file(manifest_path)
             or receipt.get("publications") != manifest["publications"]):
@@ -203,7 +216,9 @@ def replace_verified(target, candidate, before, transaction_id):
 def recover(journal):
     pending = journal.data["pending_mutation"]
     journal.verify_files([pending["manifest"]])
-    manifest = verify(journal, journal.root / pending["manifest"]["path"], pending["review_key"])
+    manifest = verified_group(journal, journal.root / pending["manifest"]["path"], pending["review_key"])
+    if pending.get("kind") != manifest["kind"]:
+        raise WorkflowError("Reserved group kind differs from its verified manifest")
     publications = manifest["publications"]
     targets = {row["target"] for row in publications}
     interrupted_holders = []
@@ -251,7 +266,7 @@ def recover(journal):
         raise WorkflowError("Correction-group publication failed its final hash check")
     for row in publications:
         transaction_path(journal.root / row["target"], pending["transaction_id"], "stage").unlink(missing_ok=True)
-    receipt = {"schema_version": 1, "kind": "factual_correction_group", "status": "promoted",
+    receipt = {"schema_version": 1, "kind": manifest["kind"], "status": "promoted",
                "manifest": pending["manifest"], "review_key": pending["review_key"],
                "publications": publications, "reserved_at": pending["reserved_at"]}
     freeze(journal.root / pending["receipt"], encoded(receipt))
@@ -263,11 +278,11 @@ def recover(journal):
 
 def publish(journal, manifest_path, call_key, receipt_path):
     journal.check_canonical()
-    manifest = verify(journal, manifest_path, call_key)
+    manifest = verified_group(journal, manifest_path, call_key)
     for row in manifest["publications"]:
         if journal.data["canonical"].get(row["target"]) != row["before"]:
             raise WorkflowError("Correction group's accepted manuscript is stale")
-    journal.data["pending_mutation"] = {"kind": "factual_correction_group",
+    journal.data["pending_mutation"] = {"kind": manifest["kind"],
         "manifest": journal.record_file(manifest_path), "review_key": call_key,
         "receipt": journal.inside(receipt_path).relative_to(journal.root).as_posix(), "reserved_at": journal.now(),
         "transaction_id": uuid4().hex}

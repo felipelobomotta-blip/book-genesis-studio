@@ -412,3 +412,38 @@ packets sent to each role. Literary improvement still requires a real book test.
 
 
 The candidate passed all 423 automated tests in 381.376 seconds and the installer suite check. The six new checks include a complete synthetic workflow with no-call completed resume and real packet inspection; this is not native book acceptance. Full native trial 20 of its predecessor separately stopped after three bounded architecture repairs, with unresolved departure timing and physical clue dependencies. Its original ten responses and failed state remain preserved. No manuscript was written or delivered by that trial.
+
+
+## Coordinated creative repairs and complete producer-format feedback
+
+Trial 17 exposed a real dependency deadlock: the chapter-3 proposal could not
+resolve the route sequence while unchanged chapter 5 still established the old
+sequence. Other rejected proposals also contained genuine new errors; grouping
+does not excuse those errors. Factual-only groups cannot settle an explicitly
+creative choice between competing on-page chronologies. The new candidate
+stages connected creative tasks together, verifies the entire proposed book,
+then requires a decisive blind preference for the complete proposed version.
+The shared publication transaction preserves crash recovery and author edits.
+
+Trial 21 separately failed before drafting: its two architecture-repair
+responses assigned different after values to the same field. The first duplicated
+`/chapters/11/events`; the format retry duplicated `/promises/2/setup_action`.
+Both originals remain unchanged and the old book stays failed. The producer's
+format retry previously received an error without its own rejected response.
+It now receives the full immutable proposal and diagnostics for every duplicate
+path, so it can consolidate the intended edits. No conflicting edit is selected
+automatically and no attempt budget or literary gate is weakened.
+
+A new whole-workflow fixture also exposed incomplete evidence checks in the
+completed-book resume path: old group source tampering could escape a check of
+only final readers and exports. Resume now verifies every phase and native
+record through `verify_execution` before confirming delivery. Ten focused
+creative-group tests passed in 17.563 seconds; two planning-format tests passed
+in 1.357 seconds. They include both gates, rejection, original source retention,
+crash recovery without model replay, both exports and completed resume. These
+are deterministic tests, not native literary acceptance. The first full-suite
+attempt was stopped after the new tampering test found this resume bug; its log
+is not a passing result. The corrected full-suite result is recorded separately.
+
+
+The corrected candidate passed all 435 automated tests in 373.804 seconds and the installer suite check. Full native candidate acceptance remains pending; no quality score follows from these automated tests.

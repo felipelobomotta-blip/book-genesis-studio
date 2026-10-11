@@ -217,7 +217,7 @@ class Journal:
         pending = self.data.get("pending_mutation")
         if not pending:
             return
-        if pending.get("kind") == "factual_correction_group":
+        if pending.get("kind") in {"factual_correction_group", "creative_revision_group"}:
             from correction_groups import recover
             recover(self)
             return
