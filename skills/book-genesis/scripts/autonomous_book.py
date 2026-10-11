@@ -33,7 +33,7 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
     validate_json, validate_prose, validate_prose_text, validate_review, neutral_contract_schema,
     plan_schema, validate_neutral, render_plan,
-    plan_repair_schema, apply_plan_edits, validate_shape, character_context)
+    plan_repair_schema, apply_plan_edits, validate_shape, character_context, production_facts)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
@@ -404,7 +404,9 @@ class BookWorkflow:
     def neutral_sources(self, chapters):
         names = ["artifacts/00-brief.md", "artifacts/02-story-engine.md", "artifacts/03-characters.md", "artifacts/04-theme.md",
                  "artifacts/05-voice.md", "artifacts/07-outline.md", "artifacts/08-opening-strategy.md", "artifacts/09-continuity-ledger.md"]
-        return {**self.files(names), **{path.name: path.read_text(encoding="utf-8") for path in chapters}}
+        return {**self.files(names),
+                "controller/production-counts.json": json.dumps(production_facts(chapters, self.contract), ensure_ascii=False, indent=2),
+                **{path.name: path.read_text(encoding="utf-8") for path in chapters}}
 
     def panel(self, key, paths):
         bundle = self.root / "work/panels" / key

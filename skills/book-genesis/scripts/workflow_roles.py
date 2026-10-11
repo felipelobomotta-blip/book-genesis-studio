@@ -4,13 +4,30 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from export_book import Chapter, count_prose_words, _XML_INVALID_RE
+from export_book import Chapter, count_prose_words, _XML_INVALID_RE, discover_chapters, word_count_receipt
 from workflow_state import digest, encoded, freeze, read_json
 from correction_edits import retains_title
 
 
 TEXT = {"type": "string"}
 INTEGER = {"type": "integer"}
+
+
+def production_facts(chapter_paths, contract):
+    """Count the exact supplied snapshot with the exporter's prose counter.
+
+    This is measured source data, not a model verdict or a quality target.
+    Enumerate public production fields rather than exposing the private contract.
+    """
+    paths = [Path(path).resolve() for path in chapter_paths]
+    if not paths:
+        raise ValueError("Production facts require a complete chapter snapshot")
+    chapters = discover_chapters(paths[0].parent)
+    if {chapter.path.resolve() for chapter in chapters} != set(paths) or len(paths) != len(chapters):
+        raise ValueError("Production facts must count exactly the supplied chapter snapshot")
+    return {"fixed_contract": {key: contract[key] for key in ("chapters", "min_words", "max_words")},
+        "observed_chapters": len(chapters), "prose_word_count": word_count_receipt(chapters),
+        "interpretation": "These are deterministic counts of the complete supplied manuscript. The fixed contract gives the hard chapter and whole-book length requirements. Per-chapter estimates in planning prose are guides, not additional hard word limits. Assess pacing on its own merits; do not infer a whole-book length violation from an outline estimate."}
 
 
 def character_context(markdown, participants):

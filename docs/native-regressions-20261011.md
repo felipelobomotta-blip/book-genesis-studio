@@ -59,6 +59,25 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+The same running Luna trial later made a false length allegation: its audit
+treated a chapter's planning estimate as a hard limit and inferred a whole-book
+overflow. The complete measured manuscript contained 45,088 prose words within
+the frozen 40,000-48,000-word contract. The reviewer had the prose and planning
+documents but no deterministic count record.
+
+Neutral review sources now include counts computed from the exact supplied
+snapshot by the same prose counter used for export, together with the original
+chapter and whole-book length requirements. Audit, historical-finding follow-up
+and revision planning receive this record. Per-chapter planning estimates are
+identified as guides; pacing remains a literary judgment. Private quality targets,
+grades, model identity and previous verdicts never enter this record. Partial or
+duplicate snapshot inputs are rejected. This is source evidence, not an automatic
+deletion of a negative finding or an instruction to approve the book.
+
+This additional handoff passed the full 355-test suite and installer verification.
+The earlier prepared Claude project had made no model call when it was superseded;
+the updated source receives its own fresh installation and acceptance record.
+
 A subsequent frozen `5ff430c` run produced a 46,758-word first draft and an
 initial calibrated score of 70.32/100. Its unchanged opening and midpoint reused
 all eight original reader responses, including an unfavorable opening result.
