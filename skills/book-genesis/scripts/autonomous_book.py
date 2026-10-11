@@ -33,6 +33,25 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
 
+def production_allowance(chapters, remaining, used, min_words, max_words):
+    """Reserve room for every remaining chapter without imposing equal lengths.
+
+    Local bounds allow an ordinary long or short chapter. The feasibility bounds
+    reserve the remaining chapters' minimum and maximum capacity, so every
+    accepted chapter leaves a route to the unchanged whole-book contract.
+    """
+    if not 1 <= remaining <= chapters or used < 0:
+        raise WorkflowError("Invalid remaining production scope")
+    local_min = max(100, math.floor(min_words / chapters * .8))
+    local_max = math.ceil(max_words / chapters * 1.25)
+    low = max(local_min, min_words - used - (remaining - 1) * local_max)
+    high = min(local_max, max_words - used - (remaining - 1) * local_min)
+    if high < low:
+        raise WorkflowError("No feasible chapter allowance within the frozen book length")
+    target = min(high, max(low, round(((min_words + max_words) / 2 - used) / remaining)))
+    return low, high, target
+
+
 class BookWorkflow:
     def __init__(self, root: Path, command: dict, *, chapters: int, min_words: int, max_words: int,
                  quality_target: float = 8.5, transport=None):
@@ -95,11 +114,12 @@ class BookWorkflow:
         if not report["ok"]:
             raise WorkflowError("Program-owned progress does not reconcile: " + json.dumps(report["mismatches"]))
 
-    def call(self, key, packet, schema, validator=None, *, feedback=False):
+    def call(self, key, packet, schema, validator=None, *, feedback=False, feedback_response=False):
         self.journal.check_canonical()
         kwargs = {"transport": self.transport} if self.transport is not None else {}
         result = self.journal.call(key, packet if isinstance(packet, bytes) else packet.encode("utf-8"), schema,
-            self.command, validator or (lambda p: validate_json(p, schema)), feedback=feedback, **kwargs)
+            self.command, validator or (lambda p: validate_json(p, schema)),
+            feedback=feedback, feedback_response=feedback_response, **kwargs)
         self.journal.check_canonical()
         return result
 
@@ -248,8 +268,8 @@ class BookWorkflow:
             if not target.exists():
                 used = self.state["manuscript"]["word_count_actual"]
                 remaining = count - number + 1
-                low = math.ceil((self.contract["min_words"] - used) / remaining)
-                high = (self.contract["max_words"] - used) // remaining
+                low, high, target_words = production_allowance(count, remaining, used,
+                    self.contract["min_words"], self.contract["max_words"])
                 previous = ""
                 if number > 1:
                     previous = " ".join((self.root / f"manuscript/chapters/chapter-{number-1:02d}.md").read_text(encoding="utf-8").split()[-300:])
@@ -257,14 +277,17 @@ class BookWorkflow:
                     "Return JSON with prose (one leading Markdown heading, then the entire chapter, no commentary) "
                     "and continuity_delta (only facts actually demonstrated here: who learned what, when, place and object custody). "
                     "Dramatize consequential choices and pressure rather than explaining the theme. Trust voice and scene. "
-                    "No outline, summary, placeholder or word-count claim in the prose.\n\n"
+                    "No outline, summary, placeholder or word-count claim in the prose. "
+                    f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
+                    "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                         "previous_tail": previous, "demonstrated_facts": self.demonstrated(number - 1),
-                        "production": {"chapter_words_min": low, "chapter_words_max": high,
+                        "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
                             "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
                             "remaining_chapters_including_this": remaining}}, ensure_ascii=False))
-                response, validation = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high), feedback=True)
+                response, validation = self.call(key, packet, PROSE_SCHEMA,
+                    lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
                 staged = self.stage_response(key, response)
                 self.journal.publish(staged, target)
                 self.sync()
@@ -499,7 +522,8 @@ class BookWorkflow:
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}, ensure_ascii=False))
-        response, _ = self.call(key, packet, PROSE_SCHEMA, lambda p: validate_prose(p, low=low, high=high), feedback=True)
+        response, _ = self.call(key, packet, PROSE_SCHEMA,
+            lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
         candidate = self.stage_response(key, response)
         bundle = self.root / f"work/comparisons/{key}"
         if not (bundle / "manifest.private.json").exists():

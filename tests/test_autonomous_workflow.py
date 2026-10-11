@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
-from autonomous_book import BookWorkflow
+from autonomous_book import BookWorkflow, production_allowance
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json, verify_execution
 from workflow_roles import obj, TEXT, validate_json
 from workflow_roles import validate_neutral, render_plan
@@ -88,6 +88,44 @@ class JournalTests(unittest.TestCase):
         self.assertEqual("original idea", packets[0])
         self.assertIn("missing or unexpected fields", packets[1])
         self.assertEqual(digest(b"original idea"), self.j.data["steps"]["planner"]["request"]["packet_sha256"])
+
+    def test_prose_repair_gets_original_draft_and_cannot_change_its_receipt(self):
+        packets = []
+        schema = obj({"text": TEXT})
+        def generate(_id, packet, _schema, _root):
+            packets.append(packet)
+            return {"text": "Preserve this scene and its ending." if len(packets) == 1 else "A compressed scene."}
+        def validate(path):
+            return {"valid": len(packets) > 1, "errors": [] if len(packets) > 1 else ["4347 words; maximum 4014"]}
+        with redirect_stdout(io.StringIO()):
+            self.j.call("draft", b"write a scene", schema, COMMAND, validate, feedback=True,
+                        feedback_response=True, transport=receipt_transport(generate))
+        self.assertIn("Preserve this scene and its ending.", packets[1])
+        self.assertIn("4347 words; maximum 4014", packets[1])
+        original = self.root / "work/host-calls/wf-draft-1"
+        self.assertEqual(digest((original / "response").read_bytes()), read_json(original / "receipt.json")["response_sha256"])
+
+    def test_changed_rejected_prose_is_not_used_as_repair_material(self):
+        schema = obj({"text": TEXT})
+        def validate(path):
+            path.write_bytes(encoded({"text": "silently replaced"}))
+            return {"valid": False, "errors": ["too long"]}
+        with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "changed before its repair"):
+            self.j.call("draft", b"original", schema, COMMAND, validate, feedback=True,
+                        feedback_response=True, transport=receipt_transport(lambda *a: {"text": "original draft"}))
+
+    def test_reader_retry_never_receives_previous_verdict(self):
+        packets = []
+        schema = obj({"text": TEXT})
+        def generate(_id, packet, _schema, _root):
+            packets.append(packet)
+            return {"wrong": "negative prior verdict"} if len(packets) == 1 else {"text": "fresh response"}
+        with redirect_stdout(io.StringIO()):
+            self.j.call("reader", b"unchanged blind packet", schema, COMMAND, lambda p: validate_json(p, schema),
+                        transport=receipt_transport(generate))
+        self.assertEqual(["unchanged blind packet"] * 2, packets)
+        with self.assertRaisesRegex(WorkflowError, "explicit producer feedback"):
+            self.j.call("invalid", b"packet", schema, COMMAND, lambda p: validate_json(p, schema), feedback_response=True)
 
     def test_stale_vote_cannot_be_rebound_to_new_packet(self):
         schema = obj({"text": TEXT})
@@ -220,6 +258,32 @@ def fixture_response(call_id, packet, schema, root):
             result["compare"] = next(label for label, identity in assignment["mapping"].items() if identity == "candidate")
         return result
     raise AssertionError(call_id)
+
+
+class ProductionAllowanceTests(unittest.TestCase):
+    def test_observed_variable_chapters_fit_without_changing_the_book_contract(self):
+        low, high, target = production_allowance(12, 12, 0, 40000, 48000)
+        self.assertLess(low, 4818)
+        self.assertGreaterEqual(high, 4818)
+        self.assertEqual(3667, target)
+        low, high, _ = production_allowance(12, 11, 4818, 40000, 48000)
+        self.assertLessEqual(low, 4347)
+        self.assertGreaterEqual(high, 4347)
+
+    def test_adversarial_long_short_and_mixed_chapters_preserve_global_feasibility(self):
+        import random
+        rng = random.Random(81026)
+        for count, floor, ceiling in ((1, 100, 100), (2, 380, 700), (12, 40000, 48000), (34, 80000, 95000)):
+            for strategy in ("short", "long", "target", "mixed"):
+                with self.subTest(count=count, strategy=strategy):
+                    used = 0
+                    for remaining in range(count, 0, -1):
+                        low, high, target = production_allowance(count, remaining, used, floor, ceiling)
+                        self.assertLessEqual(low, target)
+                        self.assertLessEqual(target, high)
+                        used += {"short": low, "long": high, "target": target, "mixed": rng.randint(low, high)}[strategy]
+                    self.assertGreaterEqual(used, floor)
+                    self.assertLessEqual(used, ceiling)
 
 
 class FullWorkflowTests(unittest.TestCase):

@@ -94,6 +94,36 @@ class StatusTests(unittest.TestCase):
         self.assertEqual("reported_pass", report["reported_quality_gates"])
         self.assertEqual("not_assessed_by_this_tool", report["literary_quality"])
 
+    def test_expected_pending_export_is_not_reported_as_a_failure_or_delivery(self):
+        p = progress()
+        p["state"].update(pipeline_status="in_progress", current_phase="Phase 3: Drafting")
+        v = {"schema_version": 1, "delivery": {"status": "pending", "errors": ["no export receipt"]},
+             "reviews": {"status": "not_run", "errors": ["no current-text review index supplied"]}}
+        report = self.collect([response(p), response(v, 1)])
+        self.assertFalse(report["technical_checks_passed"])
+        self.assertTrue(report["completion_pending"])
+        self.assertEqual(0, report["status_exit_code"])
+        with redirect_stdout(io.StringIO()) as output:
+            status.print_status(report)
+        self.assertIn("Final export and full-book reader verification are still pending", output.getvalue())
+        self.assertNotIn("Needs attention: no export receipt", output.getvalue())
+        p["state"]["pipeline_status"] = "blocked"
+        report = self.collect([response(p), response(v, 1)])
+        self.assertFalse(report["completion_pending"])
+        self.assertEqual(1, report["status_exit_code"])
+
+    def test_controlled_final_index_is_used_and_failed_quality_is_visible(self):
+        index = self.root / "evaluations/final-reader-index.json"
+        index.parent.mkdir()
+        index.write_text("{}", encoding="utf-8")
+        p = progress()
+        p["state"]["gates"] = {"adversarial_audit": "pass", "revision_loop": "gates_not_met"}
+        with patch.object(status.subprocess, "run", side_effect=[response(p), response(verified())]) as run:
+            report = status.collect_status(self.root, self.root / "scripts")
+        self.assertIn(str(index), run.call_args_list[1].args[0])
+        self.assertTrue(report["technical_checks_passed"])
+        self.assertEqual("needs_revision", report["reported_quality_gates"])
+
 
 if __name__ == "__main__":
     unittest.main()

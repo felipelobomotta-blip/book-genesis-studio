@@ -39,6 +39,20 @@ kept outside story data. Frozen reader and comparison packets never receive
 producer-retry feedback. A full integration test now exercises plan rejection,
 repair, a fresh neutral verification and a later interrupted chapter promotion.
 
+The second live run passed independent planning and the opening reader panel,
+but stopped at chapter 2: its two returned chapters were 4,524 and 4,347 words
+against an unnecessarily rigid 3,288–4,014 allowance. Its accepted opening was
+3,836 words. No export was produced. The next build reserves minimum/maximum
+capacity for the remaining chapters, supplies a central writing target, and
+allows different chapter lengths while keeping the original whole-book range.
+A producer retry receives its original rejected draft plus deterministic errors;
+the raw response must still match its native receipt. Blind reviewers never
+receive an earlier response. The two-attempt budget is unchanged.
+
+Status now distinguishes an expected pending export from a failed check and
+uses the controlled workflow's final reader index when present. Neither change
+converts a pending book or a failed literary gate into a delivered/approved one.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.

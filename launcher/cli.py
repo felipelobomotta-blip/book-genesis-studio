@@ -428,7 +428,8 @@ def _run(args: argparse.Namespace) -> int:
             print_status(report)
             if report["resume_snapshot"]["status"] == "blocked":
                 print(f"Resume is blocked: {report['resume_snapshot']['error']}")
-        return 0 if report["technical_checks_passed"] else 1
+        return (report.get("status_exit_code", 0 if report["technical_checks_passed"] else 1)
+                if report["resume_snapshot"]["status"] == "verified" else 1)
     saved = read_project(root) if args.command == "resume" else None
     controlled = bool(saved and saved.get("autonomous_contract")) or bool(args.command == "new" and args.autonomous and args.host == "codex")
     if not args.prepare_only and not _has_terminal() and not controlled:
