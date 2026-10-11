@@ -55,9 +55,11 @@ def validate_report(path, schema, catalog, members):
                         f"Chapter {row['chapter']}, check {check['name']!r}: cite supporting evidence from another chapter "
                         "or the author contract, in addition to this chapter's original and proposed prose.")
         passed = all(c["result"] == "pass" for r in data["chapters"] for c in r["checks"]) and not data["findings"]
+        validation["quote_evidence"] = []
         validation["errors"] += validate_findings(data["findings"], catalog,
             {n: f"original/chapter-{n:02d}.md" for n in members},
-            {n: f"proposed/chapter-{n:02d}.md" for n in members})
+            {n: f"proposed/chapter-{n:02d}.md" for n in members},
+            located_quotes=validation["quote_evidence"])
         if (data["verdict"] == "pass") != passed or (data["verdict"] == "block" and not data["findings"]):
             validation["errors"].append("Creative group verdict conflicts with its checks or findings")
     validation["valid"] = not validation["errors"]
