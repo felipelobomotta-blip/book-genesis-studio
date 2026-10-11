@@ -59,6 +59,23 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+The controlled panel caller also omitted an existing input supported by the
+packet builder: the blind-reader role specifies the previous chapter's final
+300 words, but the caller never supplied `context_chapter`. Readers consequently
+received a later chapter without that intended transition context. This is a
+verified handoff defect; it does not by itself invalidate any particular opinion.
+
+The caller now freezes a separate copy of the preceding chapter for each reading
+scope and lets the existing builder expose only its final 300 visible words.
+The outline, future events and quality targets remain excluded. The context copy
+and manifest are bound to the measurement evidence so later canonical revisions
+cannot overwrite what an earlier reader saw. Identical visible input retains its
+original negative reads; changed context triggers new reads. Missing context or a
+changed source under an existing scope blocks before dispatch. These changes are
+tested separately and are not applied to either active full-book run.
+The complete suite passed 361 tests after this context fix, including negative
+read reuse, changed-context dispatch, immutable history and missing-context rejection.
+
 The first full Claude trial from `28334cc` stopped in foundation after two native
 responses wrapped their JSON in Markdown fences. The JSON content was present,
 but the strict transport treated presentation syntax as part of the document.

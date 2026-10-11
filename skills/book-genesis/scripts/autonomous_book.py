@@ -410,12 +410,30 @@ class BookWorkflow:
 
     def panel(self, key, paths):
         bundle = self.root / "work/panels" / key
+        first = min(paths, key=lambda path: int(re.fullmatch(r"chapter-(\d+)\.md", path.name)[1]))
+        first_number = int(re.fullmatch(r"chapter-(\d+)\.md", first.name)[1])
+        context = None
+        if first_number > 1:
+            previous = first.parent / f"chapter-{first_number - 1:02d}.md"
+            if not previous.is_file():
+                raise WorkflowError("Blind reader is missing the preceding chapter context")
+            # Keep the original context immutable even after a later accepted
+            # revision changes the canonical preceding chapter. The packet
+            # builder exposes only its final 300 visible words, not the plan.
+            context = self.root / "work/panel-context" / key / previous.name
+            freeze(context, previous.read_bytes())
         if not (bundle / "manifest.private.json").exists():
-            prepare_readers(paths, bundle, audience=self.metadata["genre"] + "; " + self.metadata["audience"])
+            prepare_readers(paths, bundle, audience=self.metadata["genre"] + "; " + self.metadata["audience"], context_chapter=context)
         manifest = read_json(bundle / "manifest.private.json")
         if [(p.resolve().as_posix(), digest(p.read_bytes())) for p in paths] != [(Path(r['path']).as_posix(), r['sha256']) for r in manifest['chapters']]:
             raise WorkflowError("Panel sources changed; existing reads cannot be reused")
-        reports, index, evidence, reused = [], [], [], 0
+        expected_context = (str(context.resolve()), digest(context.read_bytes())) if context else None
+        recorded_context = (manifest["context"]["path"], manifest["context"]["sha256"]) if manifest.get("context") else None
+        if recorded_context != expected_context:
+            raise WorkflowError("Reader context changed; existing reads cannot be rebound")
+        reports, index, evidence, reused = [], [], [self.journal.record_file(bundle / "manifest.private.json")], 0
+        if context:
+            evidence.append(self.journal.record_file(context))
         for row in manifest["readers"]:
             step_key = key + "-" + row["persona"]
             packet = (bundle / row["packet"]).read_bytes()
