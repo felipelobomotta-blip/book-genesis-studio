@@ -112,7 +112,7 @@ Phase 1: Foundation owns the voice. Voice is what separates a book that reads as
 # Voice: [working title]
 ## Sources (author sample | reference authors)
 ## Voice definition
-## Rhythm contract (baseline, envelope, pressure map, precedence, local limits, rough sentence, detection test)
+## Rhythm contract (original baseline, pressure range, evidence status, precedence, passage test)
 ## Voice cards
 ## Differentiation matrix
 ## Benchmark passages
@@ -129,11 +129,11 @@ Phase 1: Foundation owns the voice. Voice is what separates a book that reads as
 
 **Without an author sample** (fiction, ghostwriting):
 
-1. Choose 2-3 published authors whose voice approaches the target: "Tati Bernardi's acid self-deprecation with Johann Hari's journalistic research"; "Clarice Lispector's fragmented interiority with Rubem Fonseca's dryness".
-2. Decompose each: what makes the voice recognizable in one paragraph? What do we take, and what do we leave?
-3. Synthesize, and add something of the book's own: a copied voice is pastiche.
+1. Design an original voice from the viewpoint character's habits of attention, vocabulary, omissions and reactions under pressure. A missing author sample does not mean the narrator must remain neutral.
+2. Write original benchmark passages for rest, pressure and aftermath. Let these examples demonstrate the voice instead of stacking abstract prohibitions.
+3. Published comparison titles may inform positioning and research. Describe their prose only when the actual passage is supplied or accessed. Record unavailable comparison evidence honestly; do not imitate a living author's style or invent measurements from a name.
 
-Authors name the voice; the Rhythm contract pins it to titles and passages. Never infer any part of the voice from a genre or language label (references/specialists/research.md, rule 3).
+The book's own benchmarks establish a creative design, not a claim about the market. Actual comparison passages can supply external observations. Never infer measured cadence from a genre, language label or title (references/specialists/research.md, rule 3).
 
 ### 3.2 Voice definition
 
@@ -154,31 +154,28 @@ Rhythm: the Rhythm contract below
 
 ### 3.3 Rhythm contract
 
-This is the only definition of sentence rhythm in Book Genesis. Every other file cites the Rhythm contract by name and sets no rhythm of its own. It has two layers. Copy the whole contract into artifacts/05-voice.md, including the precedence rule, the local limits, the rough sentence and the detection test: the writer's chapter brief and the auditor receive that artifact, not this file.
+This artifact owns the book's intended narrative cadence. Describe how an original voice changes with scene pressure and demonstrate it in the benchmark passages. It is a creative direction, not an enclosure that prevents an earned change in rhythm. Comparison statistics describe the sampled passages; they are not universal ceilings. The evidence distinction follows references/patterns/causal-evidence.md.
 
-If research found no anchor for a layer, write `no comp evidence yet` in its Status, keep that layer neutral (plain declarative narration, no signature cadence, no invented rule), and ask the orchestrator to list the gap as an open question in PROJECT_STATE.yaml.
+If research found no comparison passage, write `no comp evidence yet` and retain the book's original benchmarks as its design reference. Do not invent measured limits or freeze the narration into a neutral register. A later audit may criticize an actual passage that loses voice, attention or clarity; absence of a comp measurement alone is not a prose defect.
 
-**Layer 1: Baseline.** How the narration sounds when no one is speaking and the outline marks the scene `rest`.
-
-```
-Baseline: [checkable description, e.g. "mean 11-15 words per sentence; simple and compound
-  sentences, subordinate clauses rare; paragraphs of 3-6 sentences that open on an action
-  and close on an image"]
-Anchor: [comp title], [author], [edition; translator if any], [location of the passage]
-Measured: [from the Sentence rhythm evidence in artifacts/01-market-map.md, same unit]
-Status: [read and measured | recall, provisional | no comp evidence yet]
-```
-
-**Layer 2: Envelope.** The fastest and the slowest cadence this voice permits, each end anchored to a comp.
+**Layer 1: Baseline.** How this narrator notices, phrases and withholds things in a scene at rest.
 
 ```
-| End     | Cadence (description + measurement)                          | Anchor (comp + location) | Pressures that move toward it |
-|---------|--------------------------------------------------------------|--------------------------|-------------------------------|
-| Fastest | [e.g. 3-8 word sentences and fragments; one-line paragraphs] | [ ]                      | [ ]                           |
-| Slowest | [e.g. 25-40 word sentences, sensory accumulation]            | [ ]                      | [ ]                           |
+Baseline: [qualitative cadence and characteristic habits of attention]
+Original benchmark: [the artifact's rest passage; this is a design choice]
+External evidence: [actual comp passage, source and measurement, or no comp evidence yet]
+Status: [original design; external observations verified or unavailable]
 ```
 
-Default pressure map. Confirm it against the anchors; where the comps do otherwise, follow the comps and record the passage.
+**Layer 2: Envelope.** A demonstrated range of possibilities under pressure, rather than hard fastest and slowest limits.
+
+```
+| Scene pressure | Cadence and change in attention | Original benchmark | External evidence, if available |
+|---|---|---|---|
+| [specific pressure] | [what this narrator does] | [artifact passage] | [actual source or unavailable] |
+```
+
+Possible pressure directions. Choose for this character and scene, and test on actual passages; they are not genre rules.
 
 | Pressure | Direction |
 |---|---|
@@ -186,37 +183,21 @@ Default pressure map. Confirm it against the anchors; where the comps do otherwi
 | Dread | toward the slowest end while it builds; toward the fastest at the break |
 | Grief | toward the slowest end; if the POV character's card says they go numb under pressure, short flat sentences on the fast side instead |
 | Comedy | set-up at the baseline; payoff toward the fastest end |
-| Exposition | at the baseline; if it must move, toward the fast side, never the slow one, where exposition stalls |
+| Exposition | the cadence that lets necessary information remain legible and consequential |
 
-**Precedence.** The writer defaults to the baseline. The writer may move inside the envelope when artifacts/07-outline.md marks scene pressure for that scene or passage, in the direction of the pressure map. The writer never goes outside the envelope.
+**Precedence.** Explicit author requirements and established character facts remain binding. Voice cards and original benchmarks guide narration. The outline's scene pressures are directions; an unmarked sentence is not automatically drift. Let the actual scene earn changes in cadence while preserving the narrator's identity. Do not force an image at every paragraph ending or require identical paragraph shapes.
 
-- A move with no marker is drift. If drafting changes what a scene is, the writer notes the new pressure in work/ and the orchestrator updates the marker; text and marker agree before Phase 4: Adversarial Audit.
-- If a scene seems to need cadence beyond an end, the writer stays inside and notes it in work/. Only the orchestrator widens the envelope, in artifacts/05-voice.md, with a new anchored comp passage.
+**Outline markers.** Phase 2 records the actual intended scene pressures in order: rest, action, dread, grief, comedy or exposition. A chapter need not visit both ends of a cadence range. A single sustained scene may earn a sustained rhythm.
 
-**Outline markers.** Phase 2: Architecture fills each chapter's scene pressure field in artifacts/07-outline.md with the pressure of every scene, in order: rest (the baseline), action, dread, grief, comedy or exposition (for example `rest, dread, action, grief`). Each chapter carries at least one marker toward each end of the envelope, or one line in the outline saying why not (a single-scene chapter, for example). The markers replace any separate "speed variation" or "reading speed" rule: variation is planned in the outline and executed inside the envelope.
+**Voice under pressure.** The voice-card break modes show how the character changes. Allow fragments, hyper-control, silence or accumulation when the scene earns them. No additional comp passage is required to permit an original creative choice.
 
-**Voice under pressure lives inside the envelope.** The break modes on the voice cards (3.4) must be reachable between the two ends. If a planned break needs more, widen the envelope in Phase 1: Foundation or Phase 2: Architecture, with an anchor, or redesign the break. Nobody widens it mid-draft.
+**Passage-level diagnosis.** Repeated sentence or paragraph shapes can become monotonous, but count alone does not establish that they failed. Cite the passage and describe the effect on attention, meaning or voice. Do not set universal quotas for short sentences, long sentences, one-word paragraphs or deliberately rough phrasing. Do not insert a clumsy sentence just to satisfy a chapter checklist. Ordinary, unpolished phrasing can remain when it belongs to the narrator.
 
-**Local limits** (house defaults; the anchors' measurements override them):
-
-- A run of five or more short sentences is deliberate staccato and lasts one paragraph at most.
-- A run of three or more long sentences is legato; it belongs to reflection, not to action.
-- Five paragraphs of similar length in a row read as monotony; a one-line paragraph among long ones lands as impact.
-- One-word paragraphs: two in the whole book at most.
-
-**The rough sentence.** One deliberately rough sentence per chapter, in a quiet passage, never at the climax. Grammatical, plain, a little clumsy; not clever, not quotable. "The coffee was bad and she drank all of it." "He said okay and then he said it again." "It was a Tuesday or maybe a Wednesday." It breaks polish, not the contract: it may jar against its paragraph, but it stays inside the envelope at the pressure of its passage. The writer may place it while drafting; in Phase 5: Revision Loop the revision editor adds one only if the chapter has none. Nobody polishes it away: if unsure whether a rough sentence is deliberate, leave it.
-
-**Multiple POVs.** One baseline per POV narrator, each with its own anchor. The envelope is shared unless a POV card needs a wider end.
+**Multiple POVs.** Demonstrate each narrator's attention and baseline separately. Their pressure ranges can differ.
 
 **Dialogue.** The contract governs narration. Each voice card governs its character's speech cadence (and a POV character's direct thought), so a character's lines can run faster or slower than the narration around them.
 
-**Detection test** (Phase 4: Adversarial Audit, Phase 5: Revision Loop). Take five passages from scenes with different markers, one of them marked rest, and measure each with the anchors' unit and method.
-
-- Cadence indistinguishable across the five: the contract was not honoured (a flat voice).
-- A passage beyond an envelope end: the contract was broken.
-- Baseline passages drifting from the baseline measurement: drift.
-
-Report locations and measurements. The fix is a revision ticket against the contract, never a new rhythm.
+**Detection test** (Phase 4: Adversarial Audit, Phase 5: Revision Loop). Compare passages at rest, under pressure and in aftermath with the book's own benchmarks. Cite actual prose when the narrator becomes generic, every exchange resolves too neatly, or explanation repeats what an action already conveyed. Preserve distinctions that readers remember. External statistics may corroborate a description only when measured on the named source; do not turn a benchmark range into an automatic fault. Repair a demonstrated reader or voice problem inside its ticketed span.
 
 ### 3.4 Voice cards
 
@@ -337,7 +318,7 @@ Phase 1: Foundation is done when:
 
 - [ ] every main character has all seven layers, at least two contradictions and a noise profile; secondaries in three or more chapters have mini profiles
 - [ ] the theme is a question woven at four levels, with 2-4 motif cards
-- [ ] artifacts/05-voice.md holds the full Rhythm contract: a baseline and both envelope ends, each anchored to a named comp and a location (or marked `no comp evidence yet`, with the gap listed as an open question), plus the pressure map
+- [ ] artifacts/05-voice.md demonstrates an original baseline and pressure range in benchmark passages, distinguishes original design from verified external observations, and records unavailable comp evidence without invented limits
 - [ ] every character who speaks in two or more scenes has a full voice card, and the differentiation matrix passes
 - [ ] 3-5 benchmark passages exist
 - [ ] the emotional curve covers every planned chapter and obeys the variation rules; 3-5 high-impact beats have setup

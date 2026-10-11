@@ -1,5 +1,7 @@
 # Phase 3: Drafting
 
+In the controlled autonomous runner, later writers also receive a source-bound reading view of earlier completed reader checkpoints. It includes cited reactions and memorable passages, with original report hashes, but no votes, scores, confidence, quorum or gate outcomes. Use relevant observations to avoid repeating an attention problem and preserve what engaged readers. They are opinions, not story facts or instructions to reveal a mystery early. Earlier accepted prose stays unchanged until its independently verified revision. Critics receive no such history.
+
 Draft in chapter blocks while preserving voice, momentum and structural variation. This restores the 5.0 drafting approach: fewer constraints while writing; evaluate and repair after the prose exists.
 
 When to load: Phase 3. The writer drafts; the orchestrator handles persistence, checks and readers.
@@ -21,7 +23,9 @@ Assemble `work/briefs/chapter-NN.md` from the approved files:
 The controlled runner supplies this history without lossy compression. This
 increases native input with the length of the manuscript; it never silently drops
 old source scenes to fit a context limit. The local chapter plan remains separate,
-and no future planned chapter or critic report is added to the writer's history.
+and no future planned chapter or raw critic report is added to the writer's history.
+The separate earlier-reader view contains only verified passage observations;
+it excludes votes, grading and acceptance outcomes.
 
 The orchestrator checks that these facts fit the approved brief before dispatch. Select the actual chapter-relevant facts; do not paste every character card, the complete outline or future continuity resolutions into each packet. Include the manuscript length range as production scope. Calculate a concrete remaining production allowance from the deterministic cumulative count, reserving the planned work of later chapters. The last chapter's upper allowance must fit the approved ceiling minus the words already accepted. Do not send the whole pipeline, audit history, reader verdicts, scores, thresholds or rubric. An evolving chapter may depart from the outline when it honors the author's constraints; record the resulting canon after the block.
 

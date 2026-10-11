@@ -12,12 +12,12 @@ Follow `references/specialists/narrative-foundation.md`. It holds the tools: cha
 
 - `artifacts/03-characters.md`: each main character's wound, conscious desire, unconscious need, the lie they believe, contradictions, pressure between characters, and a voice card.
 - `artifacts/04-theme.md`: the central question (never a slogan), subthemes, symbols, and how the theme will be carried by choices rather than statements.
-- `artifacts/05-voice.md`: the narrative voice, the per-character voice cards, the "cover the name" test, and the **Rhythm contract**: a baseline register for narration anchored to a named comparable passage, and an envelope of the fastest and slowest cadence allowed, each anchored to a comp, with the scene pressures that move toward each end. This file is the only owner of rhythm. The research specialist supplies the comp evidence; a genre or language label alone is never evidence.
+- `artifacts/05-voice.md`: the original narrative voice, per-character voice cards, the "cover the name" test, and the **Rhythm contract**: benchmark passages at rest and under pressure, with the habits of attention that distinguish this narrator. Separate original design from externally observed comparison evidence. Missing comparison passages do not prevent an original voice; do not invent statistics or require uniform paragraph shapes.
 - `artifacts/06-emotional-curve.md`: start and end emotion for each block of chapters, high-impact beats, and where a reader is most likely to quit.
 - `PROJECT_STATE.yaml` updated.
 
 ## Rules
 
 - Contradiction over consistency: a character who always behaves well is a finding, not a virtue.
-- Every voice choice names a comparable book and passage. If research found none, write "no comp evidence yet" and keep the default register neutral instead of inventing a rule.
+- Demonstrate voice choices in original benchmark passages. Any claim about a comparable book names the actual accessed passage; otherwise write "no comp evidence yet". Do not add a required rough sentence per chapter or universal sentence and paragraph quotas.
 - For memoir, the "characters" are real people: record what the author knows, what the author is guessing, and what must be checked or softened.

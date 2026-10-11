@@ -417,6 +417,15 @@ class FullWorkflowTests(unittest.TestCase):
             self.assertIn("Ada Vale, aged thirty", writer)
             self.assertNotIn("FUTURE_ONLY_RESOLUTION", writer)
             self.assertIn("FUTURE_ONLY_RESOLUTION", plan_packet)
+            first_writer = json.loads(writer.split("\n\n", 1)[1])
+            self.assertEqual([], first_writer["earlier_reader_experience"]["observations"])
+            later_writer = (root / "work/workflow/draft-02/packet.md").read_text(encoding="utf-8")
+            later_view = json.loads(later_writer.split("\n\n", 1)[1])["earlier_reader_experience"]
+            self.assertEqual(4, len(later_view["observations"]))
+            self.assertTrue(all(row["chapter"] == 1 for row in later_view["observations"]))
+            for folder in ("draft-check-01-primary", "audit-original", "measure-0-rubric-1"):
+                critic = (root / "work/workflow" / folder / "packet.md").read_text(encoding="utf-8")
+                self.assertNotIn('"earlier_reader_experience"', critic)
             editor = (root / "work/workflow/revision-1-c01/packet.md").read_text(encoding="utf-8")
             self.assertIn('"shared_revision_strategy": "Repair the missing confession."', editor)
             issues = read_json(root / "evaluations/issues-measure-1.json")

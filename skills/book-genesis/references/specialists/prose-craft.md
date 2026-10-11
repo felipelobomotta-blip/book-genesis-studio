@@ -163,7 +163,7 @@ Chapter check, after drafting and in Phase 4: Adversarial Audit:
 2. Find three sentences an editor would underline in approval. None means the prose is functional, not distinct.
 3. Find three sentences carrying fat, and cut them.
 4. At least one concrete image per page. Fewer means the chapter has gone abstract.
-5. Paragraph lengths vary within the Rhythm contract's local limits.
+5. Paragraph shapes serve the scene and narrator; compare them with the Rhythm contract's original benchmarks, without a fixed quota.
 
 ### Consequential information
 
@@ -213,7 +213,7 @@ Each move says what a ticket targets and how the revision editor repairs it insi
    > The pushpin for Elena Marsh was yellow. She didn't remember choosing yellow.
 3. **Emotional control break.** Target: a character who notices a feeling, manages it and moves on, every time. Repair: make the management fail, once. Small, not melodramatic: the voice cracks, the eyes burn, the hand keeps shaking after it is told to stop. The prose does not explain the break, the character does not reflect on it, and other characters may or may not notice.
 4. **Precision deflation.** Target: three to five falsely precise numbers that exist only to look concrete ("She'd worked 247 cases in the last decade"; "The signal arrived at 14:23:07 UTC"). Repair: replace some with human vagueness ("more cases than she could count"; "in the early afternoon, while half the team was at lunch"). Keep precision that serves the story: a detective counting evidence, a scientist reading instruments, world-building figures the reader tracks.
-5. **Rough sentence.** Target: a chapter without the rough sentence the Rhythm contract requires; the ticket's span is a quiet passage. Repair: add one there, following the contract's definition; it stays inside the envelope. If you catch yourself making it clever, it is not rough.
+5. **Rough sentence.** Target: a passage whose conspicuous polish makes this narrator sound unlike themselves, supported by actual prose or reader evidence. Repair only that span with ordinary phrasing appropriate to the character. Preserve a naturally rough sentence that carries voice; do not add one because a chapter lacks its quota, manufacture clumsiness or polish every sentence into a maxim.
 6. **Negation break.** Target: the "Not X. Not Y. [Z]." opener, repeated. Repair: rewrite at least half of them as direct assertion. "Not a blip. Not a transient. A sustained carrier wave." becomes "A sustained carrier wave, steady as a heartbeat."
 7. **Missing paragraph.** Target: the most predictable paragraph, the one you could guess before reading it: it explains what just happened, summarizes the character's emotional state, transitions too smoothly, or says what the reader already worked out. Repair: run the revision editor's burden-of-proof test for deletion; if the paragraph has no other function, cut it. If something essential would go with it, rewrite it to be unpredictable instead.
 8. **Dialogue mess.** Target: the cleanest, most orderly exchange in the chapter. Repair: add one or two of the behaviors in "Real speech is messy" (section 3).
@@ -231,5 +231,5 @@ For literary fiction, speculative fiction, and any book whose comps reward rerea
 - Modify existing prose inside the ticket's span only: no new scenes, plot points or characters.
 - Keep the voice. Every change must sound like this book, not like another author.
 - Keep the chapter's anchor, the image, moment or line recorded for it in artifacts/06-emotional-curve.md. A move sharpens it, never dissolves it.
-- Keep cadence inside the Rhythm contract's envelope.
+- Preserve the narrator's identity while letting the scene earn its cadence; the Rhythm contract is a demonstrated design, not a hard range.
 - Record each move as its ticket's line in the revision report defined in references/specialists/revision-editor.md, naming the move.

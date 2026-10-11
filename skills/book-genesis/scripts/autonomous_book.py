@@ -23,6 +23,7 @@ from correction_edits import apply_passage_corrections, correction_schema, sourc
 from craft_context import draft_knowledge, revision_knowledge
 from narrative_evidence import INSTRUCTIONS as CAUSAL_EVIDENCE_INSTRUCTIONS
 from editorial_feedback import score_blind
+from reader_experience import draft_reader_experience
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
@@ -389,6 +390,7 @@ class BookWorkflow:
                         "stable_story_facts": self.plan["writer_facts"],
                         "characters": characters,
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
+                        "earlier_reader_experience": draft_reader_experience(self.journal, number),
                         "earlier_chapters": earlier,
                         "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,

@@ -72,6 +72,13 @@ Critics run at the strongest independence the host offers: another model family'
 
 ## Two gates, bounded
 
+Later draft writers can learn from source-bound observations in earlier completed
+reader checkpoints without receiving votes, grading or acceptance outcomes.
+Critics remain blind to that history. The original voice benchmarks guide cadence
+without mandatory rough sentences or universal paragraph quotas. See
+[reader-experience-20261011.md](reader-experience-20261011.md) for the observed
+problem, evidence checks and current validation limits.
+
 - The **panel gate** asks whether the book holds its readers: four blind personas (primary, hostile, adjacent-genre, casual), majority to turn the page, a defect needs two votes.
 - The **rubric gate** tells revision what to fix: ten weighted dimensions, calibrated for internal inflation, against a declared target of 8.5.
 
