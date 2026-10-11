@@ -218,6 +218,15 @@ def fixture_response(call_id, packet, schema, root):
         return {"prose": f"# Chapter {number}\n\n" + ("The courier chose to confess. " if revision else "The courier held the stolen letter. ") * 16
                 + "\n\n" + "The recipient listened and opened the door. " * 14,
                 "continuity_delta": "The courier arrived; the recipient opened the door."}
+    if "catalog_sha256" in props and "checks" in props:
+        catalog = json.loads(packet.split("Complete sources:\n", 1)[1])
+        ids = [source["passages"][-1]["id"] for source in catalog["sources"][:3]]
+        return {"catalog_sha256": props["catalog_sha256"]["enum"][0], "verdict": "pass",
+                "coverage": [source["source"] for source in catalog["sources"]],
+                "checks": [{"name": name, "result": "pass", "evidence_ids": ids,
+                            "reason": "The synthetic repair addresses the assigned event and its sources."}
+                           for name in props["checks"]["items"]["properties"]["name"]["enum"]],
+                "findings": [], "limitations": "Synthetic execution fixture, not a literary judgment."}
     if "coverage" in props and "checks" in props:
         catalog = json.loads(packet.split("Complete sources:\n", 1)[1])
         names = [s["source"] for s in catalog["sources"]]

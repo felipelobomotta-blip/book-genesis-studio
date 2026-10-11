@@ -26,6 +26,8 @@ from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
 from prepare_rubric import build_catalog, catalog_digest
 from promote_chapter import promote_chapter
+from revision_viability import (INSTRUCTIONS as VIABILITY_INSTRUCTIONS, CHECKS as VIABILITY_CHECKS,
+                                response_schema as viability_schema, validate_response as validate_viability)
 from stage_chapter import stage_chapter
 from validate_blind_reader import validate_blind_reader_report
 from validate_rubric import validate_rubric, rubric_schema
@@ -718,7 +720,17 @@ class BookWorkflow:
         if factual:
             decision = self.check_factual_revision(key, task, accepted, candidate, context, decision_path)
         else:
-            decision = self.compare_revision(key, n, accepted, candidate, context, decision_path)
+            viability = self.check_creative_viability(key, task, accepted, candidate, manuscript)
+            viability_record = self.journal.record_file(self.root / f"evaluations/decisions/{key}-viability.json")
+            if viability["passed"]:
+                decision = self.compare_revision(key, n, accepted, candidate, context, decision_path)
+                # Comparison calls cannot silently stale the repair check or
+                # replace its original supporting material before promotion.
+                self.journal.verify_files(viability["evidence"] + [viability_record])
+            else:
+                decision = {"decision": "reject", "reason": viability["reason"],
+                            "viability": viability_record}
+                freeze(decision_path, encoded(decision))
         if decision["decision"] == "promote":
             receipt = self.root / f"evaluations/promotions/{key}.json"
             self.journal.publish(candidate, target, receipt=receipt, promote=lambda: promote_chapter(target, candidate, decision_path, receipt))
@@ -730,12 +742,50 @@ class BookWorkflow:
         outcome = {"chapter": n, "mode": task["mode"], "decision": decision["decision"],
                    "reason": decision.get("reason", "Fresh evidence-bound factual verification"),
                    "candidate": self.journal.record_file(candidate), "evidence": self.journal.record_file(decision_path)}
+        if not factual:
+            outcome["viability"] = viability_record
         freeze(outcome_path, encoded(outcome))
         detail = ("factual correctness check" if factual else
                   f"{decision['revision_votes']}/4 preferred the candidate" if "revision_votes" in decision else
+                  "repair check blocked; accepted chapter retained" if not viability["passed"] else
                   "incomplete comparison; accepted chapter retained")
         self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {detail}")
         return outcome
+
+    def check_creative_viability(self, key, task, accepted, candidate, manuscript):
+        folder = self.root / "work/viability" / key
+        result_path = self.root / f"evaluations/decisions/{key}-viability.json"
+        sources = {"accepted-chapter.md": accepted, "candidate-chapter.md": candidate}
+        sources.update({"current/" + p.name: p for p in manuscript if p.name != accepted.name})
+        sources.update({name: self.root / name for name in
+                        ("artifacts/00-brief.md", "artifacts/03-characters.md", "artifacts/05-voice.md")})
+        bindings = [self.journal.record_file(p) for p in sources.values()]
+        manifest = folder / "sources.json"
+        freeze(manifest, encoded({"task": score_blind(task), "files": bindings}))
+        catalog = text_catalog({name: p.read_bytes().decode("utf-8") for name, p in sources.items()})
+        schema = viability_schema(catalog)
+        packet = (VIABILITY_INSTRUCTIONS + "\nAssigned task:\n" + json.dumps(score_blind(task), ensure_ascii=False, sort_keys=True)
+            + "\nRequired checks:\n" + json.dumps(VIABILITY_CHECKS)
+            + "\nComplete sources:\n" + json.dumps(catalog, ensure_ascii=False, sort_keys=True))
+        call_key = key + "-viability"
+        try:
+            response, _ = self.call(call_key, packet, schema, lambda p: validate_viability(p, schema, catalog))
+        except WorkflowError:
+            evidence = self.rejected_validation_evidence(call_key)
+            if evidence is None:
+                raise
+            result = {"passed": False, "reason": "Creative repair check exhausted its output-validation attempts; accepted chapter retained.",
+                      "evidence": evidence}
+        else:
+            report = read_json(response)
+            result = {"passed": report["verdict"] == "pass", "report": self.journal.record_file(response),
+                      "reason": "Creative repair verified." if report["verdict"] == "pass" else
+                                "Creative repair check blocked: " + "; ".join(report["findings"]),
+                      "evidence": list(self.journal.data["steps"][call_key]["evidence"])}
+        result["evidence"] += bindings + [self.journal.record_file(manifest)]
+        self.journal.verify_files(result["evidence"])
+        freeze(result_path, encoded(result))
+        return result
 
     def rejected_validation_evidence(self, key):
         """Retain verified malformed optional work; never mask transport failure."""

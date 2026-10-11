@@ -259,3 +259,38 @@ structured field cannot fall back to a more favorable text result. Older public
 result envelopes still use the existing validated decoding path. Subprocess
 fixtures verify these boundaries. A real native canary is required before the
 next full-book test; the two ongoing native books remain unchanged.
+
+## Repair correctness before creative preference
+
+Code inspection found another gap between the existing method and controlled
+execution. The revision method requires inspecting whether a candidate fixes
+its assigned tickets before spending comparison reads. The controller applied
+this distinction to factual corrections but sent creative candidates directly
+to preference voting. A preferred chapter could therefore still omit the
+required setup or preserve the original causal mistake until the next audit.
+
+Creative proposals now receive one fresh, read-only viability check with the
+original and candidate text, all other current chapters, and the author
+contract. The check covers the actual ticket, dependencies, preserved strengths
+and authorized scope, with cited evidence in both versions and supporting
+current-book sources. Planning notes or hypothetical later edits cannot supply
+missing causal evidence. A check cannot approve its own prose or substitute for
+the anonymous preference panel. The latter receives no repair verdict.
+
+A coherent negative result rejects that proposal without rerating it. Two
+malformed results retain the accepted manuscript and original failed attempts.
+Authentication, transport and altered source evidence still block. Evidence is
+verified again after the comparison calls and before publication. An interrupted
+run reuses the original verified check rather than spending another call.
+
+Focused synthetic controller regressions cover rejection before preference,
+successful repair followed by blind voting, invalid source citations, native
+authentication failure, changes to original review evidence during comparison,
+interruption and completed no-call resume. These establish control behavior;
+native literary improvement from this additional check remains unverified.
+
+The final implementation passed all 386 automated tests in 290.681 seconds and
+installer suite verification. A reproduced resume failure caused solely by
+JSON field ordering was fixed with deterministic serialization; reloading the
+same task in a different key order now reuses the original review. Native
+component canaries and a fresh full-book run remain required.

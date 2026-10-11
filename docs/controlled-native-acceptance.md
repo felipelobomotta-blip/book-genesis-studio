@@ -70,7 +70,11 @@ transport, altered evidence and incomplete first drafts still block execution.
 All writers now receive a neutral stable identity/calendar baseline. Every
 chapter editor receives the shared revision strategy. Literal factual edits use
 the existing fresh correctness verifier and atomic publication guard; creative
-edits retain the four-reader comparison. Factual edits run before creative edits.
+edits first receive a source-bound repair check and then, only if it passes,
+the four-reader comparison. That check reads the entire current manuscript and
+author contract, verifies the assigned repair and its consequences, and cannot
+replace the preference vote or close a whole-book finding. Factual edits run
+before creative edits.
 
 A separate follow-up check carries all historical continuity, audit and proofread
 findings forward. It can close an allegation only with current manuscript evidence
