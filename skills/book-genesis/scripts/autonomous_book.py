@@ -201,6 +201,9 @@ class BookWorkflow:
                 "Specify who physically does what, by what available route or means, and the resulting state; 'enables rescue' "
                 "or 'truth permits resolution' alone is not a rescue or resolution. Do not replace literal requested events "
                 "with thematic equivalents. Include emotional consequences without letting them substitute for physical outcomes. "
+                "This global promise map is for plan verification only. Put each chapter's actual on-page actions and any "
+                "payoff earned in that chapter into that chapter's events and ending fields. Writers receive those local "
+                "fields, never the combined resolution of a promise that spans future chapters. "
                 "writer_facts is the stable baseline supplied to EVERY writer: "
                 "canonical full names and ages (explicitly unstated when unknown), relationships, setting rules and an unambiguous "
                 "calendar anchor mapping story days to weekdays and dated deadlines. Keep it under 600 words. "
@@ -322,10 +325,6 @@ class BookWorkflow:
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
                         "stable_story_facts": self.plan["writer_facts"],
-                        "promises_to_set_up_here": [{"promise": p["promise"], "action": p["setup_action"]}
-                            for p in self.plan["promises"] if number in p["setup_chapters"]],
-                        "promises_to_resolve_here": [{"promise": p["promise"], "resolution": p["on_page_resolution"]}
-                            for p in self.plan["promises"] if number in p["payoff_chapters"]],
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                         "previous_tail": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,

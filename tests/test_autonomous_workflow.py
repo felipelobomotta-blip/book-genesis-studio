@@ -204,7 +204,7 @@ def fixture_response(call_id, packet, schema, root):
             "writer_facts": {name: ["The courier is Ada Vale, aged thirty; the recipient is Jo Vale; it is Monday."]
                              for name in props["writer_facts"]["properties"]},
             "promises": [{"promise": "Return the letter and confess.", "setup_action": "Ada carries the stolen letter to Jo.",
-                          "on_page_resolution": "Ada confesses and Jo takes the letter.", "setup_chapters": [1], "payoff_chapters": [1, 2]}],
+                          "on_page_resolution": "FUTURE_ONLY_RESOLUTION: Ada confesses and Jo takes the letter.", "setup_chapters": [1], "payoff_chapters": [1, 2]}],
             "chapters": [{"number": n, "title": f"Chapter {n}", **{key: "A consequential choice with a complete ending."
                 for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)],
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
@@ -335,6 +335,8 @@ class FullWorkflowTests(unittest.TestCase):
             self.assertEqual([], validate_neutral(neutral_sources))
             writer = (root / "work/workflow/draft-01/packet.md").read_text(encoding="utf-8")
             self.assertIn("Ada Vale, aged thirty", writer)
+            self.assertNotIn("FUTURE_ONLY_RESOLUTION", writer)
+            self.assertIn("FUTURE_ONLY_RESOLUTION", plan_packet)
             editor = (root / "work/workflow/revision-1-c01/packet.md").read_text(encoding="utf-8")
             self.assertIn('"shared_revision_strategy": "Repair the missing confession."', editor)
             issues = read_json(root / "evaluations/issues-measure-1.json")

@@ -88,13 +88,21 @@ for missing evacuation refusal and incomplete extraction. That build's single
 plan-repair allowance was exhausted: zero chapters, no export, no score.
 
 The next build maps each indispensable author promise to a setup action and
-concrete on-page causal resolution. Writers receive only the setup or resolution
-assigned to their chapter. Plan repairs now edit named text fields against their
+concrete on-page causal resolution for independent plan verification. Writers
+receive their chapter entry, never a combined multi-chapter payoff. Plan repairs now edit named text fields against their
 exact original values; unrelated fields, chapter numbering and assigned promise
 chapters stay unchanged. Three substantive plan repairs are permitted, each
 followed by a fresh verification. An unchanged plan is never rerated to seek a
 favorable verdict. This separate architecture budget is fixed before the new
 trial; prior failed trials and their original budgets remain unchanged.
+
+The fifth trial was stopped by QA before drafting: a multi-chapter promise could
+forward its complete future resolution into an earlier writer packet. That is
+an observer intervention, not an unattended success. The fix removes the global
+promise map from writer inputs and requires the plan to state local actions in
+each chapter entry. A regression uses a future-only sentinel in a multi-chapter
+promise and verifies that the plan critic sees it while the opening writer does
+not. The complete proposed plan and stopped process evidence remain preserved.
 
 ## Fresh live test
 
