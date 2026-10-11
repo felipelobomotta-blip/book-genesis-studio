@@ -168,6 +168,27 @@ class Journal:
             if not path.is_file() or digest(path.read_bytes()) != row["sha256"]:
                 raise WorkflowError(f"Saved evidence is missing or changed: {row['path']}")
 
+    @staticmethod
+    def request_record(packet, schema, command, *, feedback=False, feedback_response=False):
+        return {"packet_sha256": digest(packet), "schema_sha256": digest(encoded(schema)),
+                "command_sha256": digest(encoded(command)), "validation_feedback": feedback,
+                "feedback_response": feedback_response}
+
+    def matching_completed_read(self, packet, schema, command):
+        """Opt-in reuse of the first identical validated read, never a new vote.
+
+        Only the reader-panel caller opts in. Independent replicate rubric
+        evaluations still dispatch separately even though their inputs match.
+        """
+        request = self.request_record(packet, schema, command)
+        matches = [(key, step) for key, step in self.data["steps"].items()
+                   if step.get("status") == "completed" and step.get("request") == request]
+        if not matches:
+            return None
+        key, step = min(matches, key=lambda item: (item[1]["attempts"][-1]["finished_at"], item[0]))
+        self.verify_files(step["evidence"])
+        return key, self.root / step["response"], read_json(self.root / step["validation"])
+
     def check_canonical(self):
         expected = self.data["canonical"]
         actual = {p.relative_to(self.root).as_posix(): digest(p.read_bytes())
@@ -247,9 +268,7 @@ class Journal:
             raise WorkflowError("Invalid stable workflow step name")
         if feedback_response and not feedback:
             raise WorkflowError("A prior producer response requires explicit producer feedback")
-        request = {"packet_sha256": digest(packet), "schema_sha256": digest(encoded(schema)),
-                   "command_sha256": digest(encoded(command)), "validation_feedback": feedback,
-                   "feedback_response": feedback_response}
+        request = self.request_record(packet, schema, command, feedback=feedback, feedback_response=feedback_response)
         steps = self.data["steps"]
         step = steps.get(key)
         if step and step["request"] != request:

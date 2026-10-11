@@ -12,9 +12,19 @@ Assemble `work/briefs/chapter-NN.md` from the approved files:
 - this chapter's outline entry, narrative purpose and planned word range;
 - the relevant character and voice cards;
 - only the continuity facts this chapter uses: current knowledge, location, object custody and any causal rule it depends on;
-- the previous chapter's last 300 words or so.
+- the previous chapter in full, so new identities, custody transfers and scene
+  transitions outside its closing paragraphs are not lost. Treat writer-reported
+  summaries as provisional; check them against the actual preceding prose and
+  the approved character identities.
 
 The orchestrator checks that these facts fit the approved brief before dispatch. Select the actual chapter-relevant facts; do not paste every character card, the complete outline or future continuity resolutions into each packet. Include the manuscript length range as production scope. Calculate a concrete remaining production allowance from the deterministic cumulative count, reserving the planned work of later chapters. The last chapter's upper allowance must fit the approved ceiling minus the words already accepted. Do not send the whole pipeline, audit history, reader verdicts, scores, thresholds or rubric. An evolving chapter may depart from the outline when it honors the author's constraints; record the resulting canon after the block.
+
+Use the approved character-card text rather than asking the writer to reconstruct
+motives from names and dialogue tics. The controlled runner selects named cards
+for the local cast and POV. If a legacy foundation has no recognizable named-card
+headings, it preserves the approved character file instead of silently dropping
+it. Character arcs describe direction; they do not make future resolutions
+current facts.
 
 ## Writing
 

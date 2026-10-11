@@ -116,8 +116,11 @@ class RecoveryTests(unittest.TestCase):
         def generate(call_id, packet, schema, book):
             calls.append(call_id)
             props = schema["properties"]
-            if "replacements" in props:
-                return {"replacements": [{"before": "Ida Vale", "after": "Ada Vale"}]}
+            if "corrections" in props:
+                sources = json.loads(packet.rsplit("\n\n", 1)[1])["accepted_chapter"]
+                passage = next(row for row in sources if "Ida Vale" in row["text"])
+                return {"corrections": [{"from_passage": passage["id"], "through_passage": passage["id"],
+                                        "after": passage["text"].replace("Ida Vale", "Ada Vale")}]}
             if "canon_supported" in props:
                 ids = props["evidence"]["items"]["properties"]["passage_id"]["enum"]
                 return {"verdict": "pass", "canon_supported": True, "factual_only": True, "dependencies_safe": True,

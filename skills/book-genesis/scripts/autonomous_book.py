@@ -18,6 +18,7 @@ import sys
 from build_comparison import build_comparison, READERS
 from check_progress import _parse_yaml_subset, parse_project_state, reconcile_book
 from check_correction import prepare as prepare_correction, decision as correction_decision
+from correction_edits import apply_passage_corrections, correction_schema, source_passages
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
@@ -29,9 +30,9 @@ from validate_rubric import validate_rubric, rubric_schema
 from verify_book import verify_book
 from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEMA, TEXT,
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
-    validate_json, validate_prose, validate_review, neutral_contract_schema,
-    plan_schema, validate_neutral, render_plan, CORRECTION_SCHEMA, apply_corrections, validate_corrections,
-    plan_repair_schema, apply_plan_edits, validate_shape)
+    validate_json, validate_prose, validate_prose_text, validate_review, neutral_contract_schema,
+    plan_schema, validate_neutral, render_plan,
+    plan_repair_schema, apply_plan_edits, validate_shape, character_context)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
@@ -329,18 +330,25 @@ class BookWorkflow:
                     self.contract["min_words"], self.contract["max_words"])
                 previous = ""
                 if number > 1:
-                    previous = " ".join((self.root / f"manuscript/chapters/chapter-{number-1:02d}.md").read_text(encoding="utf-8").split()[-300:])
+                    previous = (self.root / f"manuscript/chapters/chapter-{number-1:02d}.md").read_text(encoding="utf-8")
+                characters = character_context((self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
+                                               entry["characters"] + "\n" + entry["point_of_view"])
                 packet = ("Write one complete, engrossing chapter. Use only this packet; no tools, files or other agents. "
                     "Return JSON with prose (one leading Markdown heading, then the entire chapter, no commentary) "
                     "and continuity_delta (only facts actually demonstrated here: who learned what, when, place and object custody). "
                     "Dramatize consequential choices and pressure rather than explaining the theme. Trust voice and scene. "
+                    "Honor the approved character cards and stable identities. The previous chapter records actual actions; "
+                    "writer-reported summaries are provisional and must not override its object custody or locations. "
+                    "Continue from those actions without replaying an exchange already completed. "
+                    "A character arc is direction, not permission to perform a later chapter's resolution now. "
                     "No outline, summary, placeholder or word-count claim in the prose. "
                     f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
                         "stable_story_facts": self.plan["writer_facts"],
+                        "characters": characters,
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
-                        "previous_tail": previous, "demonstrated_facts": self.demonstrated(number - 1),
+                        "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
                             "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
                             "remaining_chapters_including_this": remaining}}, ensure_ascii=False))
@@ -404,25 +412,39 @@ class BookWorkflow:
         manifest = read_json(bundle / "manifest.private.json")
         if [(p.resolve().as_posix(), digest(p.read_bytes())) for p in paths] != [(Path(r['path']).as_posix(), r['sha256']) for r in manifest['chapters']]:
             raise WorkflowError("Panel sources changed; existing reads cannot be reused")
-        reports, index = [], []
+        reports, index, evidence, reused = [], [], [], 0
         for row in manifest["readers"]:
-            response, validation = self.call(key + "-" + row["persona"], (bundle / row["packet"]).read_bytes(),
-                read_json(bundle / row["response_schema"]), lambda p, row=row: validate_blind_reader_report(paths, p,
-                    expected_reader=row["reader"], catalog_path=bundle / "catalog.json"))
+            step_key = key + "-" + row["persona"]
+            packet = (bundle / row["packet"]).read_bytes()
+            schema = read_json(bundle / row["response_schema"])
+            validator = lambda p, row=row: validate_blind_reader_report(paths, p,
+                expected_reader=row["reader"], catalog_path=bundle / "catalog.json")
+            previous = self.journal.matching_completed_read(packet, schema, self.command)
+            if previous:
+                original_key, response, validation = previous
+                fresh = validator(response)
+                if not fresh["valid"]:
+                    raise WorkflowError("Saved reader evidence no longer validates against the current sources")
+                reused += original_key != step_key
+                step_key = original_key
+            else:
+                response, validation = self.call(step_key, packet, schema, validator)
             reports.append(read_json(response))
+            evidence += self.journal.data["steps"][step_key]["evidence"]
             index.append({"reader": row["reader"], "report": str(response.relative_to(self.root)),
-                "validation": self.journal.data["steps"][key + "-" + row["persona"]]["validation"],
+                "validation": self.journal.data["steps"][step_key]["validation"],
                 "catalog": str((bundle / "catalog.json").relative_to(self.root))})
         stops = Counter(r["stopped_at"]["passage_id"] for r in reports if r["stopped_at"])
         flags = Counter(flag["flag"] for r in reports for flag in {f["flag"]: f for f in r["flags"]}.values())
         result = {"scope": key, "chapters": [p.name for p in paths], "readers": index,
             "yes": sum(r["turn_page"] == "yes" for r in reports), "shared_stop": any(n >= 2 for n in stops.values()),
-            "shared_flags": [f for f, n in flags.items() if n >= 2], "reports": reports}
+            "shared_flags": [f for f, n in flags.items() if n >= 2], "reports": reports,
+            "evidence": evidence, "reused_readings": reused}
         result["passed"] = result["yes"] >= 3 and not result["shared_stop"]
         freeze(self.root / f"evaluations/{key}.json", encoded(result))
         if key == "draft-check-01":
             freeze(self.root / "evaluations/panel-chapter-01.md", ("# Opening checkpoint\n\n" + json.dumps(result, ensure_ascii=False, indent=2)).encode("utf-8"))
-        self.log(f"Readers | {key} | {result['yes']}/4 would keep reading | shared stop: {result['shared_stop']}")
+        self.log(f"Readers | {key} | {result['yes']}/4 would keep reading | shared stop: {result['shared_stop']} | {reused}/4 original reads reused")
         return result
 
     def audit(self, key, snapshot):
@@ -510,6 +532,7 @@ class BookWorkflow:
         result["evidence"] = [row for name, step in self.journal.data["steps"].items() if name.startswith(prefix)
                               for row in step.get("evidence", [])]
         result["evidence"].append(self.journal.record_file(self.root / f"work/snapshots/{key}/snapshot.json"))
+        result["evidence"] += [row for panel in panels for row in panel["evidence"]]
         result["evidence"] += issues["evidence"] + ([issues["ledger"]] if "ledger" in issues else [])
         freeze(result_path, encoded(result))
         self.log(f"Review {number} | panel {'passed' if panel_passed else 'needs work'} | audit {audit['data']['verdict']} | calibrated craft floor {score_text(rubric['floor'])}/10")
@@ -531,6 +554,7 @@ class BookWorkflow:
             "Address setup AND consequences; do not substitute more explanation for a missing scene. "
             "Give at most one factual task and one creative task per affected chapter. First separate strictly factual "
             "corrections supported by existing canon (names, established ages/dates, typos) from creative changes. "
+            "Factual typography may remove a redundant Chapter N: prefix while retaining the exact title. "
             "Do not mix stylistic edits into a factual task. New canon choices, viewpoint, actions, event order, motivation "
             "or a missing scene require creative mode. All factual tasks run before any creative task. "
             "Each task must name the historical issue IDs it addresses. Every required unresolved issue must have a task. "
@@ -577,7 +601,7 @@ class BookWorkflow:
             freeze(accepted, target.read_bytes())
         current_words = word_count_receipt(discover_chapters(self.root / "manuscript/chapters"))["total"]
         from export_book import Chapter, count_prose_words
-        original_text = accepted.read_text(encoding="utf-8")
+        original_text = accepted.read_bytes().decode("utf-8")
         original_words = count_prose_words(Chapter(n, accepted, original_text.splitlines()[0][2:], "\n".join(original_text.splitlines()[1:]), digest(accepted.read_bytes())))
         low = max(100, self.contract["min_words"] - (current_words - original_words))
         high = self.contract["max_words"] - (current_words - original_words)
@@ -597,25 +621,38 @@ class BookWorkflow:
             low, high = allowance["low"], allowance["high"]
         else:
             freeze(accepted.parent / "allowance.json", encoded({"low": low, "high": high}))
-            output_instruction = ("Return only literal replacements with before/after text. Each before must occur exactly once "
-                "in the original chapter, using enough unchanged surrounding text to be unambiguous. Replacements cannot overlap. "
-                "Preserve all other bytes. Correct only demonstrable facts or typos supported by existing canon, not style, "
-                "actions, motivation, event order or the heading. A fresh correctness checker will inspect every difference. "
+            output_instruction = ("The accepted chapter is supplied as original passages with stable IDs. Return only corrections "
+                "naming from_passage and through_passage (inclusive) and the complete new after text for that range. "
+                "Use the same ID for both ends when changing one passage. Do not transcribe a before value or put IDs in after. "
+                "Ranges cannot overlap. The program retains all original text and whitespace outside the named ranges. "
+                "Correct only demonstrable facts or typos supported by existing canon, not style, actions, motivation "
+                "or event order. A redundant Chapter N: prefix may be removed, preserving the actual title exactly. "
+                "A fresh correctness checker will inspect every difference. "
                 if factual else "Return the full chapter, including unchanged passages, in prose, with its existing heading, "
                 "and an accurate continuity_delta. Preserve strengths, voice and asymmetry. ")
             packet = ("Address ONLY the named tickets and their required consequences. Use only this packet; no tools. "
                 + output_instruction +
                 "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
                 "The revision must remain a real scene, not explanatory compliance.\n\n" + self.ref("specialists/revision-editor.md")
-                + "\n\n" + json.dumps({"task": task, "shared_revision_strategy": strategy, "accepted_chapter": original_text,
+                + "\n\n" + json.dumps({"task": task, "shared_revision_strategy": strategy,
+                    "accepted_chapter": [{"id": p["id"], "text": p["text"]} for p in source_passages(original_text)] if factual else original_text,
                     "adjacent_context": [p.read_text(encoding="utf-8") for p in context],
                     "brief": (self.root / "artifacts/00-brief.md").read_text(encoding="utf-8"),
                     "characters": (self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}, ensure_ascii=False))
-        schema = CORRECTION_SCHEMA if factual else PROSE_SCHEMA
-        validator = (lambda p: validate_corrections(p, original_text, low=low, high=high)) if factual else (lambda p: validate_prose(p, low=low, high=high))
+        schema = correction_schema(original_text) if factual else PROSE_SCHEMA
+        def validate_factual(path):
+            report = validate_json(path, schema)
+            if report["valid"]:
+                try:
+                    proposed = apply_passage_corrections(original_text, read_json(path)["corrections"])
+                    report = validate_prose_text(proposed, path, low=low, high=high, report=report)
+                except ValueError as exc:
+                    report.update(valid=False, errors=[str(exc)])
+            return report
+        validator = validate_factual if factual else (lambda p: validate_prose(p, low=low, high=high))
         try:
             response, _ = self.call(key, packet, schema, validator, feedback=True, feedback_response=True)
         except WorkflowError:
@@ -642,7 +679,7 @@ class BookWorkflow:
             freeze(outcome_path, encoded(outcome))
             self.log(f"Revision pass {number}, chapter {n} | rejected invalid proposals; accepted chapter retained")
             return outcome
-        corrected = apply_corrections(original_text, read_json(response)["replacements"]) if factual else None
+        corrected = apply_passage_corrections(original_text, read_json(response)["corrections"]) if factual else None
         candidate = self.stage_response(key, response, corrected_prose=corrected)
         if candidate.read_bytes() == accepted.read_bytes():
             decision = {"decision": "reject", "reason": "Proposal is identical to the accepted chapter; no new preference panel is needed."}

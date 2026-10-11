@@ -6,10 +6,40 @@ from pathlib import Path
 
 from export_book import Chapter, count_prose_words, _XML_INVALID_RE
 from workflow_state import digest, encoded, freeze, read_json
+from correction_edits import retains_title
 
 
 TEXT = {"type": "string"}
 INTEGER = {"type": "integer"}
+
+
+def character_context(markdown, participants):
+    """Select approved cards without asking a model to resummarize their facts.
+
+    Named H2 cards are the foundation's usual format. If an older foundation
+    uses another format, retain its approved text rather than silently give a
+    writer no character context. The outline and POV constrain who is on stage.
+    """
+    headings = list(re.finditer(r"^##[ \t]+(.+)$", markdown, re.M))
+    selected = []
+    for index, heading in enumerate(headings):
+        title = re.sub(r"[*_`]", "", heading[1]).strip()
+        title = re.sub(r"^\d+[.)]\s*", "", title)
+        name = re.split(r",|\s+[—–]\s+|\s*\(", title, maxsplit=1)[0].strip()
+        if not name:
+            continue
+        exact = re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", participants,
+                          re.I if len(name.split()) > 1 else 0)
+        # A card headed 'Mara Vale, daughter' also applies when a local outline
+        # calls her 'Mara'. Keep this fallback case-sensitive to avoid a name
+        # such as Will matching the ordinary auxiliary 'will'.
+        first = name.split()[0]
+        short = (len(first) >= 2 and first[0].isupper()
+                 and re.search(r"(?<!\w)" + re.escape(first) + r"(?!\w)", participants))
+        if exact or short:
+            end = headings[index + 1].start() if index + 1 < len(headings) else len(markdown)
+            selected.append(markdown[heading.start():end].strip())
+    return "\n\n".join(selected) if selected else markdown
 
 
 def obj(fields):
@@ -212,7 +242,7 @@ def apply_corrections(original: str, replacements: list[dict]) -> str:
     candidate = original
     for start, end, after in reversed(spans):
         candidate = candidate[:start] + after + candidate[end:]
-    if candidate == original or candidate.splitlines()[0] != original.splitlines()[0]:
+    if candidate == original or not retains_title(original.splitlines()[0][2:], candidate.splitlines()[0][2:]):
         raise ValueError("Factual corrections must retain the heading and change the body")
     return candidate
 

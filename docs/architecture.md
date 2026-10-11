@@ -12,6 +12,12 @@ The host agent does the writing with the author's own account and selected model
 
 `workflow_state.py` reserves calls and revision passes before dispatch, stores immutable request/evidence bindings, recovers interrupted publications and rejects unrecorded manuscript changes. `workflow_roles.py` validates structured planning and review artifacts. The host's model can produce creative work and judgments but cannot edit control state or choose when to export. The existing guard serializes native calls, preserves each attempt, and reports completion only after the child exits and its response is saved. The controlled path currently supports Codex; its real acceptance status is tracked separately from guided and other-host tests.
 
+Writer packets carry the relevant approved character cards and the complete preceding chapter. This keeps motivations, newly introduced identities and object transfers available even when a writer-generated summary omits them. Future chapter resolutions and quality targets remain outside that packet.
+
+Factual editors address immutable paragraph ranges and supply only the proposed replacement text. `correction_edits.py` obtains the baseline from the frozen original, rejects overlapping or unknown ranges, and preserves every byte outside an accepted range. A heading may lose a redundant `Chapter N:` label while keeping its actual title; a retitle still requires creative revision. The independent factual checker and promotion guard inspect the complete difference before publication.
+
+Reader panels reuse the earliest original validated response only when the complete packet, response schema and selected native command are identical. Negative readings are retained as well as positive ones. A changed chapter receives new readings, and changed evidence blocks reuse. Two rubric replicas still run separately; this reuse policy does not turn one judgment into two independent evaluations. See [the observed native regressions](native-regressions-20261011.md) for the evidence behind these changes.
+
 ## The pipeline
 
 ```text

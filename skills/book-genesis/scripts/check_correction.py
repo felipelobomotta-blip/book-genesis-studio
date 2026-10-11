@@ -11,6 +11,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import re
+from correction_edits import retains_title
 
 
 class CorrectionError(ValueError):
@@ -84,7 +85,9 @@ def _packet(ticket: str, texts: dict[str, str]) -> str:
         "The accepted text can be wrong. The proposed text can also be wrong.\n\n"
         "Check every difference. Pass only if existing canon supports it, it is strictly a factual correction "
         "with no creative rewrite or unrelated change, and dependent expressions and surrounding scenes "
-        "remain coherent. A new canon choice, insufficient context, an unresolved dependency, or changing "
+        "remain coherent. Typography corrections may remove a redundant 'Chapter N:' prefix while retaining "
+        "every character of the actual title, or standardize dialogue quotation marks. No title rewrite is allowed. "
+        "A new canon choice, insufficient context, an unresolved dependency, or changing "
         "an action, motivation, event order or consequence requires block and a wider editorial ticket. "
         "Do not prefer an error for its wording. Existing unrelated defects may remain; identify them without "
         "claiming this local correction closes a whole-book ticket.\n\n"
@@ -105,7 +108,8 @@ def _check_versions(texts: dict, accepted: Path) -> int:
     original, proposed = texts["accepted"], texts["candidate"]
     if original == proposed:
         raise CorrectionError("candidate has no change")
-    if not original.startswith("# ") or not proposed or original.splitlines()[0] != proposed.splitlines()[0]:
+    if (not original.startswith("# ") or not proposed.startswith("# ")
+            or not retains_title(original.splitlines()[0][2:], proposed.splitlines()[0][2:])):
         raise CorrectionError("a factual correction must retain the chapter heading")
     return int(chapter[1])
 
