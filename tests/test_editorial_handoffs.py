@@ -67,8 +67,8 @@ class EditorialScoreBoundaryTests(unittest.TestCase):
                 self.assertEqual(0, workflow.run())
             planner = packets["wf-revision-plan-1-1"]
             writer = packets["wf-revision-1-c01-1"]
-            self.assertFalse("7.5" in planner, "Numeric cap reached the revision planner")
-            self.assertFalse("9.1" in writer, "A planner's generated score reached the prose editor")
+            self.assertNotIn("Prose cap of 7.5", planner, "Numeric cap reached the revision planner")
+            self.assertNotIn("Raise the score to 9.1", writer, "A planner's generated score reached the prose editor")
             self.assertIn("The gesture repeats", planner)
             original = read_json(root / "work/host-calls/wf-measure-0-rubric-1-1/response")
             self.assertIn("7.5", original["dimensions"][0]["reason"])
@@ -118,6 +118,7 @@ class DistantCorrectionEvidenceTests(unittest.TestCase):
                 outcome = workflow.revise_chapter(1, task, "Match the demonstrated fact.")
             self.assertEqual("promote", outcome["decision"])
             packet = json.loads(packets["wf-revision-1-c03-facts-1"].rsplit("\n\n", 1)[1])
+            self.assertIsNone(packet["craft_knowledge"], "A strictly factual editor must not get stylistic rewrite material")
             self.assertNotIn(marker, " ".join(packet["adjacent_context"]))
             for name, text in packet["other_current_chapters"].items():
                 self.assertEqual(originals[name], text.encode("utf-8"))

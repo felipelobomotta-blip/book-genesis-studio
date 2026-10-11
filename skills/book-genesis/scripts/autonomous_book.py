@@ -20,6 +20,7 @@ from check_progress import _parse_yaml_subset, parse_project_state, reconcile_bo
 from check_correction import (prepare as prepare_correction, decision as correction_decision,
                               validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
+from craft_context import draft_knowledge, revision_knowledge
 from editorial_feedback import score_blind
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
@@ -356,6 +357,7 @@ class BookWorkflow:
                     f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
                     + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
+                        "craft_knowledge": draft_knowledge(self.skill),
                         "stable_story_facts": self.plan["writer_facts"],
                         "characters": characters,
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
@@ -598,6 +600,7 @@ class BookWorkflow:
             "A later pass must learn from failed earlier strategies rather than repeat them. "
             "A harmless taste difference is not a mandate to rewrite. Defer low-priority suggestions explicitly.\n\n"
             + self.ref("specialists/revision-editor.md") + "\n\n" + json.dumps({
+                "craft_knowledge": revision_knowledge(self.skill, self.config["language"]),
                 "current_sources": self.neutral_sources(self.snapshot(f"measure-{measurement['number']}")),
                 **score_blind({"audit_findings": measurement["audit"]["data"]["findings"],
                     "proofread_findings": measurement["proofread"]["data"]["findings"],
@@ -677,6 +680,7 @@ class BookWorkflow:
                 "Planning notes do not prove that a planned event actually happened.\n\n" + self.ref("specialists/revision-editor.md")
                 + "\n\n" + json.dumps({"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
                     "companion_tasks": score_blind(companion_tasks or []),
+                    "craft_knowledge": None if factual else revision_knowledge(self.skill, self.config["language"]),
                     "accepted_chapter": [{"id": p["id"], "text": p["text"]} for p in source_passages(original_text)] if factual else original_text,
                     "other_current_chapters": {p.name: p.read_bytes().decode("utf-8") for p in manuscript if p.name != target.name},
                     "adjacent_context": [p.read_text(encoding="utf-8") for p in context],

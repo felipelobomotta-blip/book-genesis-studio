@@ -15,7 +15,7 @@ import re
 import secrets
 from typing import Any
 
-from validate_blind_reader import CONFIDENCE, FLAGS, TURN_PAGES
+from validate_blind_reader import CONFIDENCE, FLAGS, TURN_PAGES, MAX_EMOTION_LENGTH
 from prepare_rubric import catalog_digest
 
 
@@ -63,7 +63,9 @@ def reader_schema(reader: str, *, catalog: dict | None = None) -> dict[str, Any]
             "flag": {"type": "string", "enum": sorted(FLAGS)}, key: citation})},
         "strongest_passage": reason, "weakest_passage": reason,
         "machine_tells": {"type": "array", "items": obj({"tell": string, key: citation})},
-        "felt": obj({"emotion": string, "reason": string}),
+        "felt": obj({"emotion": {"type": "string", "minLength": 1, "maxLength": MAX_EMOTION_LENGTH,
+            "description": f"A short emotion label such as tension and relief, at most {MAX_EMOTION_LENGTH} characters. Put explanations in felt.reason; do not copy story prose here."},
+            "reason": string}),
         "confidence": {"type": "string", "enum": sorted(CONFIDENCE)},
     }
     if catalog is None or comparison:

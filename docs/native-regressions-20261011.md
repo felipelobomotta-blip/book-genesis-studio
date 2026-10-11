@@ -373,3 +373,42 @@ full-book acceptance remain required for this candidate.
 The final candidate passed all 417 automated tests in 330.238 seconds and the
 installer suite. Native component verdicts, full-book delivery and the literary
 90/100 target are separate outstanding checks, not conclusions from this count.
+
+## Reader format constraint omitted from generation schema
+
+Trial 17 stopped during the first revised-manuscript measurement after 127 native
+requests. It retained twelve chapters and 45,468 words, with accepted revisions,
+but did not reach final scoring or export. The adjacent reader for chapter 10
+returned a long emotional reaction twice. The validator required `felt.emotion`
+to be at most 120 characters; the generation schema only said it was a string.
+Both original failed responses remain unchanged, and the old trial is not retried
+under a different schema or with a reset budget. Its baseline score is stale.
+
+The shared reader schema now sends that existing bound as `maxLength`, with an
+explicit short-label description and a separate unrestricted `felt.reason`.
+Single-chapter and comparison readers use the same bound as the host validator;
+native Claude schema compaction retains it. No reaction is trimmed, rewritten or
+accepted by weakening the validator. Native acceptance is separately required.
+
+## Referenced craft knowledge missing from tool-free authoring calls
+
+Inspection of actual draft and revision packets found that the native roles
+could not access the prose-craft definitions referenced by their instructions.
+The editor received links to the eight repair moves, but not their definitions,
+while the scoped native command prohibited file access. The writer received the
+book's voice and character cards but none of prose-craft sections 1-5, which the
+existing specialist explicitly permits during drafting. This was a handoff gap,
+not evidence that sending more instructions automatically improves a novel.
+
+The follow-up supplies only material permitted at that phase. Drafts get optional
+sections 1-5, without revision moves or AI-tell checking. The planner and creative
+editor get the existing repair definitions and patterns, including the applicable
+English or Portuguese AI-tell reference; unsupported languages do not silently
+use English rules. Factual editors and blind readers do not receive that creative
+repair library. Original reference files remain unchanged, and editor views omit
+executable snippets and rubric cross-links. Tests exercise the actual full
+fixture workflow, export and no-call completed resume while inspecting the
+packets sent to each role. Literary improvement still requires a real book test.
+
+
+The candidate passed all 423 automated tests in 381.376 seconds and the installer suite check. The six new checks include a complete synthetic workflow with no-call completed resume and real packet inspection; this is not native book acceptance. Full native trial 20 of its predecessor separately stopped after three bounded architecture repairs, with unresolved departure timing and physical clue dependencies. Its original ten responses and failed state remain preserved. No manuscript was written or delivered by that trial.

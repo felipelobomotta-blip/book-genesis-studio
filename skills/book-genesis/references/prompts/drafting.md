@@ -38,6 +38,14 @@ Keep character behavior connected to desire, fear and contradiction. Keep the op
 
 Write before checking. Do not perform line-by-line anti-AI compliance or optimize sentences for a score. The craft and pattern references are available when useful, rather than another checklist inside the writer's packet.
 
+The controlled tool-free writer receives sections 1-5 of
+`references/specialists/prose-craft.md` as optional craft knowledge. It is not
+asked to open unavailable files or apply the after-draft checklists while
+composing. Section 6's revision moves and language-specific AI-tell checks stay
+in Phase 5; blind readers receive none of this authoring material. The controlled
+revision planner and creative editor receive the actual repair definitions and
+patterns they are allowed to use, without scoring criteria or previous ratings.
+
 ## After a chapter block
 
 The orchestrator, outside the writing context:

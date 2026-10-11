@@ -36,6 +36,7 @@ FLAGS = {
 TURN_PAGES = {"yes", "no", "unsure"}
 CONFIDENCE = {"low", "medium", "high"}
 COMPARE = {"A", "B", "same"}
+MAX_EMOTION_LENGTH = 120
 
 REQUIRED_FIELDS = {
     "reader",
@@ -248,8 +249,8 @@ def _validate_report(report: Any, sources: list[tuple[Path, str]]) -> list[str]:
     else:
         emotion = _nonempty_string(felt.get("emotion"), "felt.emotion", errors)
         _nonempty_string(felt.get("reason"), "felt.reason", errors)
-        if emotion is not None and len(emotion) > 120:
-            errors.append("felt.emotion must be a short emotion phrase, not copied prose")
+        if emotion is not None and len(emotion) > MAX_EMOTION_LENGTH:
+            errors.append(f"felt.emotion must be a short emotion phrase of at most {MAX_EMOTION_LENGTH} characters; put explanations in felt.reason")
         if emotion is not None and any(
             len(_normalise_quote(emotion)) >= 20
             and _normalise_quote(emotion) in _normalise_quote(prose)
