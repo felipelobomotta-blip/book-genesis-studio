@@ -26,9 +26,25 @@ def production_facts(chapter_paths, contract):
     chapters = discover_chapters(paths[0].parent)
     if {chapter.path.resolve() for chapter in chapters} != set(paths) or len(paths) != len(chapters):
         raise ValueError("Production facts must count exactly the supplied chapter snapshot")
+    counts = word_count_receipt(chapters)
+    if counts["total"] <= 0:
+        raise ValueError("Production positions require visible prose")
+    before, positions = 0, []
+    for row in counts["chapters"]:
+        through = before + row["words"]
+        positions.append({"chapter": row["number"], "words_before": before, "words_through": through,
+            "percentage_before": round(100 * before / counts["total"], 3),
+            "percentage_through": round(100 * through / counts["total"], 3)})
+        before = through
     return {"fixed_contract": {key: contract[key] for key in ("chapters", "min_words", "max_words")},
-        "observed_chapters": len(chapters), "prose_word_count": word_count_receipt(chapters),
-        "interpretation": "These are deterministic counts of the complete supplied manuscript. The fixed contract gives the hard chapter and whole-book length requirements. Per-chapter estimates in planning prose are guides, not additional hard word limits. Assess pacing on its own merits; do not infer a whole-book length violation from an outline estimate."}
+        "observed_chapters": len(chapters), "prose_word_count": counts, "chapter_positions": positions,
+        "interpretation": "These are deterministic counts and chapter positions in the complete supplied manuscript. "
+            "Any event in a chapter lies within its measured whole-book word and percentage interval; do not guess "
+            "a position from chapter numbering or confuse a local chapter percentage with a whole-book percentage. "
+            "The fixed contract gives the hard chapter and whole-book length requirements. Per-chapter estimates "
+            "and beat positions in planning prose are guides, not additional hard limits. Assess pacing through "
+            "the actual action and consequences; a percentage difference alone does not establish a defect. "
+            "Do not infer a whole-book length violation from an outline estimate."}
 
 
 def character_context(markdown, participants):

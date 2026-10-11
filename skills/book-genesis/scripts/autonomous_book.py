@@ -532,11 +532,17 @@ class BookWorkflow:
         folder = self.root / "work/rubric" / key
         catalog = build_catalog(snapshot)
         freeze(folder / "catalog.json", encoded(catalog))
+        measured = production_facts(snapshot, self.contract)
+        locations = {"whole_book_prose_words": measured["prose_word_count"]["total"],
+                     "chapter_positions": measured["chapter_positions"]}
         packet = ("You are an independent read-only literary evaluator. Use only this packet. No tools. "
             "Read the complete manuscript; do not seek previous evaluations. Return the required JSON with genuine evidence.\n\n"
             + self.ref("scoring/rubric-criteria.md") + "\n\n" + self.ref("patterns/prose.md")
             + "\n\n" + self.ref("patterns/structure-and-emotion.md") + "\n\n" + self.ref("patterns/ai-tells-en.md")
             + "\n\nMarket context (unverified positioning hypotheses):\n" + (self.root / "artifacts/01-market-map.md").read_text(encoding="utf-8")
+            + "\n\nMeasured chapter locations:\n" + json.dumps(locations, ensure_ascii=False)
+            + "\nAn event lies within its chapter's measured whole-book interval. These are factual positions, "
+              "not prescribed beat percentages. Assess pacing through action and consequences, not a percentage alone."
             + "\n\nComplete frozen manuscript:\n" + json.dumps(catalog, ensure_ascii=False)
             + "\ncatalog_sha256: " + catalog_digest(catalog))
         rows = []

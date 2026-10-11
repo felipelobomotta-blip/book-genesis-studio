@@ -72,6 +72,11 @@ Critics run at the strongest independence the host offers: another model family'
 
 ## Two gates, bounded
 
+The neutral production source supplies exporter-counted whole-book word and
+percentage intervals for each chapter. These measured locations help reviewers
+avoid confusing local and whole-book pacing; they do not impose additional beat
+or quality thresholds. See [measured-pacing-20261011.md](measured-pacing-20261011.md).
+
 Later draft writers can learn from source-bound observations in earlier completed
 reader checkpoints without receiving votes, grading or acceptance outcomes.
 Critics remain blind to that history. The original voice benchmarks guide cadence

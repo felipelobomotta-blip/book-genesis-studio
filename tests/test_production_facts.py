@@ -32,6 +32,49 @@ class ProductionFactsTests(unittest.TestCase):
             chapter.write_text("# One\n\nNow only three.\n", encoding="utf-8")
             self.assertEqual(3, production_facts([chapter], contract)["prose_word_count"]["total"])
 
+    def test_unequal_chapters_use_cumulative_export_counts_instead_of_chapter_fractions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = []
+            for number, words in enumerate((90, 7, 3), 1):
+                path = Path(tmp) / f"chapter-{number:02d}.md"
+                path.write_text(f"# Heading {number}\n\n" + "word " * words + "\n\n***\n\n<!-- invisible -->\n", encoding="utf-8")
+                paths.append(path)
+            contract = {"chapters": 3, "min_words": 90, "max_words": 110}
+            facts = production_facts(list(reversed(paths)), contract)
+            self.assertEqual([
+                {"chapter": 1, "words_before": 0, "words_through": 90, "percentage_before": 0.0, "percentage_through": 90.0},
+                {"chapter": 2, "words_before": 90, "words_through": 97, "percentage_before": 90.0, "percentage_through": 97.0},
+                {"chapter": 3, "words_before": 97, "words_through": 100, "percentage_before": 97.0, "percentage_through": 100.0},
+            ], facts["chapter_positions"])
+
+    def test_observed_chapter_ten_cannot_contain_a_whole_book_position_of_96_percent(self):
+        # Reproduce the measured native chapter-10 boundaries, with a synthetic
+        # partition of the earlier total. This is arithmetic, not native prose.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = []
+            for number, words in enumerate([3726] + [3722] * 8 + [4049, 3530, 2659], 1):
+                path = Path(tmp) / f"chapter-{number:02d}.md"
+                path.write_text(f"# Chapter {number}\n\n" + "word " * words + "\n", encoding="utf-8")
+                paths.append(path)
+            facts = production_facts(paths, {"chapters": 12, "min_words": 40000, "max_words": 48000})
+            tenth = facts["chapter_positions"][9]
+            self.assertEqual(43740, facts["prose_word_count"]["total"])
+            self.assertEqual((33502, 37551), (tenth["words_before"], tenth["words_through"]))
+            self.assertEqual((76.594, 85.85), (tenth["percentage_before"], tenth["percentage_through"]))
+            self.assertFalse(tenth["percentage_before"] <= 96 <= tenth["percentage_through"])
+
+    def test_legitimate_edits_recompute_positions_without_mutating_source_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = [Path(tmp) / f"chapter-{n:02d}.md" for n in (1, 2)]
+            paths[0].write_text("# One\n\nOne two three.\n", encoding="utf-8")
+            paths[1].write_text("# Two\n\nFour five six.\n", encoding="utf-8")
+            contract = {"chapters": 2, "min_words": 5, "max_words": 10}
+            self.assertEqual(50.0, production_facts(paths, contract)["chapter_positions"][1]["percentage_before"])
+            paths[0].write_text("# One\n\nOne two three four five six.\n", encoding="utf-8")
+            before = [p.read_bytes() for p in paths]
+            self.assertEqual(66.667, production_facts(paths, contract)["chapter_positions"][1]["percentage_before"])
+            self.assertEqual(before, [p.read_bytes() for p in paths])
+
     def test_omitted_duplicate_or_unrelated_snapshot_files_cannot_supply_partial_counts(self):
         with tempfile.TemporaryDirectory() as tmp:
             paths = [Path(tmp) / f"chapter-{n:02d}.md" for n in (1, 2)]
@@ -64,6 +107,12 @@ class ProductionFactsTests(unittest.TestCase):
                 self.assertNotIn("quality_target", packet)
             revision = (root / "work/workflow/revision-plan-1/packet.md").read_text(encoding="utf-8")
             self.assertIn("controller/production-counts.json", revision)
+            rubric = (root / "work/workflow/measure-0-rubric-1/packet.md").read_text(encoding="utf-8")
+            locations = json.loads(rubric.split("Measured chapter locations:\n", 1)[1].split("\nAn event lies", 1)[0])
+            self.assertEqual(measured["prose_word_count"]["total"], locations["whole_book_prose_words"])
+            self.assertEqual(measured["chapter_positions"], locations["chapter_positions"])
+            self.assertNotIn("fixed_contract", locations)
+            self.assertNotIn("quality_target", rubric)
             self.assertEqual(8, workflow.journal.data["phase"])
             self.assertTrue((root / "delivery/export-receipt.json").is_file())
 
