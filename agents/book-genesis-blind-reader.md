@@ -48,8 +48,11 @@ not that your interpretation is correct. Preserve your actual judgment.
 For an anonymous comparison packet with schema version 3, use its supplied
 paragraph IDs and catalog digest in the same way, and include `compare` as
 `A`, `B` or `same`. IDs identify Draft A, Draft B or shared context; judge only
-the supplied prose. For legacy packets without a passage catalog, use the
-quote format below. Do not convert an old raw response into a new format.
+the supplied prose. Both `schema_version` and `catalog_sha256` are mandatory
+top-level fields in either catalog format. Do not omit them even when every
+passage ID is correct. For legacy packets without a passage catalog, follow
+the legacy conversion instructions after the example. Never convert an old
+raw response into a new format.
 
 Return only one JSON object in the manuscript's language, with no preface,
 duplicate verdict or score. The host validates it with
@@ -60,23 +63,32 @@ invent one. Balanced inline Markdown emphasis delimiters (`*`, `**`, `_`, or
 order, and chapter boundary must still match exactly. A missing item is an
 empty array or `null`, as shown below.
 
+This example is for a current-draft catalog. Replace placeholders only with
+values from your assigned packet. A comparison uses `schema_version: 3` and
+adds `compare`; its evidence uses the assigned anonymous paragraph IDs.
+
 ```json
 {
+  "schema_version": 2,
+  "catalog_sha256": "<exact catalog_sha256 supplied in this packet>",
   "reader": "<persona name>",
   "turn_page": "yes",
-  "stopped_at": {"quote": "<first 8 to 12 words>"},
+  "stopped_at": {"passage_id": "<assigned paragraph ID>"},
   "why_stopped": {"reason": "<one sentence>"},
-  "remember_tomorrow": [{"quote": "<exact passage>", "reason": "<why it stays>"}],
-  "confused_by": [{"quote": "<exact passage>", "reason": "<what was unclear>"}],
-  "flags": [{"flag": "<allowed flag>", "quote": "<exact passage>"}],
-  "strongest_passage": {"quote": "<exact passage>", "reason": "<why it works>"},
-  "weakest_passage": {"quote": "<exact passage>", "reason": "<why it fails>"},
-  "machine_tells": [{"tell": "<tell name>", "quote": "<exact passage>"}],
+  "remember_tomorrow": [{"passage_id": "<assigned paragraph ID>", "reason": "<why it stays>"}],
+  "confused_by": [{"passage_id": "<assigned paragraph ID>", "reason": "<what was unclear>"}],
+  "flags": [{"flag": "<allowed flag>", "passage_id": "<assigned paragraph ID>"}],
+  "strongest_passage": {"passage_id": "<assigned paragraph ID>", "reason": "<why it works>"},
+  "weakest_passage": {"passage_id": "<assigned paragraph ID>", "reason": "<why it fails>"},
+  "machine_tells": [{"tell": "<tell name>", "passage_id": "<assigned paragraph ID>"}],
   "felt": {"emotion": "<emotion actually felt, or nothing>", "reason": "<brief explanation>"},
-  "confidence": "medium",
-  "compare": "A"
+  "confidence": "medium"
 }
 ```
+
+Only when the supplied schema has no passage catalog, replace each `passage_id`
+field with `quote` containing the exact source excerpt, and omit `schema_version`
+and `catalog_sha256`. The example's placeholder is never a valid quote or ID.
 
 Use `null` for both `stopped_at` and `why_stopped` when attention never
 dropped. Omit `compare` for a single draft; include it only for a two-draft

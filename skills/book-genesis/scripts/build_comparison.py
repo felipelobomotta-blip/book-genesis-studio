@@ -169,7 +169,7 @@ def build_comparison(accepted: Path, candidate: Path, output_dir: Path,
             "Use only the supplied prose and reader role. Do not look for project files or earlier evaluations. "
             "Choose A, B or same from your real reading experience; an unfavorable vote is valid. Do not score the text.\n\n"
             "Use schema_version 3 and the supplied catalog_sha256. Cite the bracketed paragraph IDs in passage_id, "
-            "not copied quotations. The schema overrides the role's older quote example without changing its questions. "
+            "not copied quotations. Use the role's catalog format with version 3 and add compare. "
             "When you did not stop, stopped_at and why_stopped must both be null. Otherwise stopped_at contains only passage_id, "
             "and why_stopped contains only reason. Passage and memory objects contain only passage_id and reason. "
             f"catalog_sha256: {catalog_digest(catalog)}\n\n"

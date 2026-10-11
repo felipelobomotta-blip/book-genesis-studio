@@ -48,7 +48,8 @@ class EditorialScoreBoundaryTests(unittest.TestCase):
             root = Path(tmp)
             freeze(root / ".book-genesis/project.json", encoded({
                 "host": "codex", "collaboration": "autonomous", "author_name": "QA",
-                "model": "exact-test-model", "effort": "high", "idea": "A letter returns.", "language": "English"}))
+                "model": "exact-test-model", "effort": "high", "idea": "A letter returns.", "language": "English",
+                "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5}}))
             freeze(root / ".book-genesis/skills/.book-genesis-install.json", b'{}')
             packets = {}
             def generate(call_id, packet, schema, book):

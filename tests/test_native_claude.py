@@ -49,6 +49,8 @@ packet = sys.stdin.buffer.read().decode("utf-8")
 model = settings.get("model", args[args.index("--model") + 1])
 payload = settings.get("payload", '{"text":"café — 星"}')
 reply = {"type":"result", "subtype":"success", "is_error": settings.get("is_error", False), "result":payload, "modelUsage":{model:{"inputTokens":1,"outputTokens":1}}}
+if "structured_output" in settings:
+    reply["structured_output"] = settings["structured_output"]
 sys.stdout.buffer.write(json.dumps(reply, ensure_ascii=False).encode("utf-8"))
 sys.stdout.buffer.flush()
 raise SystemExit(settings.get("exit", 0))
@@ -83,6 +85,9 @@ raise SystemExit(settings.get("exit", 0))
         self.assertTrue(received["packet"].startswith("Scoped café 星 packet"))
         self.assertGreater(len(received["packet"]), 32768)
         self.assertLess(sum(map(len, received["argv"])), 2000)
+        native_schema = json.loads(received["argv"][received["argv"].index("--json-schema") + 1])
+        self.assertNotIn("description", native_schema)
+        self.assertEqual(["text"], native_schema["required"])
         self.assertEqual("medium", received["effort_env"])
         self.assertIn(b"model: claude-opus-exact-test\nreasoning effort: medium\n", result.stderr)
 
@@ -155,7 +160,7 @@ raise SystemExit(settings.get("exit", 0))
         self.assertFalse((self.root / "received.json").exists())
 
     def test_capability_check_and_changing_alias_block_unsafe_dispatch(self):
-        flags = "--restricted --tools --strict-mcp-config --disable-slash-commands --no-session-persistence --setting-sources --model --effort --output-format --print"
+        flags = "--restricted --tools --strict-mcp-config --disable-slash-commands --no-session-persistence --setting-sources --model --effort --output-format --json-schema --print"
         with patch("launcher.autonomous.subprocess.run", return_value=subprocess.CompletedProcess([], 0, flags, "")):
             command = controlled_command(self.prefix, model="claude-opus-exact-test", effort="medium", host="claude", bridge=SCRIPTS / "native_claude.py")
             self.assertEqual(["-o", "{output}", "-"], command["argv"][-3:])
@@ -194,6 +199,46 @@ raise SystemExit(settings.get("exit", 0))
         self.assertEqual(call_count, len(calls))
         self.assertEqual(8, verify_execution(root, required_phase=8)["phase"])
         self.assertEqual("delivered", verify_book(root, "evaluations/final-reader-index.json")["delivery"]["status"])
+
+    def test_native_structured_object_preserves_values_and_original_envelope(self):
+        value = {"verdict": "block", "findings": ["A real unresolved defect."], "text": "café — 星", "score": 6.3}
+        result = self.run_bridge(structured_output=value, payload="A human-readable summary, not the role document.")
+        self.assertEqual(0, result.returncode, result.stderr.decode("utf-8"))
+        self.assertEqual(value, json.loads(self.output.read_bytes()))
+        self.assertEqual(value, json.loads(result.stdout)["structured_output"])
+        self.assertIn(b"response presentation: native_structured_output", result.stderr)
+
+    def test_invalid_structured_object_cannot_fall_back_to_a_positive_text_result(self):
+        result = self.run_bridge(structured_output=None, payload='{"verdict":"pass"}')
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse(self.output.exists())
+        self.assertIn("structured_output", json.loads(result.stdout))
+
+    def test_compact_schema_keeps_real_field_names_and_requires_host_source_validation(self):
+        from native_claude import compact_native_schema
+        from workflow_roles import validate_json
+        original = {"type": "object", "description": "Long annotation " * 1000,
+            "properties": {"description": {"type": "string", "description": "Field guidance"},
+                           "passage_id": {"type": "string", "enum": [f"c01p{n:04d}" for n in range(1, 300)]}},
+            "required": ["description", "passage_id"], "additionalProperties": False}
+        reduced = compact_native_schema(original)
+        self.assertIn("description", reduced["properties"])
+        self.assertNotIn("enum", reduced["properties"]["passage_id"])
+        self.assertEqual(original["required"], reduced["required"])
+        self.schema.write_text(json.dumps(original), encoding="utf-8")
+        result = self.run_bridge(structured_output={"description": "Unsupported citation", "passage_id": "invented"})
+        self.assertEqual(0, result.returncode)
+        self.assertFalse(validate_json(self.output, original)["valid"])
+
+    def test_still_oversized_structural_schema_blocks_before_model_dispatch(self):
+        properties = {("field" + str(n) + "x" * 250): {"type": "string"} for n in range(80)}
+        self.schema.write_text(json.dumps({"type": "object", "properties": properties,
+            "required": list(properties), "additionalProperties": False}), encoding="utf-8")
+        result = self.run_bridge()
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse((self.root / "received.json").exists())
+        self.assertFalse(self.output.exists())
+        self.assertIn(b"bounded command size", result.stderr)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ def controlled_command(executable, *, model, effort, host="codex", bridge=None):
     if host == "claude":
         import json
         flags = ("--restricted", "--tools", "--strict-mcp-config", "--disable-slash-commands",
-                 "--no-session-persistence", "--setting-sources", "--model", "--effort", "--output-format", "--print")
+                 "--no-session-persistence", "--setting-sources", "--model", "--effort", "--output-format", "--json-schema", "--print")
         if help_result.returncode or any(flag not in help_result.stdout for flag in flags):
             raise ValueError("Unattended isolation requires native Claude restricted mode and subscription-preserving scoped flags")
         if not bridge or not Path(bridge).is_file():

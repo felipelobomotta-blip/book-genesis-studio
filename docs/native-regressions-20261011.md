@@ -225,3 +225,37 @@ removed the numeric cap from both Prose explanations while retaining their
 concrete prose observations. The original measurement hash and scores remained
 unchanged. This is boundary evidence; the new build still needs a fresh native
 full-book run.
+
+## Incomplete comparison recovery
+
+Trial 12 subsequently stopped during its first revision pass: the fourth
+comparison reader returned paragraph IDs but omitted `schema_version` and
+`catalog_sha256` twice. The controller had no complete verified panel and
+correctly withheld promotion, but incorrectly stranded the entire manuscript.
+The failed 47,803-word run remains preserved without an export. Its 70.74/100
+baseline predates accepted revisions and is not a score of the stopped text.
+
+The comparison path now treats two verified output-validation failures as a
+rejection of that optional candidate. It retains the earlier chapter, original
+responses and invalid attempts, records the missing reader, and proceeds within
+the existing three-pass budget. It never invents a fourth vote, repairs raw
+critic output, rerates unchanged prose or overrides a valid negative verdict.
+Authentication, transport and evidence alteration still block. Regression tests
+exercise actual export and no-call completed resume, plus tampering and native
+authentication failures. Reader instructions now show the catalog response as
+their primary example, including both mandatory binding fields.
+
+The Claude bridge also requests a native structural schema using
+[`--json-schema`](https://code.claude.com/docs/en/headless#get-structured-output).
+The complete role schema still travels over stdin and is enforced by the host.
+Only long source-ID enums and annotations are omitted from the bounded native
+command argument. Required fields, ordinary enums and structural types remain;
+an oversized command fails before model dispatch. Source citations, scope,
+reviews and prose constraints still need their original validators.
+
+When present, the native `structured_output` object supplies the role document;
+its values and the complete original envelope are preserved. An invalid
+structured field cannot fall back to a more favorable text result. Older public
+result envelopes still use the existing validated decoding path. Subprocess
+fixtures verify these boundaries. A real native canary is required before the
+next full-book test; the two ongoing native books remain unchanged.

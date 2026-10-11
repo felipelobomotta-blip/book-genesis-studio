@@ -731,7 +731,9 @@ class BookWorkflow:
                    "reason": decision.get("reason", "Fresh evidence-bound factual verification"),
                    "candidate": self.journal.record_file(candidate), "evidence": self.journal.record_file(decision_path)}
         freeze(outcome_path, encoded(outcome))
-        detail = "factual correctness check" if factual else f"{decision['revision_votes']}/4 preferred the candidate"
+        detail = ("factual correctness check" if factual else
+                  f"{decision['revision_votes']}/4 preferred the candidate" if "revision_votes" in decision else
+                  "incomplete comparison; accepted chapter retained")
         self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {detail}")
         return outcome
 
@@ -799,8 +801,19 @@ class BookWorkflow:
         paths = [accepted, candidate, *context]
         for row in manifest["readers"]:
             call_key = key + "-" + row["persona"]
-            report, _ = self.call(call_key, (bundle / row["packet"]).read_bytes(), read_json(bundle / row["response_schema"]),
-                lambda p, row=row: validate_blind_reader_report(paths, p, expected_reader=row["reader"], catalog_path=bundle / row["catalog"]))
+            try:
+                report, _ = self.call(call_key, (bundle / row["packet"]).read_bytes(), read_json(bundle / row["response_schema"]),
+                    lambda p, row=row: validate_blind_reader_report(paths, p, expected_reader=row["reader"], catalog_path=bundle / row["catalog"]))
+            except WorkflowError:
+                evidence = self.rejected_validation_evidence(call_key)
+                if evidence is None:
+                    raise
+                decision = {"decision": "reject", "reason": "A comparison reader exhausted bounded output-validation attempts; "
+                            "no complete panel authorized this candidate. Accepted chapter retained.",
+                            "unverified_reader": row["reader"], "evidence": evidence,
+                            "manifest": self.journal.record_file(bundle / "manifest.private.json")}
+                freeze(decision_path, encoded(decision))
+                return decision
             index[row["persona"]] = {"report": str(report), "validation": str(self.root / self.journal.data["steps"][call_key]["validation"])}
         freeze(bundle / "index.json", encoded(index))
         decision = decide(bundle / "manifest.private.json", bundle / "index.json", n)
