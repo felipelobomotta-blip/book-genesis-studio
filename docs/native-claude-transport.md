@@ -48,8 +48,10 @@ adds a fallback model. Existing guided native sessions retain their own behavior
 ## Original response evidence
 
 The native JSON envelope is retained byte-for-byte as stdout, including a failed
-response. Its `modelUsage` must identify exactly the frozen model before the
-public result field can be extracted. Plain JSON is passed verbatim. When the
+response. Successful generations must identify exactly the frozen model in
+`modelUsage` before their role document can be extracted. Provider errors are
+reported before this success check; a zero-usage quota refusal does not falsely
+claim that a different model wrote a response. Plain JSON is passed verbatim. When the
 entire field is one JSON Markdown fence, the bridge removes only that outer
 presentation wrapper and passes its exact enclosed JSON document. It records
 which presentation was decoded; the original envelope and result field remain
@@ -66,8 +68,11 @@ finding values. The updated full automated suite passed 359 tests; a fresh
 full-length book run is required to establish delivery with this transport.
 
 Passage-reference schemas can exceed Windows command-line limits. The bridge
-sends the role packet and schema through UTF-8 stdin, then uses the common host
-validator. It does not claim provider-side schema enforcement. Binary stream
+sends the full role packet and schema through UTF-8 stdin. It additionally requests
+a bounded structural schema through native `--json-schema`; long passage-ID
+enums remain authoritative in the full host validator. Native `structured_output`,
+when present, supplies the role document without changing its values. A present
+invalid field cannot fall back to a more favorable textual result. Binary stream
 handling preserves Unicode even when the launching console uses cp1252. The
 pending response uses exclusive creation; existing evidence is never replaced.
 
@@ -75,6 +80,30 @@ The outer native-call guard still owns timeouts, retry reservations and original
 receipts. The launcher owns the process job and shutdown. Failed authentication,
 unavailable models or malformed responses remain visible failures, not empty
 chapters or passing votes.
+
+## Subscription limits
+
+A proven native HTTP 429 session refusal with empty model usage and zero input,
+output and cache tokens can defer a request until the provider's explicit reset
+time. The child alone receives `TZ=UTC` so the reset has an unambiguous timezone;
+global settings and the system timezone remain untouched. Unknown formats,
+ambiguous zones, authentication failures and other errors still stop with their
+actual reason. There is no account, model or API fallback.
+
+The journal preserves every failed physical request, the original native
+envelope, its hashes and the saved retry deadline. It displays the wait and
+retries automatically after a 30-second grace period. An interrupted wait resumes
+from that deadline. Only verified zero-usage refusals are excluded from the two
+model-attempt budget; malformed generated responses still consume it. The entire
+book permits at most eight deferrals and twelve cumulative waiting hours.
+These limits survive resume. Evidence is checked again after waiting and before
+export; a changed refusal or deadline cannot refund an attempt.
+
+This handling follows two frozen native books stopping at their first review
+requests when the account reached its session limit. Those failed runs remain
+failed with their original budgets. Synthetic tests use fake time and cover
+interruption, receipt recovery, producer feedback, limits, tampering, complete
+export and no-call resume. Native wait/resume acceptance is recorded separately.
 
 ## Validation boundary
 

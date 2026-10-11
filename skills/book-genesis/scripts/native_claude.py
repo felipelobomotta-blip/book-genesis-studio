@@ -7,12 +7,19 @@ extracts only the public result field to the exclusive pending response file.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+
+from provider_wait import MARKER, WAIT_EXIT, quota_wait
+
+
+class ProviderWait(ValueError):
+    pass
 
 
 def require_exact_model(model):
@@ -80,7 +87,9 @@ def run(prefix, *, model, effort, schema_path, output, packet):
         raise ValueError("Native executable must be an argv array")
     if output.exists():
         raise ValueError("Pending response already exists; it must not be overwritten")
-    env = {**os.environ, "CLAUDE_CODE_EFFORT_LEVEL": effort}
+    # Only the child uses UTC so a provider reset time has no Windows timezone
+    # database dependency. The user's native settings and system clock stay intact.
+    env = {**os.environ, "CLAUDE_CODE_EFFORT_LEVEL": effort, "TZ": "UTC"}
     if (any(env.get(key) for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"))
             or any(env.get(key, "").lower() in {"1", "true", "yes"} for key in (
                 "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"))):
@@ -117,7 +126,20 @@ def run(prefix, *, model, effort, schema_path, output, packet):
     except ValueError as exc:
         sys.stderr.buffer.write(result.stderr)
         raise ValueError("Native Claude did not return a JSON result envelope") from exc
-    actual = data.get("modelUsage") if isinstance(data, dict) else None
+    # A quota refusal legitimately has no modelUsage. Surface that actual error
+    # before verifying the model identity of successful generations.
+    if (not isinstance(data, dict) or result.returncode or data.get("is_error") is not False
+            or data.get("subtype") != "success"):
+        sys.stderr.buffer.write(result.stderr)
+        wait = quota_wait(data, datetime.now(timezone.utc))
+        if wait:
+            sys.stderr.buffer.write((MARKER + json.dumps(wait, ensure_ascii=True) + "\n").encode("utf-8"))
+            sys.stderr.buffer.flush()
+            raise ProviderWait(wait["reason"])
+        public = data.get("result", "unsuccessful native result") if isinstance(data, dict) else "invalid native result envelope"
+        public = " ".join(str(public).split())[:1000]
+        raise ValueError("Native Claude reported: " + public + "; original output retained")
+    actual = data.get("modelUsage")
     if not isinstance(actual, dict) or set(actual) != {model}:
         sys.stderr.buffer.write(result.stderr)
         raise ValueError("Native Claude usage did not verify the exact selected model; response not accepted")
@@ -127,8 +149,6 @@ def run(prefix, *, model, effort, schema_path, output, packet):
               "authentication: claude.ai\nmodel evidence: native modelUsage\n--------\n")
     sys.stderr.buffer.write(header.encode("utf-8") + result.stderr)
     sys.stderr.buffer.flush()
-    if result.returncode or data.get("is_error") is not False or data.get("subtype") != "success":
-        raise ValueError("Native Claude reported an unsuccessful result; original output retained")
     if "structured_output" in data:
         if not isinstance(data["structured_output"], dict):
             raise ValueError("Native structured output is not an object; original output retained")
@@ -157,8 +177,13 @@ def main(argv=None):
     try:
         run(json.loads(args.native_command_json), model=args.model, effort=args.effort,
             schema_path=args.output_schema, output=args.o, packet=sys.stdin.buffer.read().decode("utf-8"))
+    except ProviderWait as exc:
+        sys.stderr.buffer.write(f"Native Claude: {exc}\n".encode("utf-8"))
+        sys.stderr.buffer.flush()
+        return WAIT_EXIT
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
-        print(f"Native Claude: {exc}", file=sys.stderr)
+        sys.stderr.buffer.write(f"Native Claude: {exc}\n".encode("utf-8"))
+        sys.stderr.buffer.flush()
         return 1
     return 0
 

@@ -17,10 +17,24 @@ import time
 from uuid import uuid4
 
 from run_host_call import HostCallError, run_host_call
+from provider_wait import MAX_DEFERRALS, MAX_WAIT_SECONDS, WAIT_EXIT, verified_wait
 
 
 class WorkflowError(ValueError):
     pass
+
+
+def verify_deferred_attempt(root, attempt, verify_files):
+    records = attempt["provider_evidence"]
+    verify_files(records)
+    folder = root / "work/host-calls" / attempt["call_id"]
+    packet_path = (root / attempt["attempt_packet"]).resolve()
+    if not packet_path.is_relative_to(root) or not any(row["path"] == attempt["attempt_packet"] for row in records):
+        raise WorkflowError("Provider wait packet is outside its frozen evidence")
+    proof = verified_wait(folder, read_json(folder / "receipt.json"), packet_path.read_bytes())
+    if proof is None or proof != attempt["provider_wait"]:
+        raise WorkflowError("Saved provider wait differs from its native evidence")
+    return proof
 
 
 def verify_execution(root: Path, *, required_phase: int = 7) -> dict:
@@ -50,6 +64,9 @@ def verify_execution(root: Path, *, required_phase: int = 7) -> dict:
         for row in record["files"]:
             check(row)
     for step in data["steps"].values():
+        for attempt in step.get("attempts", []):
+            if attempt["status"] == "provider_wait":
+                verify_deferred_attempt(root, attempt, lambda records: [check(row) for row in records])
         if step["status"] == "completed":
             for row in step["evidence"]:
                 check(row)
@@ -261,6 +278,53 @@ class Journal:
         self.save()  # A crash or fresh context never refunds a dispatched pass.
         return row
 
+    def verify_provider_waits(self, step):
+        for row in step.get("attempts", []):
+            if row["status"] == "provider_wait":
+                verify_deferred_attempt(self.root, row, self.verify_files)
+
+    def defer_provider(self, attempt, call_dir, packet, attempt_packet):
+        receipt_path = call_dir / "receipt.json"
+        if not receipt_path.is_file():
+            return False
+        proof = verified_wait(call_dir, read_json(receipt_path), packet)
+        if proof is None:
+            return False
+        earlier = [row["provider_wait"] for step in self.data["steps"].values()
+                   for row in step["attempts"] if row["status"] == "provider_wait"]
+        duration = lambda row: (datetime.fromisoformat(row["retry_at"]) - datetime.fromisoformat(row["observed_at"])).total_seconds()
+        if len(earlier) >= MAX_DEFERRALS or sum(duration(row) for row in earlier + [proof]) > MAX_WAIT_SECONDS:
+            raise WorkflowError("Native subscription wait budget exhausted; original refusals retained")
+        evidence = [self.record_file(call_dir / name) for name in ("packet", "stdout", "stderr", "receipt.json")]
+        evidence.append(self.record_file(attempt_packet))
+        attempt.update(status="provider_wait", provider_wait=proof, provider_evidence=evidence,
+                       attempt_packet=attempt_packet.relative_to(self.root).as_posix(), finished_at=self.now())
+        self.save()
+        return True
+
+    def wait_for_provider(self, key, step):
+        attempt = step["attempts"][-1]
+        proof = verify_deferred_attempt(self.root, attempt, self.verify_files)
+        retry_at = datetime.fromisoformat(proof["retry_at"])
+        step["status"] = "waiting_for_provider"
+        self.data["status"] = "waiting_for_provider"
+        self.save()
+        print(f"  {key} | subscription limit; book saved | automatic retry at {proof['retry_at']}", flush=True)
+        last_notice = time.monotonic()
+        while True:
+            remaining = (retry_at - datetime.fromisoformat(self.now())).total_seconds()
+            if remaining <= 0:
+                break
+            time.sleep(min(20, remaining))
+            if time.monotonic() - last_notice >= 60:
+                print(f"  {key} | waiting for subscription reset | {max(0, int(remaining))}s remaining", flush=True)
+                last_notice = time.monotonic()
+        # Recheck after the wait: a changed refusal cannot silently refund a call.
+        verify_deferred_attempt(self.root, attempt, self.verify_files)
+        self.data["status"] = "running"
+        step["status"] = "pending"
+        self.save()
+
     def call(self, key: str, packet: bytes, schema: dict | None, command: dict, validator,
              *, attempts: int = 2, feedback: bool = False, feedback_response: bool = False,
              transport=run_host_call) -> tuple[Path, dict]:
@@ -285,11 +349,14 @@ class Journal:
                 raise WorkflowError("Unsupported structured native command")
             argv[-3:-3] = ["--output-schema", str(folder / "schema.json")]
         native = {**command, "argv": argv}
+        self.verify_provider_waits(step)
         if step["status"] == "completed":
             self.verify_files(step["evidence"])
             return self.root / step["response"], read_json(self.root / step["validation"])
         while True:
             rows = step["attempts"]
+            if rows and rows[-1]["status"] == "provider_wait":
+                self.wait_for_provider(key, step)
             if rows and rows[-1]["status"] == "reserved":
                 attempt = rows[-1]
                 call_dir = self.root / "work/host-calls" / attempt["call_id"]
@@ -301,7 +368,7 @@ class Journal:
                     self.save()
                     continue
             else:
-                if len(rows) >= attempts:
+                if sum(row["status"] != "provider_wait" for row in rows) >= attempts:
                     step["status"] = "failed"
                     self.save()
                     raise WorkflowError(f"{key}: exhausted {attempts} native attempts: {rows[-1].get('error')}")
@@ -310,12 +377,13 @@ class Journal:
                 self.save()  # Durable attempt exists before any network/process dispatch.
             call_dir = self.root / "work/host-calls" / attempt["call_id"]
             actual_packet = packet
-            if feedback and len(rows) > 1 and rows[-2].get("validation_errors"):
+            prior = next((row for row in reversed(rows[:-1]) if row["status"] != "provider_wait"), {})
+            if feedback and prior.get("validation_errors"):
                 actual_packet += ("\n\nDeterministic output validation rejected the previous response. "
                     "Correct these output-contract errors while preserving the original creative request. "
-                    "Do not put this process note into any story or planning artifact:\n").encode("utf-8") + encoded(rows[-2]["validation_errors"])
+                    "Do not put this process note into any story or planning artifact:\n").encode("utf-8") + encoded(prior["validation_errors"])
                 if feedback_response:
-                    previous = self.root / "work/host-calls" / rows[-2]["call_id"]
+                    previous = self.root / "work/host-calls" / prior["call_id"]
                     raw = (previous / "response").read_bytes()
                     if digest(raw) != read_json(previous / "receipt.json").get("response_sha256"):
                         raise WorkflowError("Rejected producer response changed before its repair")
@@ -328,6 +396,13 @@ class Journal:
             attempt_packet = folder / f"packet-attempt-{len(rows)}.md"
             freeze(attempt_packet, actual_packet)
             try:
+                # Recover a crash after the native refusal was saved, without
+                # redispatching or changing that original failed receipt.
+                saved_receipt = call_dir / "receipt.json"
+                if saved_receipt.is_file():
+                    saved = read_json(saved_receipt)
+                    if saved.get("status") == "failed" and saved.get("exit_code") == WAIT_EXIT:
+                        raise HostCallError(saved.get("error", "Native subscription wait"), receipt=saved)
                 with activity(key):
                     result = transport(self.root, attempt["call_id"], attempt_packet, json.dumps(native))
                 response = call_dir / "response"
@@ -357,6 +432,8 @@ class Journal:
                     attempt["validation_errors"] = validation.get("errors", ["Invalid response"])
                     raise WorkflowError("; ".join(validation.get("errors", ["Invalid response"])))
             except (HostCallError, ValueError, OSError) as exc:
+                if isinstance(exc, HostCallError) and self.defer_provider(attempt, call_dir, actual_packet, attempt_packet):
+                    continue
                 attempt.update(status="failed", error=str(exc), finished_at=self.now())
                 self.save()
                 if isinstance(exc, HostCallError) and exc.exit_code == 130:

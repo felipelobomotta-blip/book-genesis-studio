@@ -703,7 +703,8 @@ class BookWorkflow:
                 raise
             step = self.journal.data["steps"][key]
             outcome = {"chapter": n, "mode": task["mode"], "decision": "reject", "reason": "Both bounded revision attempts failed output validation; accepted text retained.",
-                       "validation_errors": [row["validation_errors"] for row in step["attempts"]], "evidence": evidence}
+                       "validation_errors": [row["validation_errors"] for row in step["attempts"]
+                                             if row["status"] != "provider_wait"], "evidence": evidence}
             freeze(outcome_path, encoded(outcome))
             self.log(f"Revision pass {number}, chapter {n} | rejected invalid proposals; accepted chapter retained")
             return outcome
@@ -790,10 +791,12 @@ class BookWorkflow:
     def rejected_validation_evidence(self, key):
         """Retain verified malformed optional work; never mask transport failure."""
         step = self.journal.data["steps"].get(key, {})
-        attempts = step.get("attempts", [])
+        self.journal.verify_provider_waits(step)
+        attempts = [row for row in step.get("attempts", []) if row["status"] != "provider_wait"]
         if step.get("status") != "failed" or not attempts or not all(row.get("validation_errors") for row in attempts):
             return None
-        evidence = []
+        evidence = [record for row in step.get("attempts", []) if row["status"] == "provider_wait"
+                    for record in row["provider_evidence"]]
         for attempt in attempts:
             folder = self.root / "work/host-calls" / attempt["call_id"]
             receipt = read_json(folder / "receipt.json")
@@ -1042,10 +1045,12 @@ class BookWorkflow:
             self.package()
             return 0
         except (Exception, KeyboardInterrupt) as exc:
-            self.journal.data.update(status="blocked", error=str(exc))
+            waiting = isinstance(exc, KeyboardInterrupt) and self.journal.data["status"] == "waiting_for_provider"
+            self.journal.data.update(status="waiting_for_provider" if waiting else "blocked", error=str(exc))
             self.journal.save()
             self.sync()
-            atomic(self.root / "DELIVERY_STATUS.md", ("# Delivery blocked\n\n" + str(exc)
+            message = "Subscription wait interrupted. Resume will honor the saved retry time." if waiting else str(exc)
+            atomic(self.root / "DELIVERY_STATUS.md", ("# Delivery paused\n\n" + message
                 + "\n\nOriginal files and attempt budgets are preserved. Resume the same exact build after resolving the stated error.\n").encode("utf-8"))
             raise
 

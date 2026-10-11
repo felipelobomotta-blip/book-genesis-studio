@@ -294,3 +294,32 @@ installer suite verification. A reproduced resume failure caused solely by
 JSON field ordering was fixed with deterministic serialization; reloading the
 same task in a different key order now reuses the original review. Native
 component canaries and a fresh full-book run remain required.
+
+## Native subscription limits before model execution
+
+Fresh trial 14 wrote twelve chapters and 47,938 words, then native Claude refused
+both initial-audit requests with HTTP 429, zero token usage, empty modelUsage and
+an explicit session-reset time. Trial 16 stopped at the plan checker for the same
+reason, before writing chapters. The bridge checked modelUsage first, producing
+a misleading identity error; an immediate second request exhausted the role.
+Neither book completed review or export. Original failed runs remain preserved.
+
+The bridge now reports provider errors before checking successful model identity.
+For the narrowly recognized zero-usage session refusal, the controller durably
+waits until the native UTC reset plus thirty seconds. Raw failed receipts remain
+physical requests; only these verified refusals are excluded from the two model
+attempts. The entire book has eight deferrals and twelve cumulative waiting hours.
+No account, model or API fallback occurs. Unrecognized errors remain failures.
+
+Regressions cover zero-versus-nonzero usage, explicit reset parsing, midnight,
+crash after receipt persistence, interrupted waits, source/receipt tampering,
+producer feedback across a wait, durable model and wait budgets, full fixture
+export and completed no-call resume. A cp1252 subprocess test also exposed mixed
+stderr encodings; all bridge error diagnostics now emit UTF-8 bytes consistently.
+Native component and full-book acceptance remain separately required.
+
+The final candidate passed all 403 automated tests in 314.387 seconds and the
+installer suite. The combined case of a quota wait followed by two malformed
+optional revisions retains the original chapter, records both rejections and
+exports the reviewed unapproved draft; its completed resume makes no model call.
+This synthetic recovery result does not establish native complete-book delivery.

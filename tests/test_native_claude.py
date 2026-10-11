@@ -45,10 +45,11 @@ assert "--bare" not in args and "--dangerously-skip-permissions" not in args
 assert "--fallback-model" not in args and "--disable-slash-commands" in args
 assert "--no-session-persistence" in args and args[args.index("--setting-sources") + 1] == ""
 packet = sys.stdin.buffer.read().decode("utf-8")
-(root / "received.json").write_text(json.dumps({"argv": args, "packet": packet, "effort_env": os.environ.get("CLAUDE_CODE_EFFORT_LEVEL")}), encoding="utf-8")
+(root / "received.json").write_text(json.dumps({"argv": args, "packet": packet, "effort_env": os.environ.get("CLAUDE_CODE_EFFORT_LEVEL"), "tz": os.environ.get("TZ")}), encoding="utf-8")
 model = settings.get("model", args[args.index("--model") + 1])
 payload = settings.get("payload", '{"text":"café — 星"}')
 reply = {"type":"result", "subtype":"success", "is_error": settings.get("is_error", False), "result":payload, "modelUsage":{model:{"inputTokens":1,"outputTokens":1}}}
+reply.update(settings.get("envelope", {}))
 if "structured_output" in settings:
     reply["structured_output"] = settings["structured_output"]
 sys.stdout.buffer.write(json.dumps(reply, ensure_ascii=False).encode("utf-8"))
@@ -89,6 +90,7 @@ raise SystemExit(settings.get("exit", 0))
         self.assertNotIn("description", native_schema)
         self.assertEqual(["text"], native_schema["required"])
         self.assertEqual("medium", received["effort_env"])
+        self.assertEqual("UTC", received["tz"])
         self.assertIn(b"model: claude-opus-exact-test\nreasoning effort: medium\n", result.stderr)
 
     def test_api_auth_is_rejected_before_model_dispatch(self):
@@ -158,6 +160,35 @@ raise SystemExit(settings.get("exit", 0))
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(b"original", self.output.read_bytes())
         self.assertFalse((self.root / "received.json").exists())
+
+    def test_zero_usage_provider_error_reports_actual_reason_before_identity_check(self):
+        result = self.run_bridge(envelope={"is_error": True, "modelUsage": {}, "api_error_status": 429,
+            "result": "You've hit your session limit · resets 7:30am (America/Sao_Paulo)"})
+        self.assertEqual(1, result.returncode)
+        self.assertIn(b"session limit", result.stderr)
+        self.assertNotIn(b"did not verify the exact selected model", result.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_success_without_usage_is_still_rejected(self):
+        result = self.run_bridge(envelope={"is_error": False, "modelUsage": {}})
+        self.assertEqual(1, result.returncode)
+        self.assertIn(b"did not verify the exact selected model", result.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_proven_utc_quota_has_distinct_exit_and_preserves_original_refusal(self):
+        from datetime import datetime, timedelta, timezone
+        from provider_wait import MARKER, WAIT_EXIT
+        reset = datetime.now(timezone.utc) + timedelta(hours=1)
+        clock = f"{reset.hour % 12 or 12}:{reset.minute:02d}{'am' if reset.hour < 12 else 'pm'}"
+        envelope = {"is_error": True, "modelUsage": {}, "api_error_status": 429,
+            "usage": {key: 0 for key in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")},
+            "result": f"You've hit your session limit · resets {clock} (UTC)"}
+        result = self.run_bridge(envelope=envelope)
+        self.assertEqual(WAIT_EXIT, result.returncode, result.stderr.decode("utf-8"))
+        self.assertIn(MARKER.encode(), result.stderr)
+        self.assertEqual(envelope["result"], json.loads(result.stdout)["result"])
+        self.assertNotIn(b"model evidence: native modelUsage", result.stderr)
+        self.assertFalse(self.output.exists())
 
     def test_capability_check_and_changing_alias_block_unsafe_dispatch(self):
         flags = "--restricted --tools --strict-mcp-config --disable-slash-commands --no-session-persistence --setting-sources --model --effort --output-format --json-schema --print"
