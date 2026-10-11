@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 from workflow_roles import (PROSE_SCHEMA, TEXT, apply_corrections, enum, array, obj,
     review_schema, text_catalog, validate_prose, validate_corrections, validate_shape)
-from workflow_issues import collect_issues, validate_issue_statuses
+from workflow_issues import collect_issues, reconcile_issues, validate_issue_statuses
 from workflow_state import Journal, encoded, freeze, read_json
 from test_autonomous_workflow import COMMAND, receipt_transport, fixture_response
 from autonomous_book import BookWorkflow
@@ -105,6 +105,48 @@ class RecoveryTests(unittest.TestCase):
         row["status"] = "open"
         path.write_bytes(encoded({"statuses": [row]}))
         self.assertTrue(validate_issue_statuses(path, schema, issues, catalog)["valid"])
+
+    def test_status_format_retry_identifies_missing_chapter_without_disclosing_prior_judgment(self):
+        from types import SimpleNamespace
+        journal = Journal(self.root, {})
+        texts = {"chapter-01.md": "# One\n\nThe delivery happened Thursday.",
+                 "chapter-02.md": "# Two\n\nThe same delivery happened Monday."}
+        snapshot = []
+        for name, text in texts.items():
+            path = self.root / name
+            freeze(path, text.encode())
+            snapshot.append(path)
+        catalog = text_catalog(texts)
+        response = self.root / "audit-response"
+        freeze(response, encoded({"findings": [{"severity": "high", "kind": "continuity", "chapters": [1, 2],
+            "evidence_ids": ["s01p0002", "s02p0002"], "problem": "The delivery date conflicts.",
+            "fix": "Establish one delivery date.", "preserve": "Voice."}]}))
+        freeze(self.root / "work/workflow/audit-original/packet.md", ("Complete sources:\n" + json.dumps(catalog)).encode())
+        journal.data["steps"]["audit-original"] = {"status": "completed", "response": "audit-response", "evidence": [journal.record_file(response)]}
+        packets = []
+        def generate(call_id, packet, schema, root):
+            packets.append(packet)
+            if len(packets) == 1:
+                return {"statuses": [{"id": "audit-original-f001", "status": "resolved",
+                    "reason": "UNIQUE_REJECTED_JUDGMENT", "evidence_ids": ["s01p0002"]}]}
+            self.assertIn("missing chapter-02.md", packet)
+            self.assertNotIn("UNIQUE_REJECTED_JUDGMENT", packet)
+            self.assertNotIn("Previous rejected producer response", packet)
+            return {"statuses": [{"id": "audit-original-f001", "status": "open",
+                "reason": "The current two chapters still disagree.", "evidence_ids": ["s01p0002", "s02p0002"]}]}
+        def call(key, packet, schema, validator, **kwargs):
+            return journal.call(key, packet.encode(), schema, COMMAND, validator,
+                                transport=receipt_transport(generate), **kwargs)
+        workflow = SimpleNamespace(root=self.root, journal=journal, neutral_sources=lambda _: texts, call=call)
+        with redirect_stdout(io.StringIO()):
+            result = reconcile_issues(workflow, 1, snapshot)
+        self.assertEqual(2, len(packets))
+        self.assertFalse(result["passed"])
+        self.assertEqual("open", result["statuses"][0]["status"])
+        self.assertTrue(journal.data["steps"]["issue-check-1"]["attempts"][-1]["feedback_evidence"])
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(result, reconcile_issues(workflow, 1, snapshot))
+        self.assertEqual(2, len(packets))
 
     def test_factual_fix_reaches_export_without_preference_votes(self):
         root = self.root

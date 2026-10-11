@@ -7,7 +7,7 @@ The existing recoverable publication transaction commits the authorized group.
 import json
 
 from workflow_roles import TEXT, INTEGER, array, enum, obj, text_catalog, validate_json
-from workflow_state import WorkflowError, digest, encoded, freeze, read_json
+from workflow_state import WorkflowError, digest, encoded, freeze, read_json, verified_review_packet
 from revision_viability import CHECKS
 from decide_comparison import decide
 
@@ -41,9 +41,15 @@ def validate_report(path, schema, catalog, members):
             for check in row["checks"]:
                 cited = {locations[i] for i in check["evidence_ids"]}
                 if not own.issubset(cited):
-                    validation["errors"].append("Every member check needs its original and proposed prose")
+                    missing = ", ".join(sorted(own - cited))
+                    validation["errors"].append(
+                        f"Chapter {row['chapter']}, check {check['name']!r}: missing evidence from {missing}. "
+                        "Each individual check needs this chapter's original AND proposed prose; "
+                        "citations in another check do not satisfy this check. Cite supporting passage IDs from the supplied catalog.")
                 if check["name"] == "Canon and causal dependencies" and not cited.difference(own):
-                    validation["errors"].append("Group dependency checks need another chapter or the author contract")
+                    validation["errors"].append(
+                        f"Chapter {row['chapter']}, check {check['name']!r}: cite supporting evidence from another chapter "
+                        "or the author contract, in addition to this chapter's original and proposed prose.")
         passed = all(c["result"] == "pass" for r in data["chapters"] for c in r["checks"]) and not data["findings"]
         if (data["verdict"] == "pass") != passed or (data["verdict"] == "block" and not data["findings"]):
             validation["errors"].append("Creative group verdict conflicts with its checks or findings")
@@ -115,7 +121,7 @@ def verify_step(journal, key, packet, schema):
     response = journal.root / step["response"]
     receipt = read_json(response.parent / "receipt.json")
     if (receipt.get("status") != "completed" or receipt.get("exit_code") != 0 or receipt.get("error")
-            or receipt.get("packet_sha256") != request["packet_sha256"]):
+            or receipt.get("packet_sha256") != digest(verified_review_packet(journal, key, packet))):
         raise WorkflowError("Creative group lacks a successful original native receipt")
     for name in ("packet", "response", "stdout", "stderr"):
         if digest((response.parent / name).read_bytes()) != receipt[name + "_sha256"]:
@@ -240,7 +246,7 @@ def execute(workflow, number, tasks, strategy):
             schema = schema_for(catalog, members)
             try:
                 response, _ = workflow.call(call_key, packet_for(manifest, catalog), schema,
-                    lambda p: validate_report(p, schema, catalog, members))
+                    lambda p: validate_report(p, schema, catalog, members), feedback=True)
             except WorkflowError:
                 if workflow.rejected_validation_evidence(call_key) is None:
                     raise

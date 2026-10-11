@@ -865,7 +865,7 @@ class BookWorkflow:
                 schema = schema_for(catalog, members)
                 try:
                     response, _ = self.call(call_key, packet_for(manifest, catalog), schema,
-                                           lambda p: validate_report(p, schema, catalog, members))
+                                           lambda p: validate_report(p, schema, catalog, members), feedback=True)
                 except WorkflowError:
                     if self.rejected_validation_evidence(call_key) is None:
                         raise

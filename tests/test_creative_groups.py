@@ -18,7 +18,7 @@ from test_autonomous_workflow import COMMAND, receipt_transport, fixture_respons
 
 
 def group_report(packet, schema, blocked=False):
-    catalog = json.loads(packet.split("\nSources:\n", 1)[1])
+    catalog = json.JSONDecoder().raw_decode(packet.split("\nSources:\n", 1)[1])[0]
     sources = {s["source"]: s for s in catalog["sources"]}
     members = schema["properties"]["chapters"]["items"]["properties"]["chapter"]["enum"]
     return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
@@ -130,6 +130,38 @@ class CreativeGroupTests(unittest.TestCase):
         self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
         self.assert_originals()
         self.assertEqual(4, len(self.calls))
+
+    def test_missing_original_feedback_identifies_exact_member_and_check_before_bounded_retry(self):
+        original = self.generate
+        attempts = []
+        def omit_original(call_id, packet, schema, root):
+            report = original(call_id, packet, schema, root)
+            if "chapters" not in schema["properties"]:
+                return report
+            attempts.append(call_id)
+            if len(attempts) == 1:
+                member = next(r for r in report["chapters"] if r["chapter"] == 3)
+                check = next(c for c in member["checks"] if c["name"] == "Preserved strengths")
+                check["evidence_ids"] = check["evidence_ids"][1:]
+            else:
+                self.assertIn("Chapter 3, check 'Preserved strengths'", packet)
+                self.assertIn("missing evidence from original/chapter-03.md", packet)
+                self.assertNotIn("missing evidence from original/chapter-01.md", packet)
+            return report
+        self.workflow.transport = receipt_transport(omit_original)
+        self.assertTrue(all(r["decision"] == "promote" for r in self.run_group()))
+        self.assertEqual(2, len(attempts))
+        self.assertEqual(8, len(self.calls))
+        step = self.workflow.journal.data["steps"]["revision-1-creative-group-1-3-check"]
+        self.assertTrue(step["attempts"][-1].get("feedback_evidence"))
+        self.assertFalse(read_json(self.root / "work/workflow/revision-1-creative-group-1-3-check/validation-1.json")["valid"])
+        self.workflow = self.new_workflow()
+        self.run_group()
+        self.assertEqual(8, len(self.calls))
+        response = self.root / "work/host-calls" / attempts[0] / "response"
+        response.write_bytes(response.read_bytes() + b" ")
+        with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
+            self.run_group()
 
     def test_unchanged_member_cannot_partially_publish_the_group(self):
         self.noop = True

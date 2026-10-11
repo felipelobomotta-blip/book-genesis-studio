@@ -56,7 +56,9 @@ def validate_issue_statuses(path, schema, issues, catalog):
         if row["status"] != "open":
             required = {f"chapter-{n:02d}.md" for n in expected[row["id"]]["finding"]["chapters"]}
             if not required.issubset(cited):
-                report["errors"].append(f"{row['id']}: closing a finding requires current evidence from every affected chapter")
+                report["errors"].append(f"{row['id']}: closing a finding requires current evidence from every affected chapter; "
+                    f"missing {', '.join(sorted(required - cited))}. Cite supporting current passage IDs, "
+                    "or retain status open when that evidence does not support closing the finding.")
     report["valid"] = not report["errors"]
     return report
 
@@ -82,7 +84,7 @@ def reconcile_issues(workflow, number, snapshot):
         + "\n\nCurrent complete sources:\n" + json.dumps(catalog, ensure_ascii=False))
     key = f"issue-check-{number}"
     response, validation = workflow.call(key, packet, schema,
-        lambda path: validate_issue_statuses(path, schema, issues, catalog))
+        lambda path: validate_issue_statuses(path, schema, issues, catalog), feedback=True)
     statuses = read_json(response)["statuses"]
     by_id = {row["id"]: row for row in statuses}
     open_issues = [{**issue, "current": by_id[issue["id"]]} for issue in issues if by_id[issue["id"]]["status"] == "open"]

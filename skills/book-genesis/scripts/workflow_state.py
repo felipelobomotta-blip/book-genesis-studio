@@ -89,6 +89,43 @@ def encoded(value) -> bytes:
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
+def validation_feedback(errors):
+    return ("\n\nDeterministic output validation rejected the previous response. "
+            "Correct these output-contract errors while preserving the original creative request. "
+            "Do not put this process note into any story or planning artifact:\n").encode("utf-8") + encoded(errors)
+
+
+def verified_review_packet(journal, key, packet):
+    """Reconstruct format-only reviewer feedback from retained failed evidence."""
+    step = journal.data["steps"][key]
+    if step["request"].get("feedback_response"):
+        raise WorkflowError("A review cannot receive a prior producer response")
+    if not step["request"].get("validation_feedback"):
+        return packet
+    journal.verify_files(step["evidence"])
+    call_id = Path(step["response"]).parent.name
+    matches = [(i, row) for i, row in enumerate(step["attempts"])
+               if row["call_id"] == call_id and row["status"] == "completed"]
+    if len(matches) != 1:
+        raise WorkflowError("Review does not identify one completed native attempt")
+    index, attempt = matches[0]
+    prior = next((row for row in reversed(step["attempts"][:index]) if row["status"] != "provider_wait"), {})
+    if not prior.get("validation_errors"):
+        return packet
+    records = attempt.get("feedback_evidence", [])
+    if not records or any(row not in step["evidence"] for row in records):
+        raise WorkflowError("Review feedback lacks its original rejected evidence")
+    journal.verify_files(records)
+    prior_index = step["attempts"].index(prior) + 1
+    validation_path = journal.root / f"work/workflow/{key}/validation-{prior_index}.json"
+    if journal.record_file(validation_path) not in records:
+        raise WorkflowError("Review feedback does not bind its original validation")
+    validation = read_json(validation_path)
+    if validation.get("valid", validation.get("ok", False)) or validation.get("errors") != prior["validation_errors"]:
+        raise WorkflowError("Review feedback differs from its original validation errors")
+    return packet + validation_feedback(prior["validation_errors"])
+
+
 def read_json(path: Path):
     def unique(pairs):
         out = {}
@@ -383,11 +420,20 @@ class Journal:
             actual_packet = packet
             prior = next((row for row in reversed(rows[:-1]) if row["status"] != "provider_wait"), {})
             if feedback and prior.get("validation_errors"):
-                actual_packet += ("\n\nDeterministic output validation rejected the previous response. "
-                    "Correct these output-contract errors while preserving the original creative request. "
-                    "Do not put this process note into any story or planning artifact:\n").encode("utf-8") + encoded(prior["validation_errors"])
+                previous = self.root / "work/host-calls" / prior["call_id"]
+                previous_receipt = read_json(previous / "receipt.json")
+                for name in ("packet", "response", "stdout", "stderr"):
+                    if digest((previous / name).read_bytes()) != previous_receipt.get(name + "_sha256"):
+                        raise WorkflowError("Rejected native evidence changed before format feedback")
+                prior_index = rows.index(prior) + 1
+                inputs = [self.record_file(previous / name) for name in ("packet", "response", "stdout", "stderr", "receipt.json")]
+                inputs.append(self.record_file(folder / f"validation-{prior_index}.json"))
+                if attempt.get("feedback_evidence") and attempt["feedback_evidence"] != inputs:
+                    raise WorkflowError("Saved format feedback evidence changed")
+                attempt["feedback_evidence"] = inputs
+                self.save()
+                actual_packet += validation_feedback(prior["validation_errors"])
                 if feedback_response:
-                    previous = self.root / "work/host-calls" / prior["call_id"]
                     raw = (previous / "response").read_bytes()
                     if digest(raw) != read_json(previous / "receipt.json").get("response_sha256"):
                         raise WorkflowError("Rejected producer response changed before its repair")
@@ -447,6 +493,7 @@ class Journal:
             attempt.update(status="completed", finished_at=self.now())
             evidence = [self.record_file(call_dir / name) for name in ("packet", "response", "stdout", "stderr", "receipt.json")]
             evidence += [self.record_file(validation_path), self.record_file(folder / "packet.md"), self.record_file(attempt_packet)]
+            evidence += attempt.get("feedback_evidence", [])
             if schema is not None:
                 evidence.append(self.record_file(folder / "schema.json"))
             step.update(status="completed", response=response.relative_to(self.root).as_posix(),

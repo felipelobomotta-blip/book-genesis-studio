@@ -56,7 +56,7 @@ class CorrectionGroupTests(unittest.TestCase):
                                      "after": p["text"].replace("plastic", "galvanised mesh")}]}
         if self.malformed:
             return {"verdict": "pass"}
-        catalog = json.loads(packet.split("\nSources:\n", 1)[1])
+        catalog = json.JSONDecoder().raw_decode(packet.split("\nSources:\n", 1)[1])[0]
         by_name = {s["source"]: s for s in catalog["sources"]}
         for n in [task["chapter"] for task in self.tasks]:
             self.assertIn(f"original/chapter-{n:02d}.md", by_name)
@@ -242,6 +242,37 @@ class CorrectionGroupTests(unittest.TestCase):
         self.workflow.transport = receipt_transport(unsupported)
         self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
         self.assert_original()
+
+    def test_missing_canon_feedback_names_the_member_and_preserves_original_invalid_report(self):
+        original = self.generate
+        attempts = []
+        def omit_canon(call_id, packet, schema, root):
+            report = original(call_id, packet, schema, root)
+            if "chapters" not in schema["properties"]:
+                return report
+            attempts.append(call_id)
+            if len(attempts) == 1:
+                member = next(r for r in report["chapters"] if r["chapter"] == 4)
+                member["evidence_ids"] = member["evidence_ids"][:2] + member["evidence_ids"][:1]
+            else:
+                self.assertIn("Chapter 4: missing independent existing-canon evidence", packet)
+                self.assertIn("another original/ chapter or a contract/ source", packet)
+                self.assertNotIn("Chapter 2: missing independent", packet)
+            return report
+        self.workflow.transport = receipt_transport(omit_canon)
+        self.assertTrue(all(r["decision"] == "promote" for r in self.run_group()))
+        self.assertEqual(2, len(attempts))
+        self.assertEqual(4, len(self.packets))
+        step = self.workflow.journal.data["steps"]["revision-1-facts-group-2-4-check"]
+        self.assertTrue(step["attempts"][-1].get("feedback_evidence"))
+        self.assertFalse(read_json(self.root / "work/workflow/revision-1-facts-group-2-4-check/validation-1.json")["valid"])
+        self.workflow = self.new_workflow()
+        self.run_group()
+        self.assertEqual(4, len(self.packets))
+        response = self.root / "work/host-calls" / attempts[0] / "response"
+        response.write_bytes(response.read_bytes() + b" ")
+        with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
+            self.run_group()
 
 
 class FullGroupDeliveryTests(unittest.TestCase):

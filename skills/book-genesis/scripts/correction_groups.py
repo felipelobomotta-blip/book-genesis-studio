@@ -10,7 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from workflow_roles import TEXT, INTEGER, array, enum, obj, text_catalog, validate_json
-from workflow_state import WorkflowError, digest, encoded, freeze, read_json
+from workflow_state import WorkflowError, digest, encoded, freeze, read_json, verified_review_packet
 
 
 def connected_tasks(tasks, *, mode="factual"):
@@ -61,8 +61,15 @@ def validate_report(path, schema, catalog, members):
             needed = {"original/" + name, "proposed/" + name}
             cited = {locations[i] for i in row["evidence_ids"]}
             supporting = {n for n in cited - needed if n.startswith(("original/", "contract/"))}
-            if not needed.issubset(cited) or not supporting:
-                validation["errors"].append("Each correction needs its original, proposal and independent existing-canon evidence")
+            if not needed.issubset(cited):
+                validation["errors"].append(
+                    f"Chapter {row['chapter']}: missing correction evidence from {', '.join(sorted(needed - cited))}. "
+                    "This chapter's evidence_ids must cite its original AND proposed prose.")
+            if not supporting:
+                validation["errors"].append(
+                    f"Chapter {row['chapter']}: missing independent existing-canon evidence. "
+                    "Alongside this chapter's original and proposed prose, cite supporting passage IDs from "
+                    "another original/ chapter or a contract/ source. A proposed/ companion is not established canon.")
         passed = all(row[k] for row in report["chapters"] for k in
                      ("canon_supported", "factual_only", "dependencies_safe")) and not report["findings"]
         if (report["verdict"] == "pass") != passed or (report["verdict"] == "block" and not report["findings"]):
@@ -149,7 +156,7 @@ def verify(journal, manifest_path, call_key):
     receipt = read_json(response.parent / "receipt.json")
     if receipt.get("status") != "completed" or receipt.get("exit_code") != 0 or receipt.get("error"):
         raise WorkflowError("Correction group lacks a successful native receipt")
-    if receipt["packet_sha256"] != expected["packet_sha256"]:
+    if receipt["packet_sha256"] != digest(verified_review_packet(journal, call_key, packet_for(manifest, catalog))):
         raise WorkflowError("Group native receipt belongs to a different packet")
     for name in ("packet", "response", "stdout", "stderr"):
         if digest((response.parent / name).read_bytes()) != receipt[name + "_sha256"]:

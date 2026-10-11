@@ -110,7 +110,7 @@ class JournalTests(unittest.TestCase):
         def validate(path):
             path.write_bytes(encoded({"text": "silently replaced"}))
             return {"valid": False, "errors": ["too long"]}
-        with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "changed before its repair"):
+        with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "Rejected native evidence changed before format feedback"):
             self.j.call("draft", b"original", schema, COMMAND, validate, feedback=True,
                         feedback_response=True, transport=receipt_transport(lambda *a: {"text": "original draft"}))
 
