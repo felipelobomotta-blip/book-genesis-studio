@@ -55,7 +55,7 @@ What has actually been run where is tracked in [compatibility](docs/compatibilit
 
 ## Start a book
 
-New unattended Codex projects have a [controlled native execution path](docs/controlled-native-acceptance.md), with durable revision budgets, original-call evidence, phase prerequisites and source-verified export. This path is under fresh full-length acceptance testing; its existence is not a claim that the 90/100 quality bar has passed.
+New unattended projects have a [controlled native execution path](docs/controlled-native-acceptance.md), with durable revision budgets, original-call evidence, phase prerequisites and source-verified export. Codex is in full-length acceptance testing; the added [Claude subscription transport](docs/native-claude-transport.md) has separate validation. Neither path's existence is a claim that the 90/100 quality bar has passed.
 
 ```bash
 python book_genesis.py new ./books/my-novel --host codex --model gpt-5.6-luna --effort high --author "Your Name" --autonomous --idea "Your idea"

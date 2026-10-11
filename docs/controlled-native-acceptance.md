@@ -19,8 +19,10 @@ response text is preserved; visible progress reports real roles, elapsed time,
 saved chapters and measured counts, never fabricated model thoughts.
 
 The guided native-agent path and existing projects remain available. An existing
-project is not silently migrated or upgraded. This controlled path is currently
-implemented for Codex; it is not a claim of end-to-end coverage for other hosts.
+project is not silently migrated or upgraded. The original protocol below tests
+Codex. The added [Claude subscription transport](native-claude-transport.md) uses
+the same controller and needs a separate frozen native acceptance run. Neither
+host inherits the other host's test result.
 
 Controlled roles capability-check `codex exec --help`, then use its documented
 `--ignore-user-config` and `--ephemeral` options. The explicit model, effort,

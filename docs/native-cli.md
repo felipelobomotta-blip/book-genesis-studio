@@ -1,6 +1,6 @@
 # Native CLI launcher prototype
 
-Book Genesis can have a small command line while keeping its writing architecture in the existing skill. This local prototype prepares a verified project and opens **the unmodified Codex or Claude Code CLI**, with its own login, terminal UI and permission prompts. The native agent remains the single orchestrator.
+Book Genesis can have a small command line while keeping its writing architecture in the existing skill. Guided sessions prepare a verified project and open **the unmodified Codex or Claude Code CLI**, with its own login, terminal UI and permission prompts. New `--autonomous` projects use the controlled workflow described below; the program owns their phase transitions.
 
 It is a working entry point for the current recovery checkout, not a new released application or a new editorial engine. One supervised Codex run delivered a complete six-chapter manuscript and verified EPUB within its 6,000–7,500-word contract. It required author and execution-review interventions, and its literary gates failed. That establishes technical delivery for this short test, not unattended reliability, full-length novel quality or publication readiness. The underlying longer recovery pilot also has unresolved length and literary-quality checks; adding a launcher does not resolve them.
 
@@ -23,6 +23,14 @@ The new command asks for an idea and the title-page author or pen name before ha
 
 To use Claude Code, use `connect claude` and `--host claude`. Sign-in completes through the official native CLI, not a Book Genesis login form.
 
+New unattended projects on either host require an explicit model, effort and
+title-page author. They can run without a terminal. The program owns the book,
+while fresh native roles return only their assigned responses. Claude uses the
+[subscription transport](native-claude-transport.md), including an exact model ID
+and native claude.ai authentication. Guided sessions and legacy host-driven books
+continue to use the native terminal UI. A connection probe does not establish
+full-book acceptance; see each host's actual validation record.
+
 Explicit selections are forwarded without a model fallback:
 
 ```bash
@@ -31,9 +39,9 @@ python book_genesis.py new ./books/my-book --host codex \
   --model gpt-5.6-luna --effort high
 ```
 
-Model availability depends on the user's account and native CLI. Omitting `--model` or `--effort` uses that native CLI's configured default; Book Genesis does not select a hidden alternative. `--language` defaults to `English`. Use `--idea-file` for a longer UTF-8 idea, and `--autonomous` to request the existing skill's go-to-the-end mode.
+Model availability depends on the user's account and native CLI. In guided sessions, omitting `--model` or `--effort` uses that native CLI's configured default; Book Genesis does not select a hidden alternative. Controlled unattended projects require both selections. `--language` defaults to `English`. Use `--idea-file` for a longer UTF-8 idea, and `--autonomous` for the controlled workflow.
 
-For an explicit Claude effort, the launcher forwards `--effort` and the matching `CLAUDE_CODE_EFFORT_LEVEL` in both the child's inherited environment and CLI-scoped `--settings`. Native saved settings can reapply their environment values after startup, so forwarding a flag or process environment alone is insufficient. Only this effort key is overridden; the parent environment and saved native settings stay unchanged. Omitting effort keeps the native default. The native UI remains the place to verify the effective level and any account restrictions. See [Claude effort configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level) and [CLI settings](https://code.claude.com/docs/en/cli-reference).
+For an explicit Claude effort in a guided session, the launcher forwards `--effort` and the matching `CLAUDE_CODE_EFFORT_LEVEL` in both the child's inherited environment and CLI-scoped `--settings`. Native saved settings can reapply their environment values after startup, so forwarding a flag or process environment alone is insufficient. Only this effort key is overridden; the parent environment and saved native settings stay unchanged. Omitting effort keeps the native default. The native UI remains the place to verify the effective level and any account restrictions. Controlled Claude roles instead exclude local settings and supply their frozen effort through argv and the child environment. See [Claude effort configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level) and [CLI settings](https://code.claude.com/docs/en/cli-reference).
 
 Prepare without making a model call:
 
@@ -44,7 +52,7 @@ python book_genesis.py resume ./books/my-book
 python book_genesis.py status ./books/my-book
 ```
 
-Run `new` only on an empty folder; it never writes into a folder that already has files, so an existing manuscript is never overwritten. Preparation claims its metadata folder atomically, so two simultaneous attempts cannot overwrite one another. If preparation fails, cleanup checks the resolved paths and removes only the directories that attempt claimed; unrelated files remain. A cleanup failure is reported and the partial files are kept. `new` and `resume` without `--prepare-only` need an interactive terminal. Without one, they stop before preparing or locking anything and print the command to run.
+Run `new` only on an empty folder; it never writes into a folder that already has files, so an existing manuscript is never overwritten. Preparation claims its metadata folder atomically, so two simultaneous attempts cannot overwrite one another. If preparation fails, cleanup checks the resolved paths and removes only the directories that attempt claimed; unrelated files remain. A cleanup failure is reported and the partial files are kept. Guided `new` and `resume` without `--prepare-only` need an interactive terminal. Without one, they stop before preparing or locking anything and print the command to run. Controlled autonomous projects also run headlessly.
 
 `resume` opens a new native context, which reconciles the book from files; it does not claim to resume a provider's original conversation ID. In this prototype, `resume` accepts projects prepared by this launcher, for the host they were prepared for (`--host` cannot switch an existing book to another agent). An original pending author checkpoint remains pending. An existing project uses its installed skill snapshot; a changed skill file, a changed Claude agent, or a Claude project that was moved or copied to another folder blocks launch instead of silently upgrading the book.
 

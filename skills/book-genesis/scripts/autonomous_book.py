@@ -66,8 +66,8 @@ class BookWorkflow:
         self.root = root.resolve()
         self.skill = Path(__file__).resolve().parents[1]
         self.config = read_json(self.root / ".book-genesis/project.json")
-        if self.config["host"] != "codex" or self.config["collaboration"] != "autonomous":
-            raise WorkflowError("The controlled autonomous runner currently supports native Codex autonomous projects")
+        if self.config["host"] not in {"codex", "claude"} or self.config["collaboration"] != "autonomous":
+            raise WorkflowError("The controlled autonomous runner supports native Codex and Claude autonomous projects")
         if not self.config.get("author_name"):
             raise WorkflowError("An explicit title-page author is required before unattended execution")
         if not 1 <= chapters <= 100 or min_words < chapters * 100 or max_words < min_words or not 0 <= quality_target <= 9.2:

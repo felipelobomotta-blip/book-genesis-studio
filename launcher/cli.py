@@ -376,7 +376,7 @@ def build_parser() -> argparse.ArgumentParser:
             ideas.add_argument("--idea-file", type=Path)
             command.add_argument("--language", default="English")
             command.add_argument("--autonomous", action="store_true", help="Request the existing core's go-to-the-end mode")
-            command.add_argument("--chapters", type=int, default=12, help="Unattended Codex production contract (default 12)")
+            command.add_argument("--chapters", type=int, default=12, help="Unattended native production contract (default 12)")
             command.add_argument("--min-words", type=int, default=40000)
             command.add_argument("--max-words", type=int, default=48000)
             command.add_argument("--quality-target", type=float, default=8.5, help="Private calibrated craft floor; never sent to writers or critics")
@@ -432,7 +432,7 @@ def _run(args: argparse.Namespace) -> int:
         return (report.get("status_exit_code", 0 if report["technical_checks_passed"] else 1)
                 if report["resume_snapshot"]["status"] == "verified" else 1)
     saved = read_project(root) if args.command == "resume" else None
-    controlled = bool(saved and saved.get("autonomous_contract")) or bool(args.command == "new" and args.autonomous and args.host == "codex")
+    controlled = bool(saved and saved.get("autonomous_contract")) or bool(args.command == "new" and args.autonomous)
     if not args.prepare_only and not _has_terminal() and not controlled:
         raise ValueError("The native agent needs an interactive terminal. " + ("Add --prepare-only to prepare the book without a model call, then run resume from a terminal." if args.command == "new" else "Run resume from your terminal, or add --prepare-only to only verify the project."))
     author_name = _author_name(args.author)
@@ -450,7 +450,7 @@ def _run(args: argparse.Namespace) -> int:
             # account-derived identity or a placeholder deferred until export.
             author_name = _author_name(input("Name on the title page [Anonymous]: ").strip() or "Anonymous")
         contract = None
-        if args.autonomous and host == "codex":
+        if args.autonomous:
             if not args.model or not args.effort:
                 raise ValueError("Pass --model and --effort for the controlled unattended run; no model is silently substituted")
             if not 1 <= args.chapters <= 100 or args.min_words < 100 * args.chapters or args.max_words < args.min_words or not 0 <= args.quality_target <= 9.2:

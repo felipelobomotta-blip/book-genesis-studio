@@ -7,12 +7,26 @@ from uuid import uuid4
 from launcher.native import codex_scoped_command, find_native, run_attached
 
 
-def controlled_command(executable, *, model, effort):
+def controlled_command(executable, *, model, effort, host="codex", bridge=None):
     """Capability-check the installed CLI; auth and execpolicy remain native."""
     if not model or not effort:
         raise ValueError("Unattended isolation requires an explicit --model and --effort; no silent native-default substitution")
-    help_result = subprocess.run(list(executable) + ["exec", "--help"], capture_output=True,
+    if host not in {"codex", "claude"}:
+        raise ValueError("Unsupported controlled native host")
+    help_result = subprocess.run(list(executable) + (["exec", "--help"] if host == "codex" else ["--help"]), capture_output=True,
                                  text=True, encoding="utf-8", timeout=15, shell=False)
+    if host == "claude":
+        import json
+        flags = ("--restricted", "--tools", "--strict-mcp-config", "--disable-slash-commands",
+                 "--no-session-persistence", "--setting-sources", "--model", "--effort", "--output-format", "--print")
+        if help_result.returncode or any(flag not in help_result.stdout for flag in flags):
+            raise ValueError("Unattended isolation requires native Claude restricted mode and subscription-preserving scoped flags")
+        if not bridge or not Path(bridge).is_file():
+            raise ValueError("Verified native Claude transport is missing from this book's installed skill")
+        if model.lower() in {"opus", "sonnet", "haiku", "fable", "default"}:
+            raise ValueError("Unattended Claude requires an exact model ID, not a changing native alias")
+        return {"argv": [sys.executable, "-u", str(bridge), "--native-command-json", json.dumps(list(executable)),
+                         "--model", model, "--effort", effort, "-o", "{output}", "-"], "timeout_seconds": 900}
     if help_result.returncode or any(flag not in help_result.stdout for flag in ("--ignore-user-config", "--ephemeral")):
         raise ValueError("Unattended isolation requires a native Codex exec with --ignore-user-config and --ephemeral support; no automatic CLI replacement")
     command = codex_scoped_command(executable, model=model, effort=effort)
@@ -25,13 +39,15 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
     # Import here to keep cli -> autonomous -> cli out of module initialization.
     from launcher.cli import _ownership, _write_json, _now, LOCK
 
-    if config["host"] != "codex":
-        raise ValueError("Controlled unattended execution is currently verified only for the native Codex command")
+    host = config["host"]
+    if host not in {"codex", "claude"}:
+        raise ValueError("Controlled unattended execution needs a supported native host")
     if model != config.get("model") or effort != config.get("effort") or author_name not in (None, config.get("author_name")):
         raise ValueError("An unattended run freezes model, effort and author; start a new project to change them")
     if not config.get("author_name"):
         raise ValueError("Unattended execution needs --author when preparing the new project")
-    command = controlled_command(find_native("codex"), model=model, effort=effort)
+    command = controlled_command(find_native(host), model=model, effort=effort, host=host,
+        bridge=root / ".book-genesis/skills/book-genesis/scripts/native_claude.py")
     command_file = root / ".book-genesis/native-command.json"
     if command_file.exists():
         import json
@@ -50,13 +66,13 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
         folder = root / ".book-genesis/launches"
         folder.mkdir(exist_ok=True)
         path = folder / (uuid4().hex + ".json")
-        record = {"schema_version": 1, "host": "codex", "mode": "controlled_native", "model": model, "effort": effort,
+        record = {"schema_version": 1, "host": host, "mode": "controlled_native", "model": model, "effort": effort,
                   "scoped_command": command, "status": "launching", "started_at": _now(), "book_completion": "not_assessed"}
         _write_json(path, record, exclusive=True)
         def started(pid):
             record.update(native_pid=pid, status="workflow_running")
             _write_json(path, record)
-            _write_json(root / LOCK, {"launcher_pid": __import__("os").getpid(), "native_pid": pid, "host": "codex"})
+            _write_json(root / LOCK, {"launcher_pid": __import__("os").getpid(), "native_pid": pid, "host": host})
         try:
             code = run_attached(argv, cwd=root, on_start=started)
         except BaseException:
