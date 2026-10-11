@@ -340,3 +340,36 @@ installer verification. Rebuilding the data-only archive from the pinned wheel
 produced the same SHA-256. Tests decode all 598 shipped zones, reproduce the
 actual Sao Paulo refusal, handle fractional offsets and local midnight, and
 reject nonexistent or ambiguous future DST times without installed tzdata.
+
+## Interdependent factual corrections cannot be approved in isolation
+
+Frozen Codex trial 17 produced twelve chapters and 46,432 words, then received
+an initial internal calibrated score of 71.73/100. Its review identified a
+chronology conflict across several chapters. The first plan assigned separate
+factual corrections; the checker rejected each because the other current
+chapters retained the incompatible chronology. Some proposals also contained
+unrelated wording changes, which correctly remained blocking findings. The
+original refusals are preserved. Later accepted edits make that baseline score
+stale; no new score or final delivery is inferred from those promotions.
+
+The follow-up groups factual tasks connected by the same historical issue,
+including transitive connections. It stages every member, checks the assembled
+proposed book in one fresh evidence-bound review, and publishes all authorized
+members through a durable transaction. Original chapters and companion
+proposals are labeled separately; proposals cannot establish their own facts.
+One unsupported or incomplete member rejects the group. Unsupported chronology
+choices must still use creative revision, and sequential creative repairs remain
+subject to their existing full-context viability check.
+
+Ten targeted regressions cover coordinated promotion, preserved originals,
+negative and malformed reports, independent factual support, transitive groups,
+interruption between files and after claiming an original inode, concurrent
+author edits, tampered reviews, full fixture export and a completed resume with
+zero new calls. Original group sources remain verified even after export.
+The fixture writes real Markdown and EPUB files but uses a synthetic transport;
+it does not establish native literary improvement. Real component and fresh
+full-book acceptance remain required for this candidate.
+
+The final candidate passed all 417 automated tests in 330.238 seconds and the
+installer suite. Native component verdicts, full-book delivery and the literary
+90/100 target are separate outstanding checks, not conclusions from this count.

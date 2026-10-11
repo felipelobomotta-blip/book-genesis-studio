@@ -589,6 +589,9 @@ class BookWorkflow:
             "Factual typography may remove a redundant Chapter N: prefix while retaining the exact title. "
             "Do not mix stylistic edits into a factual task. New canon choices, viewpoint, actions, event order, motivation "
             "or a missing scene require creative mode. All factual tasks run before any creative task. "
+            "Factual tasks sharing an issue ID are staged and checked as one complete group. Include EVERY affected "
+            "chapter needed for that correction; do not rely on a later creative task to make a factual group coherent. "
+            "Resolving competing on-page chronologies is a creative continuity decision, not a factual typo. "
             "Each task must name the historical issue IDs it addresses. Every required unresolved issue must have a task. "
             "Join dependent fixes coherently and preserve remembered strengths. "
             "Do not change the approved premise, POV, time window, chapter count or production length. "
@@ -618,7 +621,7 @@ class BookWorkflow:
         response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
         return read_json(response)
 
-    def revise_chapter(self, number, task, strategy):
+    def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None):
         n = task["chapter"]
         factual = task["mode"] == "factual"
         key = f"revision-{number}-c{n:02d}" + ("-facts" if factual else "")
@@ -673,6 +676,7 @@ class BookWorkflow:
                 "Use the complete current manuscript to check distant facts and consequences. "
                 "Planning notes do not prove that a planned event actually happened.\n\n" + self.ref("specialists/revision-editor.md")
                 + "\n\n" + json.dumps({"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
+                    "companion_tasks": score_blind(companion_tasks or []),
                     "accepted_chapter": [{"id": p["id"], "text": p["text"]} for p in source_passages(original_text)] if factual else original_text,
                     "other_current_chapters": {p.name: p.read_bytes().decode("utf-8") for p in manuscript if p.name != target.name},
                     "adjacent_context": [p.read_text(encoding="utf-8") for p in context],
@@ -718,6 +722,11 @@ class BookWorkflow:
             freeze(outcome_path, encoded(outcome))
             self.log(f"Revision pass {number}, chapter {n} | unchanged proposal; accepted text retained")
             return outcome
+        if stage_only:
+            if not factual:
+                raise WorkflowError("Only factual corrections support grouped staging")
+            return {"key": key, "task": task, "accepted": accepted, "candidate": candidate,
+                    "target": target, "manuscript": manuscript, "outcome_path": outcome_path}
         if factual:
             decision = self.check_factual_revision(key, task, accepted, candidate, context, decision_path)
         else:
@@ -752,6 +761,101 @@ class BookWorkflow:
                   "incomplete comparison; accepted chapter retained")
         self.log(f"Revision pass {number}, chapter {n} | {decision['decision']} | {detail}")
         return outcome
+
+    def revise_factual_group(self, number, tasks, strategy):
+        from correction_groups import (schema_for, validate_report, packet_for, publish, verify_receipt)
+        key = f"revision-{number}-facts-group-" + "-".join(str(t["chapter"]) for t in tasks)
+        folder = self.root / "work/correction-groups" / key
+        manifest_path = folder / "manifest.json"
+        result_path = self.root / f"evaluations/decisions/{key}.json"
+        receipt_path = self.root / f"evaluations/promotions/{key}.json"
+        call_key = key + "-check"
+        if result_path.exists():
+            result = read_json(result_path)
+            self.journal.verify_files(result["evidence"])
+            return result["outcomes"]
+        # Recovery may already have completed the whole publication before the
+        # controller was able to save its outcomes. Never restage against it.
+        if receipt_path.exists():
+            manifest = verify_receipt(self.journal, manifest_path, call_key, receipt_path)
+            reason = "Fresh correctness review authorized the complete factual group."
+            decision = "promote"
+        else:
+            prepared = [self.revise_chapter(number, task, strategy, stage_only=True,
+                                           companion_tasks=[t for t in tasks if t != task]) for task in tasks]
+            failed = [row for row in prepared if "decision" in row]
+            if failed:
+                decision = "reject"
+                reason = "A member of this interdependent correction group produced no valid change; all accepted chapters retained."
+                evidence = []
+                for row in prepared:
+                    if "decision" in row:
+                        path = self.root / f"evaluations/decisions/revision-{number}-c{row['chapter']:02d}-facts-outcome.json"
+                        evidence.append(self.journal.record_file(path))
+                    else:
+                        evidence += [self.journal.record_file(row["accepted"]), self.journal.record_file(row["candidate"])]
+                outcomes = [{"chapter": t["chapter"], "mode": "factual", "decision": decision,
+                             "reason": reason, "group": key} for t in tasks]
+                freeze(result_path, encoded({"outcomes": outcomes, "evidence": evidence}))
+                self.log(f"Revision pass {number} | rejected incomplete factual group")
+                return outcomes
+            sources = {"original/" + p.name: p for p in prepared[0]["manuscript"]}
+            sources.update({"proposed/" + row["target"].name: row["candidate"] for row in prepared})
+            sources.update({"contract/" + name: self.root / "artifacts" / name for name in
+                            ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")})
+            manifest = {"schema_version": 1, "kind": "factual_correction_group", "tasks": score_blind(tasks),
+                "sources": {name: self.journal.record_file(path) for name, path in sources.items()},
+                "publications": [{"chapter": row["task"]["chapter"], "target": row["target"].relative_to(self.root).as_posix(),
+                    "before": digest(row["accepted"].read_bytes()), "candidate": self.journal.record_file(row["candidate"])} for row in prepared]}
+            freeze(manifest_path, encoded(manifest))
+            # Serialization defines source order; reloading keeps paragraph IDs
+            # byte-identical after a crash or journal reload.
+            manifest = read_json(manifest_path)
+            assembled = {p.name: p for p in prepared[0]["manuscript"]}
+            assembled.update({row["target"].name: row["candidate"] for row in prepared})
+            from export_book import Chapter, count_prose_words
+            total = 0
+            for name, path in assembled.items():
+                text = path.read_bytes().decode("utf-8")
+                total += count_prose_words(Chapter(int(name[8:-3]), path, text.splitlines()[0][2:],
+                                                   "\n".join(text.splitlines()[1:]), digest(path.read_bytes())))
+            if not self.contract["min_words"] <= total <= self.contract["max_words"]:
+                decision, reason = "reject", "Combined factual corrections violate the frozen production length."
+            else:
+                catalog = text_catalog({name: (self.root / row["path"]).read_bytes().decode("utf-8")
+                                        for name, row in manifest["sources"].items()})
+                members = [t["chapter"] for t in tasks]
+                schema = schema_for(catalog, members)
+                try:
+                    response, _ = self.call(call_key, packet_for(manifest, catalog), schema,
+                                           lambda p: validate_report(p, schema, catalog, members))
+                except WorkflowError:
+                    if self.rejected_validation_evidence(call_key) is None:
+                        raise
+                    decision, reason = "reject", "Group checker exhausted bounded output-validation attempts; all accepted chapters retained."
+                else:
+                    report = read_json(response)
+                    decision = "promote" if report["verdict"] == "pass" else "reject"
+                    reason = ("Fresh correctness review authorized the complete factual group." if decision == "promote" else
+                              "Factual group blocked: " + "; ".join(report["findings"]))
+                    if decision == "promote":
+                        publish(self.journal, manifest_path, call_key, receipt_path)
+        evidence = [self.journal.record_file(manifest_path)] + list(manifest["sources"].values())
+        step = self.journal.data["steps"].get(call_key, {})
+        evidence += step.get("evidence", []) + step.get("rejected_evidence", [])
+        if decision == "promote":
+            evidence.append(self.journal.record_file(receipt_path))
+            chapters = self.journal.data.setdefault("revision_chapters", [])
+            for task in tasks:
+                if task["chapter"] not in chapters:
+                    chapters.append(task["chapter"])
+            self.journal.save()
+            self.sync()
+        outcomes = [{"chapter": t["chapter"], "mode": "factual", "decision": decision,
+                     "reason": reason, "group": key, "evidence": evidence} for t in tasks]
+        freeze(result_path, encoded({"outcomes": outcomes, "evidence": evidence}))
+        self.log(f"Revision pass {number} | {decision} factual group | chapters " + ", ".join(str(t["chapter"]) for t in tasks))
+        return outcomes
 
     def check_creative_viability(self, key, task, accepted, candidate, manuscript):
         folder = self.root / "work/viability" / key
@@ -910,7 +1014,13 @@ class BookWorkflow:
             if len(plans) < number:
                 plans.append(plan)
                 self.journal.save()
-            outcomes = [self.revise_chapter(number, task, plan["strategy"]) for task in sorted(plan["tasks"], key=lambda t: (t["mode"] != "factual", t["chapter"]))]
+            from correction_groups import connected_tasks
+            outcomes = []
+            for group in connected_tasks([t for t in plan["tasks"] if t["mode"] == "factual"]):
+                outcomes.extend(self.revise_factual_group(number, group, plan["strategy"]) if len(group) > 1 else
+                                [self.revise_chapter(number, group[0], plan["strategy"])])
+            outcomes.extend(self.revise_chapter(number, t, plan["strategy"]) for t in
+                            sorted((t for t in plan["tasks"] if t["mode"] == "creative"), key=lambda t: t["chapter"]))
             row.update(status="revisions_saved", outcomes=outcomes)
             self.journal.save()
             current = {p.name: digest(p.read_bytes()) for p in (self.root / "manuscript/chapters").glob("*.md")}
@@ -928,8 +1038,13 @@ class BookWorkflow:
         freeze(self.root / "evaluations/proofread.md", ("# Current manuscript technical proofreading\n\n" + json.dumps(measurement["proofread"], ensure_ascii=False, sort_keys=True, indent=2)).encode("utf-8"))
         index = {"schema_version": 1, "scopes": [{k: p[k] for k in ("scope", "chapters", "readers")} for p in measurement["panels"]]}
         freeze(self.root / "evaluations/final-reader-index.json", encoded(index))
+        group_evidence = []
+        for path in sorted((self.root / "evaluations/decisions").glob("revision-*-facts-group-*.json")):
+            records = read_json(path)["evidence"]
+            self.journal.verify_files(records)
+            group_evidence += [path] + [self.root / row["path"] for row in records]
         self.finish(5, [result_path, self.root / "evaluations/revision-loop.md", self.root / "evaluations/revision-plan.md",
-                       self.root / "evaluations/proofread.md", self.root / "evaluations/final-reader-index.json"],
+                       self.root / "evaluations/proofread.md", self.root / "evaluations/final-reader-index.json", *group_evidence],
                     "passed" if measurement["passed"] else "gates_not_met")
 
     def final_score(self):

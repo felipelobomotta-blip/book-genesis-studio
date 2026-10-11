@@ -217,6 +217,10 @@ class Journal:
         pending = self.data.get("pending_mutation")
         if not pending:
             return
+        if pending.get("kind") == "factual_correction_group":
+            from correction_groups import recover
+            recover(self)
+            return
         target = self.inside(self.root / pending["path"])
         actual = digest(target.read_bytes()) if target.exists() else None
         if actual == pending["after"]:
