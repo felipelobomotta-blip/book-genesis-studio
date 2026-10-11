@@ -113,6 +113,24 @@ duplicate paths, changed originals and unknown fields. It never rewrites the raw
 native response or rerates an identical plan. Both failed native responses remain
 preserved, and this run delivered no manuscript or export.
 
+The seventh trial exposed another plan-patch mismatch: both model proposals
+paraphrased a `before` field while proposing repairs. The validator rejected them
+instead of guessing. In the next protocol the model supplies only an allowed
+path and its new text. The journal already binds every response to the exact
+frozen input packet; the controller records original values, base/result hashes
+and the original response hash itself. Duplicate/unknown paths, changed evidence
+and wholly unchanged plans remain blocked. No raw model response is repaired.
+
+Negative-path probes also exposed a valid unassessed rubric dimension aborting
+delivery and unchanged revision proposals causing fresh preference/rubric calls.
+The controller now retains an unassessed score as null, marks the quality gate
+unmet, and can still export the complete draft after bounded revision. It never
+invented a zero or passing grade. Identical chapter proposals are retained without
+another comparison; an unchanged whole manuscript keeps its current measurements
+instead of being rerated. Revision budgets still advance, and completed pass
+records point to the actual current measurement across resume. Synthetic tests
+exercise all three failed quality passes, honest export and no-call resume.
+
 ## Fresh live test
 
 - Official Codex CLI, exact model `gpt-5.6-luna`, effort `high`.

@@ -110,7 +110,10 @@ def plan_text_fields(data, prefix=""):
 
 
 def plan_repair_schema(data):
-    return obj({"edits": {**array(obj({"path": enum(plan_text_fields(data)), "before": TEXT, "after": TEXT})), "minItems": 1}})
+    # The journal binds this response to the exact input plan. The controller
+    # already owns the original value; asking the model to retype it adds no
+    # concurrency protection and makes valid edits fail on typographic drift.
+    return obj({"edits": {**array(obj({"path": enum(plan_text_fields(data)), "after": TEXT})), "minItems": 1}})
 
 
 def apply_plan_edits(data, edits):
@@ -125,10 +128,10 @@ def apply_plan_edits(data, edits):
             raise ValueError(f"Duplicate plan edit path: {path}")
         if path not in fields:
             raise ValueError(f"Plan edit does not name an existing text field: {path}")
-        if edit["before"] != fields[path]:
+        if "before" in edit and edit["before"] != fields[path]:
             raise ValueError(f"Plan edit before value differs from the frozen original at {path}")
         seen.add(path)
-        if edit["after"] == edit["before"]:
+        if edit["after"] == fields[path]:
             continue  # Harmless repeated context is not a substantive repair.
         parts = path.strip("/").split("/")
         target = result

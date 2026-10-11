@@ -202,6 +202,8 @@ class RecoveryTests(unittest.TestCase):
         after = data["chapters"][0]["events"] + " The rescue physically reaches safety."
         edits = [{"path": "/chapters/0/events", "before": data["chapters"][0]["events"], "after": after}]
         repaired = apply_plan_edits(data, edits)
+        native_edits = [{"path": row["path"], "after": row["after"]} for row in edits]
+        self.assertEqual(repaired, apply_plan_edits(data, native_edits))
         self.assertEqual(data["chapters"][1], repaired["chapters"][1])
         self.assertEqual(data["canon"], repaired["canon"])
         self.assertEqual(data["writer_facts"], repaired["writer_facts"])
@@ -211,6 +213,7 @@ class RecoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "No substantive plan edit"):
             apply_plan_edits(data, [unchanged])
         schema = plan_repair_schema(data)
+        self.assertNotIn("before", schema["properties"]["edits"]["items"]["properties"])
         self.assertNotIn("/chapters/0/number", schema["properties"]["edits"]["items"]["properties"]["path"]["enum"])
         with self.assertRaises(ValueError):
             apply_plan_edits(data, edits + edits)
@@ -241,6 +244,43 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(3, sum("architecture-repair" in call for call in calls))
         self.assertEqual(4, sum("plan-check-" in call for call in calls))
         self.assertFalse(list((root / "manuscript/chapters").glob("*.md")))
+
+    def test_three_pass_exhaustion_exports_honestly_without_rerating_unchanged_prose(self):
+        for mode in ("below_weighted_goal", "unassessed_dimension"):
+            with self.subTest(mode=mode):
+                root = self.root / mode
+                freeze(root / ".book-genesis/project.json", encoded({"host": "codex", "collaboration": "autonomous", "author_name": "QA",
+                    "model": "exact-test-model", "effort": "high", "idea": "A letter returns.", "language": "English",
+                    "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5, "weighted_quality_target": 9.0}}))
+                freeze(root / ".book-genesis/skills/.book-genesis-install.json", b'{}')
+                calls = []
+                def generate(call_id, packet, schema, book):
+                    calls.append(call_id)
+                    result = fixture_response(call_id, packet, schema, book)
+                    if mode == "unassessed_dimension" and "dimensions" in schema["properties"]:
+                        result["dimensions"][-1]["score"] = None
+                    return result
+                kwargs = dict(chapters=2, min_words=240, max_words=600, weighted_quality_target=9.0,
+                              transport=receipt_transport(generate))
+                with redirect_stdout(io.StringIO()):
+                    workflow = BookWorkflow(root, COMMAND, **kwargs)
+                    self.assertEqual(0, workflow.run())
+                self.assertEqual(3, len(workflow.journal.data["passes"]))
+                result = read_json(root / "evaluations/final-measurement.json")
+                self.assertFalse(result["passed"])
+                self.assertEqual(1, result["number"])
+                self.assertTrue(list((root / "delivery").glob("*.epub")))
+                self.assertFalse(any("measure-2" in call or "measure-3" in call for call in calls))
+                self.assertFalse(any("revision-2-c01-primary" in call for call in calls))
+                self.assertEqual("reject", read_json(root / "evaluations/decisions/revision-2-c01.json")["decision"])
+                if mode == "unassessed_dimension":
+                    self.assertIsNone(result["rubric"]["weighted"])
+                    self.assertIsNone(result["rubric"]["floor"])
+                    self.assertIn("unassessed", (root / "artifacts/11-genesis-score.md").read_text(encoding="utf-8"))
+                before = len(calls)
+                with redirect_stdout(io.StringIO()):
+                    self.assertEqual(0, BookWorkflow(root, COMMAND, **kwargs).run())
+                self.assertEqual(before, len(calls))
 
 
 if __name__ == "__main__":

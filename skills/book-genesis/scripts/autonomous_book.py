@@ -55,6 +55,10 @@ def production_allowance(chapters, remaining, used, min_words, max_words):
     return low, high, target
 
 
+def score_text(value):
+    return "unassessed" if value is None else f"{value:.2f}"
+
+
 class BookWorkflow:
     def __init__(self, root: Path, command: dict, *, chapters: int, min_words: int, max_words: int,
                  quality_target: float = 8.5, weighted_quality_target: float | None = None, transport=None):
@@ -243,7 +247,8 @@ class BookWorkflow:
                     raise WorkflowError("Independent architecture verification still blocks drafting after three bounded plan repairs")
                 repair_schema = plan_repair_schema(data)
                 repair = packet + "\n\nReturn ONLY named text-field edits in the repair schema, not a replacement whole plan. "
-                repair += "Each before value must match the original field exactly. Change all necessary dependent fields, "
+                repair += "Give each allowed field path and its complete new after value. The program retains the exact original "
+                repair += "from this frozen plan; do not repeat it. Change all necessary dependent fields, "
                 repair += "including promise setup/resolution text and ledger facts. Preserve every unrelated event, detail and physical outcome; "
                 repair += "do not shorten unaffected scenes. The chapter count, numbering and promise chapter assignments are fixed. "
                 repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
@@ -255,13 +260,22 @@ class BookWorkflow:
                         try:
                             proposed = apply_plan_edits(data, read_json(path)["edits"])
                             report["errors"] += validate_shape(proposed, schema) + validate_neutral(proposed)
+                            report["plan_base_sha256"] = digest(encoded(data))
                             report["plan_sha256"] = digest(encoded(proposed))
                         except ValueError as exc:
                             report["errors"].append(str(exc))
                         report["valid"] = not report["errors"]
                     return report
                 response, _ = self.call(f"architecture-repair-{attempt + 1}", repair, repair_schema, validate_repair, feedback=True)
-                data = apply_plan_edits(data, read_json(response)["edits"])
+                proposed = apply_plan_edits(data, read_json(response)["edits"])
+                from workflow_roles import plan_text_fields
+                original_fields = plan_text_fields(data)
+                freeze(self.root / f"work/plan-candidates/changes-{attempt + 1}.json", encoded({
+                    "base_sha256": digest(encoded(data)), "result_sha256": digest(encoded(proposed)),
+                    "response": self.journal.record_file(response),
+                    "edits": [{"path": edit["path"], "before": original_fields[edit["path"]], "after": edit["after"]}
+                              for edit in read_json(response)["edits"]]}))
+                data = proposed
             data["files"] = render_plan(data)
             self.publish_artifacts(data)
             freeze(self.root / "work/approved-plan.json", encoded(data))
@@ -453,17 +467,21 @@ class BookWorkflow:
         for name, weight in weights.items():
             scores = [next(d["score"] for d in row["data"]["dimensions"] if d["name"] == name) for row in rows]
             if any(score is None for score in scores):
-                raise WorkflowError("A required rubric dimension is unassessed")
+                dimensions.append({"name": name, "raw_median": None, "calibrated": None,
+                                   "weight": weight, "disagreement": True})
+                continue
             raw = median(scores)
             dimensions.append({"name": name, "raw_median": raw, "calibrated": round(max(0, raw - .8), 3),
                                "weight": weight, "disagreement": max(scores) - min(scores) >= 1.5})
-        floor = min(d["calibrated"] for d in dimensions)
-        weighted = round(sum(d["calibrated"] * d["weight"] for d in dimensions) / sum(weights.values()), 3)
+        complete = all(d["calibrated"] is not None for d in dimensions)
+        floor = min(d["calibrated"] for d in dimensions) if complete else None
+        weighted = round(sum(d["calibrated"] * d["weight"] for d in dimensions) / sum(weights.values()), 3) if complete else None
         weighted_target = self.contract.get("weighted_quality_target")
         return {"readings": rows, "dimensions": dimensions, "floor": floor,
             "weighted": weighted,
             "confidence": "low" if any(d["disagreement"] for d in dimensions) else "medium",
-            "passed": floor >= self.contract["quality_target"] and (weighted_target is None or weighted > weighted_target), "calibration": -0.8}
+            "passed": complete and floor >= self.contract["quality_target"] and (weighted_target is None or weighted > weighted_target),
+            "unassessed": [d["name"] for d in dimensions if d["calibrated"] is None], "calibration": -0.8}
 
     def measure(self, number):
         key = f"measure-{number}"
@@ -494,7 +512,7 @@ class BookWorkflow:
         result["evidence"].append(self.journal.record_file(self.root / f"work/snapshots/{key}/snapshot.json"))
         result["evidence"] += issues["evidence"] + ([issues["ledger"]] if "ledger" in issues else [])
         freeze(result_path, encoded(result))
-        self.log(f"Review {number} | panel {'passed' if panel_passed else 'needs work'} | audit {audit['data']['verdict']} | calibrated craft floor {rubric['floor']:.2f}/10")
+        self.log(f"Review {number} | panel {'passed' if panel_passed else 'needs work'} | audit {audit['data']['verdict']} | calibrated craft floor {score_text(rubric['floor'])}/10")
         return result
 
     def revision_plan(self, number, measurement):
@@ -521,7 +539,7 @@ class BookWorkflow:
             "A later pass must learn from failed earlier strategies rather than repeat them. "
             "A harmless taste difference is not a mandate to rewrite. Defer low-priority suggestions explicitly.\n\n"
             + self.ref("specialists/revision-editor.md") + "\n\n" + json.dumps({
-                "current_sources": self.neutral_sources(self.snapshot(f"measure-{number - 1}")),
+                "current_sources": self.neutral_sources(self.snapshot(f"measure-{measurement['number']}")),
                 "audit_findings": measurement["audit"]["data"]["findings"],
                 "proofread_findings": measurement["proofread"]["data"]["findings"],
                 "unresolved_findings": open_issues,
@@ -626,6 +644,14 @@ class BookWorkflow:
             return outcome
         corrected = apply_corrections(original_text, read_json(response)["replacements"]) if factual else None
         candidate = self.stage_response(key, response, corrected_prose=corrected)
+        if candidate.read_bytes() == accepted.read_bytes():
+            decision = {"decision": "reject", "reason": "Proposal is identical to the accepted chapter; no new preference panel is needed."}
+            freeze(decision_path, encoded(decision))
+            outcome = {"chapter": n, "mode": task["mode"], **decision,
+                "candidate": self.journal.record_file(candidate), "evidence": self.journal.record_file(decision_path)}
+            freeze(outcome_path, encoded(outcome))
+            self.log(f"Revision pass {number}, chapter {n} | unchanged proposal; accepted text retained")
+            return outcome
         if factual:
             decision = self.check_factual_revision(key, task, accepted, candidate, context, decision_path)
         else:
@@ -695,7 +721,9 @@ class BookWorkflow:
             row = self.journal.reserve_pass(number, panel_failed=not measurement["panel_passed"], rubric_failed=not measurement["rubric"]["passed"])
             self.sync()
             if row["status"] == "completed":
-                measurement = self.measure(number)
+                self.journal.verify_files([row["measurement"]])
+                measurement = read_json(self.root / row["measurement"]["path"])
+                self.journal.verify_files(measurement["evidence"])
                 continue
             plan = self.revision_plan(number, measurement)
             plans = self.journal.data.setdefault("strategies", [])
@@ -705,8 +733,12 @@ class BookWorkflow:
             outcomes = [self.revise_chapter(number, task, plan["strategy"]) for task in sorted(plan["tasks"], key=lambda t: (t["mode"] != "factual", t["chapter"]))]
             row.update(status="revisions_saved", outcomes=outcomes)
             self.journal.save()
-            measurement = self.measure(number)
-            row.update(status="completed", measurement=self.journal.record_file(self.root / f"evaluations/measure-{number}.json"))
+            current = {p.name: digest(p.read_bytes()) for p in (self.root / "manuscript/chapters").glob("*.md")}
+            if current != measurement["sources"]:
+                measurement = self.measure(number)
+            else:
+                self.log(f"Revision pass {number} | manuscript unchanged; retaining current reviews and scores without rerating")
+            row.update(status="completed", measurement=self.journal.record_file(self.root / f"evaluations/measure-{measurement['number']}.json"))
             self.journal.save()
         result_path = self.root / "evaluations/final-measurement.json"
         freeze(result_path, encoded(measurement))
@@ -736,8 +768,8 @@ class BookWorkflow:
             "", "Gates met." if result["passed"] else "Gates not met. Completion and export do not imply literary approval.", "",
             "| Dimension | Raw median | Calibrated |", "|---|---:|---:|"]
         for d in result["rubric"]["dimensions"]:
-            lines.append(f"| {d['name']} | {d['raw_median']:.2f} | {d['calibrated']:.2f} |")
-        lines += ["", f"Calibrated floor: {result['rubric']['floor']:.2f}/10. Weighted score: {result['rubric']['weighted']:.2f}/10. Target: {self.contract['quality_target']:.2f}/10.",
+            lines.append(f"| {d['name']} | {score_text(d['raw_median'])} | {score_text(d['calibrated'])} |")
+        lines += ["", f"Calibrated floor: {score_text(result['rubric']['floor'])}/10. Weighted score: {score_text(result['rubric']['weighted'])}/10. Target: {self.contract['quality_target']:.2f}/10.",
             f"Audit: {result['audit']['data']['verdict']}. Central ending resolved: {result['audit']['data']['ending_resolved']}.",
             f"Panel: {'passed' if result['panel_passed'] else 'not met'}. Proofread findings remaining: {len(result['proofread']['data']['findings'])}.",
             f"Independence B: fresh native {self.config['model']} contexts, effort {self.config['effort']}, one model family. Confidence: {result['rubric']['confidence']}.",

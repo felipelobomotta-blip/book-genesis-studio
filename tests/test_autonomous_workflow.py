@@ -210,7 +210,7 @@ def fixture_response(call_id, packet, schema, root):
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
     if "edits" in props:
         data = json.loads(packet.split("\nProposed plan:\n", 1)[1].split("\nSupported defects:\n", 1)[0])
-        return {"edits": [{"path": "/chapters/0/events", "before": data["chapters"][0]["events"],
+        return {"edits": [{"path": "/chapters/0/events",
                            "after": data["chapters"][0]["events"] + " The courier confesses before the door opens."}]}
     if "prose" in props:
         revision = "revision-" in call_id
