@@ -1,5 +1,8 @@
 # Architecture
 
+Coordinated repair findings carry the source contract described in
+[repair-findings-20261011.md](repair-findings-20261011.md).
+
 The dated metadata input for unattended planning is described in
 [research-snapshot-20261011.md](research-snapshot-20261011.md).
 

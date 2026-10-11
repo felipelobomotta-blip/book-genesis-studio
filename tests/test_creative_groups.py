@@ -27,7 +27,17 @@ def group_report(packet, schema, blocked=False):
             "reason": "Synthetic coordinated repair evidence.", "evidence_ids": [sources[s]["passages"][-1]["id"] for s in
                 (f"original/chapter-{n:02d}.md", f"proposed/chapter-{n:02d}.md", "contract/00-brief.md")]}
             for name in groups.CHECKS]} for n in members],
-        "findings": ["The paired rescue is still inconsistent."] if blocked else [], "limitations": "Synthetic code test only."}
+        "findings": [{
+            "kind": "unresolved_ticket", "chapters": members,
+            "problem": "The paired rescue is still inconsistent.",
+            "causal_test": "Synthetic code fixture keeps the assigned rescue unresolved.",
+            "limitations": "Synthetic negative judgment, not a native literary verdict.",
+            **{field: [{"passage_id": sources[f"{prefix}/chapter-{n:02d}.md"]["passages"][-1]["id"],
+                        "quote": sources[f"{prefix}/chapter-{n:02d}.md"]["passages"][-1]["text"]}
+                       for n in members] for field, prefix in
+               (("original_evidence", "original"), ("proposed_evidence", "proposed"))},
+            "supporting_evidence": [],
+        }] if blocked else [], "limitations": "Synthetic code test only."}
 
 
 def comparison_report(call_id, packet, schema, root, prefer=True):

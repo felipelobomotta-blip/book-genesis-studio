@@ -10,6 +10,7 @@ from workflow_roles import TEXT, INTEGER, array, enum, obj, text_catalog, valida
 from workflow_state import WorkflowError, digest, encoded, freeze, read_json, verified_review_packet
 from revision_viability import CHECKS
 from decide_comparison import decide
+from repair_findings import finding_schema, validate_findings, INSTRUCTIONS as FINDING_INSTRUCTIONS
 
 
 def schema_for(catalog, members):
@@ -22,7 +23,9 @@ def schema_for(catalog, members):
                 "evidence_ids": {**array(enum(ids)), "minItems": 2}, "reason": TEXT})),
                 "minItems": len(CHECKS), "maxItems": len(CHECKS)}})),
             "minItems": len(members), "maxItems": len(members)},
-        "findings": array(TEXT), "limitations": TEXT})
+        "findings": finding_schema(catalog,
+            {n: f"original/chapter-{n:02d}.md" for n in members},
+            {n: f"proposed/chapter-{n:02d}.md" for n in members}), "limitations": TEXT})
 
 
 def validate_report(path, schema, catalog, members):
@@ -51,6 +54,9 @@ def validate_report(path, schema, catalog, members):
                         f"Chapter {row['chapter']}, check {check['name']!r}: cite supporting evidence from another chapter "
                         "or the author contract, in addition to this chapter's original and proposed prose.")
         passed = all(c["result"] == "pass" for r in data["chapters"] for c in r["checks"]) and not data["findings"]
+        validation["errors"] += validate_findings(data["findings"], catalog,
+            {n: f"original/chapter-{n:02d}.md" for n in members},
+            {n: f"proposed/chapter-{n:02d}.md" for n in members})
         if (data["verdict"] == "pass") != passed or (data["verdict"] == "block" and not data["findings"]):
             validation["errors"].append("Creative group verdict conflicts with its checks or findings")
     validation["valid"] = not validation["errors"]
@@ -92,7 +98,7 @@ def catalog_for(journal, manifest):
 
 
 def packet_for(manifest, catalog):
-    return (INSTRUCTIONS + "\nTasks and shared strategy:\n" + json.dumps(
+    return (INSTRUCTIONS + "\n" + FINDING_INSTRUCTIONS + "\nTasks and shared strategy:\n" + json.dumps(
         {"tasks": manifest["tasks"], "strategy": manifest["strategy"]}, ensure_ascii=False, sort_keys=True)
         + "\nSources:\n" + json.dumps(catalog, ensure_ascii=False, sort_keys=True)).encode("utf-8")
 
@@ -254,7 +260,7 @@ def execute(workflow, number, tasks, strategy):
             else:
                 report = read_json(response)
                 if report["verdict"] == "block":
-                    reason = "Creative group blocked: " + "; ".join(report["findings"])
+                    reason = "Creative group blocked: " + "; ".join(finding["problem"] for finding in report["findings"])
                 else:
                     preference = workflow.compare_revision(manifest["comparison_key"], min(members),
                         root / volumes["accepted"]["path"], root / volumes["candidate"]["path"], [], preference_path)
