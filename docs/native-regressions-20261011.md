@@ -59,6 +59,23 @@ misleading improvement without lowering any quality threshold.
 
 ## Validation boundary
 
+The newer Opus run exposed another lossy handoff at its five-chapter continuity
+check: later chapters changed an early mentor's name and the month/method of a
+payment. The earlier source prose contained those details, but the writer's
+own continuity summary omitted them. The chapter-four packet did not contain
+either mentor name. Supplying only the preceding chapter and accumulated
+summaries therefore still discarded established facts from older scenes.
+
+Future chapter packets now carry every earlier published chapter verbatim, in
+order, as well as the immediately preceding chapter and the local plan. The
+writer is told to treat that prose as the source of established facts and keep
+character knowledge separate from reader knowledge. Summaries remain labelled
+provisional. This does not expose future planned chapters, critic reports or
+score targets. A four-chapter controller regression checks an early fact omitted
+from every summary and from the immediately previous chapter. Larger input is
+the explicit tradeoff: prompt size grows with the written manuscript. A native
+run of this new handoff is still required; the running Opus book remains frozen.
+
 One native run reached a complete manuscript but stopped when the revision
 planner exhausted its bounded attempts: a timeout followed by a response that
 omitted a mandatory historical finding. The timeout remains a transport failure,

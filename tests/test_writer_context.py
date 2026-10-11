@@ -3,6 +3,7 @@ from contextlib import redirect_stdout
 import io
 import json
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
@@ -74,6 +75,48 @@ class WriterContextTests(unittest.TestCase):
             self.assertNotIn("Will Hart", context["characters"])
             self.assertNotIn("FUTURE_ONLY_RESOLUTION", packets["wf-draft-02-1"])
             self.assertNotIn("quality_target", context)
+
+    def test_later_chapter_receives_original_history_when_every_summary_omits_a_fact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            freeze(root / ".book-genesis/project.json", encoded({
+                "host": "codex", "collaboration": "autonomous", "author_name": "QA",
+                "model": "exact-test-model", "effort": "high", "idea": "A letter returns.", "language": "English",
+                "autonomous_contract": {"chapters": 4, "min_words": 1600, "max_words": 3600, "quality_target": 8.5}}))
+            freeze(root / ".book-genesis/skills/.book-genesis-install.json", b'{}')
+            packets = {}
+            marker = "Old Dombrowski received the wire transfer in September."
+            def generate(call_id, packet, schema, book):
+                packets[call_id] = packet
+                data = fixture_response(call_id, packet, schema, book)
+                if "canon" in data:
+                    template = data["chapters"][0]
+                    data["chapters"] = [{**template, "number": n, "title": f"Chapter {n}"} for n in range(1, 5)]
+                    data["chapters"][3]["events"] += " ONLY_FOURTH_CHAPTER_PLAN."
+                if "prose" in data:
+                    number = int(re.search(r"draft-(\d+)", call_id)[1])
+                    fact = marker if number == 1 else "Ada remembered the letter."
+                    data["prose"] = f"# Chapter {number}\n\n{fact}\n\n" + "Ada carried the letter down the lane. " * 60
+                    data["continuity_delta"] = "Ada carried the letter."
+                return data
+            workflow = BookWorkflow(root, COMMAND, chapters=4, min_words=1600, max_words=3600,
+                                    transport=receipt_transport(generate))
+            with redirect_stdout(io.StringIO()):
+                workflow.planning()
+                workflow.draft()
+            context = json.loads(packets["wf-draft-04-1"].split("\n\n", 1)[1])
+            self.assertNotIn(marker, context["previous_chapter"])
+            self.assertNotIn(marker, json.dumps(context["demonstrated_facts"]))
+            self.assertEqual(["chapter-01.md", "chapter-02.md"], list(context["earlier_chapters"]))
+            for name, prose in context["earlier_chapters"].items():
+                self.assertEqual((root / "manuscript/chapters" / name).read_bytes(), prose.encode("utf-8"))
+            self.assertIn(marker, context["earlier_chapters"]["chapter-01.md"])
+            third = json.loads(packets["wf-draft-03-1"].split("\n\n", 1)[1])
+            self.assertEqual(["chapter-01.md"], list(third["earlier_chapters"]))
+            self.assertNotIn("ONLY_FOURTH_CHAPTER_PLAN", packets["wf-draft-03-1"])
+            for number in range(1, 5):
+                self.assertNotIn("quality_target", packets[f"wf-draft-{number:02d}-1"])
+                self.assertNotIn("FUTURE_ONLY_RESOLUTION", packets[f"wf-draft-{number:02d}-1"])
 
 
 if __name__ == "__main__":

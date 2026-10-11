@@ -331,15 +331,22 @@ class BookWorkflow:
                     self.contract["min_words"], self.contract["max_words"])
                 previous = ""
                 if number > 1:
-                    previous = (self.root / f"manuscript/chapters/chapter-{number-1:02d}.md").read_text(encoding="utf-8")
+                    previous = (self.root / f"manuscript/chapters/chapter-{number-1:02d}.md").read_bytes().decode("utf-8")
+                earlier = {f"chapter-{prior:02d}.md":
+                           (self.root / f"manuscript/chapters/chapter-{prior:02d}.md").read_bytes().decode("utf-8")
+                           for prior in range(1, number - 1)}
                 characters = character_context((self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
                                                entry["characters"] + "\n" + entry["point_of_view"])
                 packet = ("Write one complete, engrossing chapter. Use only this packet; no tools, files or other agents. "
                     "Return JSON with prose (one leading Markdown heading, then the entire chapter, no commentary) "
                     "and continuity_delta (only facts actually demonstrated here: who learned what, when, place and object custody). "
                     "Dramatize consequential choices and pressure rather than explaining the theme. Trust voice and scene. "
-                    "Honor the approved character cards and stable identities. The previous chapter records actual actions; "
-                    "writer-reported summaries are provisional and must not override its object custody or locations. "
+                    "Honor the approved character cards and stable identities. Read the complete earlier chapters in order "
+                    "and then the previous chapter. These are the published story so far, including minor details a "
+                    "summary may omit: names, memories, dates, transactions, object custody and who learned what. "
+                    "Writer-reported summaries are provisional and must not override those source scenes. "
+                    "Keep established details consistent when they recur. A fact known to the reader is not necessarily "
+                    "known to the current viewpoint character; honor the on-page knowledge boundaries. "
                     "Continue from those actions without replaying an exchange already completed. "
                     "A character arc is direction, not permission to perform a later chapter's resolution now. "
                     "No outline, summary, placeholder or word-count claim in the prose. "
@@ -349,6 +356,7 @@ class BookWorkflow:
                         "stable_story_facts": self.plan["writer_facts"],
                         "characters": characters,
                         "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
+                        "earlier_chapters": earlier,
                         "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
                             "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],

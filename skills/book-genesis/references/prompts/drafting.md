@@ -12,10 +12,16 @@ Assemble `work/briefs/chapter-NN.md` from the approved files:
 - this chapter's outline entry, narrative purpose and planned word range;
 - the relevant character and voice cards;
 - only the continuity facts this chapter uses: current knowledge, location, object custody and any causal rule it depends on;
-- the previous chapter in full, so new identities, custody transfers and scene
-  transitions outside its closing paragraphs are not lost. Treat writer-reported
-  summaries as provisional; check them against the actual preceding prose and
-  the approved character identities.
+- the published story so far: every earlier chapter in order, plus the immediately
+  previous chapter in full. A detail omitted from an earlier summary is still
+  established on the page. Preserve names, dates, memories, transactions and
+  custody from that source prose. Treat writer-reported summaries as provisional,
+  and distinguish reader knowledge from each character's demonstrated knowledge.
+
+The controlled runner supplies this history without lossy compression. This
+increases native input with the length of the manuscript; it never silently drops
+old source scenes to fit a context limit. The local chapter plan remains separate,
+and no future planned chapter or critic report is added to the writer's history.
 
 The orchestrator checks that these facts fit the approved brief before dispatch. Select the actual chapter-relevant facts; do not paste every character card, the complete outline or future continuity resolutions into each packet. Include the manuscript length range as production scope. Calculate a concrete remaining production allowance from the deterministic cumulative count, reserving the planned work of later chapters. The last chapter's upper allowance must fit the approved ceiling minus the words already accepted. Do not send the whole pipeline, audit history, reader verdicts, scores, thresholds or rubric. An evolving chapter may depart from the outline when it honors the author's constraints; record the resulting canon after the block.
 
