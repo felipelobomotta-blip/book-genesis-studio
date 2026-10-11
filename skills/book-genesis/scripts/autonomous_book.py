@@ -20,6 +20,7 @@ from check_progress import _parse_yaml_subset, parse_project_state, reconcile_bo
 from check_correction import (prepare as prepare_correction, decision as correction_decision,
                               validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
+from editorial_feedback import score_blind
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
@@ -593,12 +594,12 @@ class BookWorkflow:
             "A harmless taste difference is not a mandate to rewrite. Defer low-priority suggestions explicitly.\n\n"
             + self.ref("specialists/revision-editor.md") + "\n\n" + json.dumps({
                 "current_sources": self.neutral_sources(self.snapshot(f"measure-{measurement['number']}")),
-                "audit_findings": measurement["audit"]["data"]["findings"],
-                "proofread_findings": measurement["proofread"]["data"]["findings"],
-                "unresolved_findings": open_issues,
-                "reader_experience": reports, "craft_observations": reasons,
-                "earlier_revision_outcomes": [row.get("outcomes", []) for row in self.journal.data["passes"][:number - 1]],
-                "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]}, ensure_ascii=False, sort_keys=True))
+                **score_blind({"audit_findings": measurement["audit"]["data"]["findings"],
+                    "proofread_findings": measurement["proofread"]["data"]["findings"],
+                    "unresolved_findings": open_issues,
+                    "reader_experience": reports, "craft_observations": reasons,
+                    "earlier_revision_outcomes": [row.get("outcomes", []) for row in self.journal.data["passes"][:number - 1]],
+                    "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]})}, ensure_ascii=False, sort_keys=True))
         def validate(path):
             report = validate_json(path, schema)
             if report["valid"]:
@@ -628,6 +629,10 @@ class BookWorkflow:
         # This copy is immutable, including across a crash after promotion.
         if not accepted.exists():
             freeze(accepted, target.read_bytes())
+        # Revision tickets can rely on facts many chapters away. Freeze the
+        # entire accepted book for both the editor and the factual verifier;
+        # neither a summary nor the outline proves an event happened on-page.
+        manuscript = self.snapshot(key + "-source-book")
         current_words = word_count_receipt(discover_chapters(self.root / "manuscript/chapters"))["total"]
         from export_book import Chapter, count_prose_words
         original_text = accepted.read_bytes().decode("utf-8")
@@ -662,9 +667,12 @@ class BookWorkflow:
             packet = ("Address ONLY the named tickets and their required consequences. Use only this packet; no tools. "
                 + output_instruction +
                 "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
-                "The revision must remain a real scene, not explanatory compliance.\n\n" + self.ref("specialists/revision-editor.md")
-                + "\n\n" + json.dumps({"task": task, "shared_revision_strategy": strategy,
+                "The revision must remain a real scene, not explanatory compliance. "
+                "Use the complete current manuscript to check distant facts and consequences. "
+                "Planning notes do not prove that a planned event actually happened.\n\n" + self.ref("specialists/revision-editor.md")
+                + "\n\n" + json.dumps({"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
                     "accepted_chapter": [{"id": p["id"], "text": p["text"]} for p in source_passages(original_text)] if factual else original_text,
+                    "other_current_chapters": {p.name: p.read_bytes().decode("utf-8") for p in manuscript if p.name != target.name},
                     "adjacent_context": [p.read_text(encoding="utf-8") for p in context],
                     "brief": (self.root / "artifacts/00-brief.md").read_text(encoding="utf-8"),
                     "characters": (self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
@@ -750,9 +758,12 @@ class BookWorkflow:
         bundle = self.root / f"work/corrections/{key}"
         manifest = bundle / "manifest.private.json"
         if not manifest.exists():
+            manuscript = self.snapshot(key + "-source-book")
+            target_name = f"chapter-{task['chapter']:02d}.md"
             prepare_correction(accepted, candidate,
-                [self.root / f"artifacts/{name}" for name in ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")],
-                context, task["ticket"], bundle, publication_target=self.root / f"manuscript/chapters/chapter-{task['chapter']:02d}.md")
+                [p for p in manuscript if p.name != target_name]
+                + [self.root / f"artifacts/{name}" for name in ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")],
+                context, score_blind(task["ticket"]), bundle, publication_target=self.root / f"manuscript/chapters/{target_name}")
         schema = read_json(bundle / "review.schema.json")
         try:
             response, _ = self.call(key + "-check", (bundle / "review.packet.md").read_bytes(), schema,

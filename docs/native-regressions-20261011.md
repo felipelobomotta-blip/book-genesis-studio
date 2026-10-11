@@ -179,3 +179,49 @@ synthetic and are not literary or human-usability evidence. The original native
 trial continues to test the frozen build; a subsequent fresh trial must test
 these new changes. No market, bestseller, other-host or 90/100 claim follows
 from passing this regression suite.
+
+## Distant evidence in revisions
+
+The frozen `85579f2` Opus run reached a complete 47,930-word draft, then rejected
+a chapter 3 factual repair because the verifier could not see chapters 1 and 12.
+The ticket cited those chapters as the source for a repeated object's material
+and price. The actual verifier response explicitly reported that neither
+chapter's text was supplied, and that the summary documents omitted those facts.
+This was an orchestration failure: rejecting an unsupported correction was
+correct, but the controller had withheld the existing source evidence.
+
+Each revision now freezes the complete current manuscript. The editor receives
+all other chapters verbatim, and the factual checker receives the same frozen
+chapters as citable canon sources. The blind preference readers still receive
+their bounded anonymous comparison packet. Planning documents are not treated
+as proof that an event happened. Conflicting sources can still produce a block;
+supplying more context never overrides the verifier's judgment.
+
+The regression exercises the controller with a correction in chapter 3 whose
+only evidence occurs in chapters 1 and 5. It checks the editor packet, full
+checker sources, original bytes, source-bound promotion and no repeated call
+when the completed revision is resumed. No active native trial is patched.
+
+## Numeric feedback separation
+
+The same real run exposed a numeric Prose cap inside a critic's explanation.
+Removing the structured `score` field alone did not prevent the revision planner
+from seeing that number. The planner explicitly recorded the leak.
+
+Editorial handoffs now make a separate view of feedback that omits sentences
+containing explicit numeric evaluation language. Nearby defect observations,
+passage IDs, dates, prices and source quotations are retained. Original critic
+responses, scores and receipts are never modified. The boundary also applies to
+the strategy and tickets sent to a prose editor. It is a conservative text
+filter, not a guarantee against every possible paraphrase of a rating.
+
+Tests reproduce the real cap sentence, decimal and Portuguese notation, nested
+evidence, legitimate story numbers, and the complete controller path. The raw
+score stays in its original report while the authoring packets exclude it.
+
+The complete suite passed 372 tests in 255.078 seconds, with installer suite
+verification. A read-only replay of the real twenty-dimension critic feedback
+removed the numeric cap from both Prose explanations while retaining their
+concrete prose observations. The original measurement hash and scores remained
+unchanged. This is boundary evidence; the new build still needs a fresh native
+full-book run.
