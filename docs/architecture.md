@@ -1,5 +1,8 @@
 # Architecture
 
+The dated metadata input for unattended planning is described in
+[research-snapshot-20261011.md](research-snapshot-20261011.md).
+
 How the 5.1 recovery build is put together. The creative policy returns to 5.0; portable installation and reliability retain the later design in [ADR 0012](adr/0012-book-genesis-6-one-skill-blind-critics.md). See [the recovery record](v5-recovery.md) for evidence and limitations.
 
 ## One product, three layers

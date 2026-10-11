@@ -407,6 +407,11 @@ class FullWorkflowTests(unittest.TestCase):
             self.assertEqual(1, state["pipeline"]["rubric_passes"])
             self.assertEqual(8, workflow.journal.data["phase"])
             self.assertEqual("completed", workflow.journal.data["status"])
+            reference_path = root / "work/research/reference-metadata.json"
+            reference_before = reference_path.read_bytes()
+            intake_packet = (root / "work/workflow/intake/packet.md").read_text(encoding="utf-8")
+            self.assertIn('"reference_metadata"', intake_packet)
+            self.assertIn(read_json(reference_path)["reference_sha256"], intake_packet)
             result = verify_book(root, "evaluations/final-reader-index.json")
             self.assertEqual("delivered", result["delivery"]["status"])
             self.assertEqual("current", result["reviews"]["status"])
@@ -435,6 +440,7 @@ class FullWorkflowTests(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(0, BookWorkflow(root, COMMAND, **kwargs).run())
             self.assertEqual(calls, len(list((root / "work/host-calls").iterdir())))
+            self.assertEqual(reference_before, reference_path.read_bytes())
             epub = next((root / "delivery").glob("*.epub"))
             epub.write_bytes(b"damaged export")
             with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "delivery is missing or stale"):

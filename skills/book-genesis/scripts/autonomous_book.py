@@ -24,6 +24,7 @@ from craft_context import draft_knowledge, revision_knowledge
 from narrative_evidence import INSTRUCTIONS as CAUSAL_EVIDENCE_INSTRUCTIONS
 from editorial_feedback import score_blind
 from reader_experience import draft_reader_experience
+from research_context import frozen_reference_metadata
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
 from prepare_readers import prepare_readers
@@ -167,17 +168,23 @@ class BookWorkflow:
         refs = "\n\n".join((self.skill / p).read_text(encoding="utf-8") for p in row["references"])
         return ("You are a scoped book planning specialist, not a host orchestrator. Use only this packet. "
             "Do not run tools, write files, request user input or start other agents. Return the requested JSON artifacts. "
-            "Do not claim research was verified on the web. Mark unverified market/comparison hypotheses honestly. "
+            "Do not claim you browsed or performed live market research. Supplied dated publisher metadata can "
+            "support only its cited edition facts; mark comparison relevance and unverified market hypotheses honestly. "
             "Do not invent process records or review results. The program handles them.\n\n"
             + instructions + "\n\n" + refs + "\n\nAuthor contract and allowed material:\n" + json.dumps(inputs, ensure_ascii=False))
 
     def planning(self):
+        if self.journal.data["phase"] > 0:
+            self.journal.verify_files(self.journal.data["phase_evidence"]["0"]["files"])
         if self.journal.data["phase"] == 0:
+            research_path = self.root / "work/research/reference-metadata.json"
+            research = frozen_reference_metadata(self.skill, self.config["language"], research_path)
             schema = artifact_schema([p for p in self.artifact_paths(0) if p != "artifacts/00-brief.md"], metadata=True)
             schema["properties"]["contract"] = neutral_contract_schema()
             schema["required"].append("contract")
             packet = self.phase_packet(0, {"idea": self.config["idea"], "language": self.config["language"],
                 "chapters": self.contract["chapters"], "min_words": self.contract["min_words"], "max_words": self.contract["max_words"],
+                "reference_metadata": research,
                 "author": self.config["author_name"], "collaboration": "autonomous; make reasonable creative assumptions and record them"})
             packet += "\nReturn the neutral story contract separately; the program renders the brief from it and the author's exact idea/length. "
             packet += "Keep the market map under 700 words and story engine under 800. No process verdicts, gate outcomes or quality scores in story fields."
@@ -199,7 +206,7 @@ class BookWorkflow:
             self.publish_artifacts(data)
             self.state["project"].update(data["book"])
             freeze(self.root / "work/book-metadata.json", encoded(data["book"]))
-            self.finish(0, [self.root / name for name in self.artifact_paths(0)] + [self.root / "work/book-metadata.json"])
+            self.finish(0, [self.root / name for name in self.artifact_paths(0)] + [self.root / "work/book-metadata.json", research_path])
         if self.journal.data["phase"] == 1:
             schema = artifact_schema(self.artifact_paths(1))
             response, _ = self.call("foundation", self.phase_packet(1, self.files(self.artifact_paths(0)))
