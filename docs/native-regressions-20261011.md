@@ -323,3 +323,20 @@ installer suite. The combined case of a quota wait followed by two malformed
 optional revisions retains the original chapter, records both rejections and
 exports the reviewed unapproved draft; its completed resume makes no model call.
 This synthetic recovery result does not establish native complete-book delivery.
+
+The subsequent native canary failed before any model usage: the Windows CLI
+kept reporting `America/Sao_Paulo` despite the child-only UTC environment. Its
+two original refusals remain failed; no trial-18 book was prepared or launched.
+The follow-up handles the named zone using frozen IANA TZif data instead of an
+environment assumption or a hardcoded UTC offset. The data-only archive comes
+from checksum-pinned `tzdata 2026.5` and retains the upstream licenses. The
+standard-library reader handles midnight and fractional offsets, and refuses
+ambiguous/nonexistent DST times. It needs no global package installation and
+does not change the user's clock, native settings or timezone. New native quota
+recovery and complete-book validation are still required for this follow-up.
+
+The named-timezone follow-up passed 407 automated tests in 338.689 seconds and
+installer verification. Rebuilding the data-only archive from the pinned wheel
+produced the same SHA-256. Tests decode all 598 shipped zones, reproduce the
+actual Sao Paulo refusal, handle fractional offsets and local midnight, and
+reject nonexistent or ambiguous future DST times without installed tzdata.

@@ -90,7 +90,7 @@ raise SystemExit(settings.get("exit", 0))
         self.assertNotIn("description", native_schema)
         self.assertEqual(["text"], native_schema["required"])
         self.assertEqual("medium", received["effort_env"])
-        self.assertEqual("UTC", received["tz"])
+        self.assertEqual(os.environ.get("TZ"), received["tz"])
         self.assertIn(b"model: claude-opus-exact-test\nreasoning effort: medium\n", result.stderr)
 
     def test_api_auth_is_rejected_before_model_dispatch(self):

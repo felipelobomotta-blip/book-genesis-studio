@@ -85,8 +85,9 @@ chapters or passing votes.
 
 A proven native HTTP 429 session refusal with empty model usage and zero input,
 output and cache tokens can defer a request until the provider's explicit reset
-time. The child alone receives `TZ=UTC` so the reset has an unambiguous timezone;
-global settings and the system timezone remain untouched. Unknown formats,
+time. Python's standard-library `zoneinfo` converts the reported IANA timezone
+using a pinned data-only archive shipped with the skill. Windows needs no extra
+package installation; global settings and the system timezone remain untouched. Unknown formats,
 ambiguous zones, authentication failures and other errors still stop with their
 actual reason. There is no account, model or API fallback.
 
@@ -104,6 +105,18 @@ requests when the account reached its session limit. Those failed runs remain
 failed with their original budgets. Synthetic tests use fake time and cover
 interruption, receipt recovery, producer feedback, limits, tampering, complete
 export and no-call resume. Native wait/resume acceptance is recorded separately.
+
+The first real wait canary showed that the Windows native CLI ignores a
+child-only `TZ=UTC` override and continues reporting `America/Sao_Paulo`. The
+UTC-only candidate correctly refused to guess but failed recovery. The updated
+parser preserves the reported zone, uses its actual transition rules, and rejects
+nonexistent or ambiguous future daylight-saving times. Fractional UTC offsets
+and a reset after local midnight are covered. The archive contains 598 TZif
+records from the Python-maintained [tzdata 2026.5 release](https://pypi.org/project/tzdata/2026.5/),
+with its original licenses and pinned wheel checksum; no package code executes.
+The reproducible build is `python runner/vendor_timezones.py /path/to/the/pinned.whl`.
+The [Python zoneinfo documentation](https://docs.python.org/3/library/zoneinfo.html)
+describes the binary-data reader and timezone behavior used here.
 
 ## Validation boundary
 

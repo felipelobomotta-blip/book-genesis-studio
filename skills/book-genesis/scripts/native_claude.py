@@ -87,9 +87,7 @@ def run(prefix, *, model, effort, schema_path, output, packet):
         raise ValueError("Native executable must be an argv array")
     if output.exists():
         raise ValueError("Pending response already exists; it must not be overwritten")
-    # Only the child uses UTC so a provider reset time has no Windows timezone
-    # database dependency. The user's native settings and system clock stay intact.
-    env = {**os.environ, "CLAUDE_CODE_EFFORT_LEVEL": effort, "TZ": "UTC"}
+    env = {**os.environ, "CLAUDE_CODE_EFFORT_LEVEL": effort}
     if (any(env.get(key) for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"))
             or any(env.get(key, "").lower() in {"1", "true", "yes"} for key in (
                 "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"))):

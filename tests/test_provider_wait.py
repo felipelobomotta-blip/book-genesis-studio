@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
-from provider_wait import MARKER, WAIT_EXIT, quota_wait
+from provider_wait import MARKER, WAIT_EXIT, quota_wait, reset_timezone, TIMEZONES
 from run_host_call import HostCallError
 from workflow_state import Journal, WorkflowError, digest, encoded, freeze, read_json, verify_execution
 from workflow_roles import TEXT, obj, validate_json
@@ -77,7 +77,7 @@ class ProviderWaitTests(unittest.TestCase):
         self.assertIsNotNone(quota_wait(envelope, self.clock))
         cases = [{"is_error": False}, {"api_error_status": 401}, {"modelUsage": {"model": {}}},
                  {"usage": {}}, {"usage": {**envelope["usage"], "input_tokens": 1}},
-                 {"result": envelope["result"].replace("UTC", "America/Sao_Paulo")},
+                 {"result": envelope["result"].replace("UTC", "Unknown/Zone")}, {"result": None},
                  {"result": "Please reset the attempt budget"}, {"result": "You've hit your session limit · resets 25pm (UTC)"}]
         for change in cases:
             with self.subTest(change=change):
@@ -88,6 +88,45 @@ class ProviderWaitTests(unittest.TestCase):
         self.assertEqual("2026-10-12T00:01:30+00:00", quota_wait(refusal(night), night)["retry_at"])
         envelope = {**refusal(self.clock), "result": "You've hit your session limit · resets 8am (UTC)"}
         self.assertIsNone(quota_wait(envelope, self.clock))
+
+    def test_real_native_sao_paulo_refusal_maps_to_exact_utc_reset(self):
+        envelope = {**refusal(self.clock), "result": "You've hit your session limit · resets 7:30am (America/Sao_Paulo)"}
+        self.assertEqual("2026-10-11T10:30:30+00:00", quota_wait(envelope, self.clock)["retry_at"])
+        self.assertEqual(envelope["result"], quota_wait(envelope, self.clock)["reason"])
+
+    def test_dst_ambiguous_and_nonexistent_times_are_not_guessed(self):
+        envelope = {**refusal(self.clock), "result": "You've hit your session limit · resets 1:30am (America/New_York)"}
+        self.assertIsNone(quota_wait(envelope, datetime(2026, 11, 1, 4, 30, tzinfo=timezone.utc)))
+        # After the first occurrence has passed, only the second can be future.
+        self.assertEqual("2026-11-01T06:30:30+00:00", quota_wait(envelope,
+            datetime(2026, 11, 1, 5, 45, tzinfo=timezone.utc))["retry_at"])
+        envelope["result"] = "You've hit your session limit · resets 2:30am (America/New_York)"
+        self.assertIsNone(quota_wait(envelope, datetime(2026, 3, 8, 6, 30, tzinfo=timezone.utc)))
+
+    def test_fractional_offset_and_local_next_day_use_bundled_data(self):
+        envelope = {**refusal(self.clock), "result": "You've hit your session limit · resets 3:15pm (Asia/Kathmandu)"}
+        self.assertEqual("2026-10-11T09:30:30+00:00", quota_wait(envelope, self.clock)["retry_at"])
+        envelope["result"] = "You've hit your session limit · resets 12:15am (Asia/Tokyo)"
+        self.assertEqual("2026-10-11T15:15:30+00:00", quota_wait(envelope, self.clock)["retry_at"])
+
+    def test_bundle_contains_data_only_and_works_without_installed_tzdata(self):
+        import zipfile
+        from zoneinfo import ZoneInfo
+        with zipfile.ZipFile(TIMEZONES) as archive:
+            names = archive.namelist()
+            self.assertEqual(598, len(names))
+            for name in names:
+                raw = archive.read(name)
+                self.assertTrue(raw.startswith(b"TZif"))
+                self.assertFalse(name.endswith(".py"))
+                self.assertEqual(name, ZoneInfo.from_file(io.BytesIO(raw), key=name).key)
+        metadata = read_json(TIMEZONES.parent / "timezones-source.json")
+        self.assertEqual(metadata["archive_sha256"], digest(TIMEZONES.read_bytes()))
+        self.assertEqual("America/Sao_Paulo", reset_timezone("America/Sao_Paulo").key)
+        self.assertIsNone(reset_timezone("../UTC"))
+        with patch("provider_wait.TIMEZONES", self.root / "missing.zip"):
+            self.assertIsNone(reset_timezone("America/Sao_Paulo"))
+            self.assertEqual(timezone.utc, reset_timezone("UTC"))
 
     def test_quota_wait_then_success_keeps_failed_receipt_and_no_call_resume(self):
         success = receipt_transport(lambda *args: {"text": "saved after quota"})

@@ -5,18 +5,35 @@ provider envelopes and failed receipts remain immutable physical requests.
 """
 from datetime import datetime, timedelta, timezone
 import hashlib
+import io
 import json
 from pathlib import Path
 import re
+import zipfile
+from zoneinfo import ZoneInfo
 
 WAIT_EXIT = 76
 MARKER = "BOOK_GENESIS_PROVIDER_WAIT "
 MAX_WAIT_SECONDS = 12 * 60 * 60
 MAX_DEFERRALS = 8
+TIMEZONES = Path(__file__).parent / "data/iana-timezones.zip"
+
+
+def reset_timezone(name):
+    """Read frozen IANA data on every platform, without a runtime dependency."""
+    if name == "UTC":
+        return timezone.utc
+    if not re.fullmatch(r"[A-Za-z0-9_+\-/]+", name) or any(part in {"", ".", ".."} for part in name.split("/")):
+        return None
+    try:
+        with zipfile.ZipFile(TIMEZONES) as archive:
+            return ZoneInfo.from_file(io.BytesIO(archive.read(name)), key=name)
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile):
+        return None
 
 
 def quota_wait(envelope, observed_at):
-    """Recognize only a zero-usage session limit with an unambiguous UTC reset."""
+    """Recognize a zero-usage session limit and resolve its named timezone."""
     if (not isinstance(envelope, dict) or envelope.get("is_error") is not True
             or envelope.get("api_error_status") != 429
             or envelope.get("modelUsage") != {}):
@@ -25,8 +42,10 @@ def quota_wait(envelope, observed_at):
     if not isinstance(usage, dict) or any(usage.get(key) != 0 for key in (
             "input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")):
         return None
-    match = re.fullmatch(r"You've hit your session limit [·-] resets (\d{1,2})(?::(\d{2}))?(am|pm) \(UTC\)",
-                         envelope.get("result", ""))
+    public = envelope.get("result", "")
+    if not isinstance(public, str):
+        return None
+    match = re.fullmatch(r"You've hit your session limit [·-] resets (\d{1,2})(?::(\d{2}))?(am|pm) \(([A-Za-z0-9_+\-/]+)\)", public)
     if not match or observed_at.tzinfo is None:
         return None
     hour, minute = int(match[1]), int(match[2] or 0)
@@ -34,13 +53,26 @@ def quota_wait(envelope, observed_at):
         return None
     now = observed_at.astimezone(timezone.utc)
     hour = hour % 12 + (12 if match[3] == "pm" else 0)
-    reset = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    # Preserve a short grace period for calls made during the reset minute.
-    retry = reset + timedelta(seconds=30)
-    if retry <= now:
-        retry += timedelta(days=1)
-    if (retry - now).total_seconds() > MAX_WAIT_SECONDS:
+    zone = reset_timezone(match[4])
+    if zone is None:
         return None
+    local = now.astimezone(zone)
+    candidates = set()
+    for days in (0, 1):
+        naive = (local + timedelta(days=days)).replace(hour=hour, minute=minute, second=0,
+                                                     microsecond=0, tzinfo=None, fold=0)
+        for fold in (0, 1):
+            reset = naive.replace(tzinfo=zone, fold=fold).astimezone(timezone.utc)
+            # A nonexistent DST wall-clock time cannot survive this round trip.
+            if reset.astimezone(zone).replace(tzinfo=None) != naive:
+                continue
+            retry = reset + timedelta(seconds=30)
+            if 0 < (retry - now).total_seconds() <= MAX_WAIT_SECONDS:
+                candidates.add(retry)
+    # Never guess between two future instants during a repeated DST hour.
+    if len(candidates) != 1:
+        return None
+    retry = candidates.pop()
     return {"provider": "claude.ai", "observed_at": now.isoformat(),
             "retry_at": retry.isoformat(), "reason": envelope["result"]}
 

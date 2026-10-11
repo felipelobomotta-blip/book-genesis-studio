@@ -1,0 +1,8 @@
+{
+  "source": "https://pypi.org/project/tzdata/2026.5/",
+  "version": "2026.5",
+  "wheel_sha256": "b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac",
+  "archive_sha256": "8401ff010b4d8dd72782a00978df05e2da70e8a71b6fc6b00c835c70fb15e9fc",
+  "zone_count": 598,
+  "scope": "Unmodified TZif data; no executable package code; original licenses retained."
+}
