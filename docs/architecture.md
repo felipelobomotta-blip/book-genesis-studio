@@ -89,4 +89,10 @@ Both must pass. Each gets at most three revision passes, and a revised chapter i
 
 ## Current-text receipts
 
+The causal-evidence and delivery candidate is described in
+[causal-evidence-delivery-20261011.md](causal-evidence-delivery-20261011.md).
+It extends existing source review with acquisition/use/payoff traces, preserves
+uncertain knowledge routes, and addresses the demonstrated hook identity and
+Windows schema-size failures without changing literary targets or old runs.
+
 `verify_book.py` checks original reader receipts and raw reports against current chapter hashes before final aggregation. Old passes do not survive a prose edit. It also derives technical delivery from the source-bound export receipt and actual files. Export commits `STATUS.json` with the deliverables; the host reconciles its YAML from verified delivery, without changing literary gates or human publication approval.

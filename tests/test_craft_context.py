@@ -30,6 +30,8 @@ class CraftContextTests(unittest.TestCase):
         self.assertNotIn("Simile surgery", text)
         self.assertNotIn("scoring/rubric", text)
         self.assertIn("not a quota", data["use"])
+        self.assertIn("Consequential information", text)
+        self.assertIn("disclosure to the reader", text)
 
     def test_revision_gets_actual_move_definitions_and_patterns_without_tools_or_rubric(self):
         source = SKILL / "references/specialists/prose-craft.md"
@@ -40,6 +42,7 @@ class CraftContextTests(unittest.TestCase):
         self.assertIn("A competent chapter can be well built, consistent in voice, coherent in theme and still predictable.", text)
         self.assertIn("Simile surgery", text)
         self.assertIn("patterns/ai-tells-en.md", data["references"])
+        self.assertIn("patterns/causal-evidence.md", data["references"])
         self.assertNotIn("scoring/rubric", text)
         self.assertNotIn("the rubric still penalizes", text)
         self.assertNotIn('grep -o', text)

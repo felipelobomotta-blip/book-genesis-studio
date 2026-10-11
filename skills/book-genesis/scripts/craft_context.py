@@ -40,7 +40,7 @@ def language_tells(language):
 
 
 def revision_knowledge(skill, language):
-    paths = ["specialists/prose-craft.md", "patterns/prose.md", "patterns/structure-and-emotion.md"]
+    paths = ["specialists/prose-craft.md", "patterns/prose.md", "patterns/structure-and-emotion.md", "patterns/causal-evidence.md"]
     tells = language_tells(language)
     if tells:
         paths.append(tells)

@@ -21,6 +21,7 @@ from check_correction import (prepare as prepare_correction, decision as correct
                               validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
 from craft_context import draft_knowledge, revision_knowledge
+from narrative_evidence import INSTRUCTIONS as CAUSAL_EVIDENCE_INSTRUCTIONS
 from editorial_feedback import score_blind
 from decide_comparison import decide
 from export_book import discover_chapters, export_book, word_count_receipt
@@ -34,7 +35,7 @@ from validate_blind_reader import validate_blind_reader_report
 from validate_rubric import validate_rubric, rubric_schema
 from verify_book import verify_book
 from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEMA, TEXT,
-    INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema,
+    INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema, hook_schema, validate_hook,
     validate_json, validate_prose, validate_prose_text, validate_review, neutral_contract_schema,
     plan_schema, validate_neutral, render_plan,
     plan_repair_schema, plan_edit_items, apply_plan_edits, validate_shape, character_context, production_facts)
@@ -307,7 +308,7 @@ class BookWorkflow:
             "No findings is valid only when the checks support it. A negative verdict is valid.\n\n"
             + instructions + "\n\nRequired checks: " + json.dumps(passes) + "\n\nComplete sources:\n" + json.dumps(catalog, ensure_ascii=False))
         response, validation = self.call(key, packet, schema,
-            lambda p: validate_review(p, schema, catalog, passes, max_chapter=self.contract["chapters"]))
+            lambda p: validate_review(p, schema, catalog, passes, max_chapter=self.contract["chapters"]), feedback=True)
         return {"report": str(response.relative_to(self.root)), "validation": validation, "data": read_json(response)}
 
     def snapshot(self, key):
@@ -491,8 +492,9 @@ class BookWorkflow:
 
     def audit(self, key, snapshot):
         standards = "\n\n".join(self.ref(name) for name in ("roles/auditor.md", "patterns/prose.md",
-            "patterns/structure-and-emotion.md", "patterns/ai-tells-en.md", "specialists/continuity.md"))
+            "patterns/structure-and-emotion.md", "patterns/ai-tells-en.md", "specialists/continuity.md", "patterns/causal-evidence.md"))
         return self.review(key, self.neutral_sources(snapshot), AUDIT_PASSES, standards
+            + "\n\n" + CAUSAL_EVIDENCE_INSTRUCTIONS
             + "\nUse passage IDs in place of copied quotations; the host resolves them without changing your report. "
             "Judge the current prose, not planned events as if they had happened. Mark ending_resolved false for an unfulfilled central promise.")
 
@@ -614,6 +616,7 @@ class BookWorkflow:
                 "craft_knowledge": revision_knowledge(self.skill, self.config["language"]),
                 "current_sources": self.neutral_sources(self.snapshot(f"measure-{measurement['number']}")),
                 **score_blind({"audit_findings": measurement["audit"]["data"]["findings"],
+                    "causal_evidence": measurement["audit"]["data"].get("causal_traces", []),
                     "proofread_findings": measurement["proofread"]["data"]["findings"],
                     "unresolved_findings": open_issues,
                     "reader_experience": reports, "craft_observations": reasons,
@@ -1132,7 +1135,8 @@ class BookWorkflow:
         if self.journal.data["phase"] != 7:
             return
         schema = obj({"editorial_package": TEXT, "positioning": TEXT,
-            "options": array(obj({"id": INTEGER, "title": TEXT, "logline": TEXT, "blurb": TEXT}))})
+            "options": {**array(obj({"id": {"type": "integer", "enum": [1, 2, 3]}, "title": TEXT, "logline": TEXT, "blurb": TEXT})),
+                        "minItems": 3, "maxItems": 3}})
         snapshot = self.snapshot("delivery")
         packet = ("Prepare the book's editorial package. Use only this packet, no tools. Return JSON. "
             "editorial_package includes logline, blurb, full ending-inclusive synopsis, query letter, cover brief and format notes. "
@@ -1149,20 +1153,14 @@ class BookWorkflow:
         response, _ = self.call("editorial-package", packet, schema, validate)
         package = read_json(response)
         hooks = []
-        hook_schema = obj({"reader": TEXT, "options": array(obj({"id": INTEGER, "click": {"type": "boolean"},
-            "buy": {"type": "boolean"}, "keep_reading": {"type": "boolean"}, "reason": TEXT}))})
         first = " ".join(snapshot[0].read_text(encoding="utf-8").split()[2:252])
         for persona, (reader, lens) in READERS.items():
-            def validate_hook(path, reader=reader):
-                report = validate_json(path, hook_schema)
-                if report["valid"]:
-                    data = read_json(path)
-                    if data["reader"] != reader or sorted(r["id"] for r in data["options"]) != [1, 2, 3]:
-                        report.update(valid=False, errors=["Hook reader identity or option coverage differs"])
-                return report
             report, _ = self.call("hook-" + persona, f"You are {reader}, {lens}. Use only this packet, no tools. "
-                "For each package, would you click, buy, and keep reading? Give honest reasons. This is a simulated preference, not a sale.\n"
-                + json.dumps({"packages": package["options"], "opening_250_words": first}, ensure_ascii=False), hook_schema, validate_hook)
+                f"Return reader as the exact identity string {json.dumps(reader)}, with your opinions only in each option's reason. "
+                "Include each option ID 1, 2, 3 exactly once. For each package, would you click, buy, and keep reading? "
+                "Give honest reasons. This is a simulated preference, not a sale.\n"
+                + json.dumps({"packages": package["options"], "opening_250_words": first}, ensure_ascii=False),
+                hook_schema(reader), lambda path, reader=reader: validate_hook(path, reader))
             hooks.append(read_json(report))
         ranking = sorted(range(1, 4), key=lambda n: (sum(sum(r[k] for k in ("click", "buy", "keep_reading"))
             for h in hooks for r in h["options"] if r["id"] == n),

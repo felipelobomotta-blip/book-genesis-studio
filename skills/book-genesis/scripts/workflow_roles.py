@@ -7,6 +7,7 @@ from pathlib import Path
 from export_book import Chapter, count_prose_words, _XML_INVALID_RE, discover_chapters, word_count_receipt
 from workflow_state import digest, encoded, freeze, read_json
 from correction_edits import retains_title
+from narrative_evidence import trace_schema, validate_traces
 
 
 TEXT = {"type": "string"}
@@ -65,6 +66,20 @@ def obj(fields):
 
 def array(items):
     return {"type": "array", "items": items}
+
+
+def hook_schema(reader):
+    return obj({"reader": enum((reader,)), "options": {**array(obj({
+        "id": {"type": "integer", "enum": [1, 2, 3]}, "click": {"type": "boolean"},
+        "buy": {"type": "boolean"}, "keep_reading": {"type": "boolean"}, "reason": TEXT})),
+        "minItems": 3, "maxItems": 3}})
+
+
+def validate_hook(path, reader):
+    report = validate_json(path, hook_schema(reader))
+    if report["valid"] and sorted(row["id"] for row in read_json(path)["options"]) != [1, 2, 3]:
+        report.update(valid=False, errors=["Hook options must cover IDs 1, 2, 3 exactly once"])
+    return report
 
 
 def enum(values):
@@ -305,7 +320,7 @@ def text_catalog(files: dict[str, str]):
 
 def review_schema(catalog: dict, *, passes: list[str]):
     ids = [p["id"] for source in catalog["sources"] for p in source["passages"]]
-    return obj({"verdict": enum(("pass", "revise", "major_rewrite")),
+    fields = {"verdict": enum(("pass", "revise", "major_rewrite")),
         "coverage": {**array(enum(source["source"] for source in catalog["sources"])),
                      "minItems": len(catalog["sources"]), "maxItems": len(catalog["sources"])},
         "checks": {**array(obj({"name": enum(passes), "result": enum(("pass", "finding")), "reason": TEXT})),
@@ -313,7 +328,10 @@ def review_schema(catalog: dict, *, passes: list[str]):
         "findings": array(obj({"severity": enum(("high", "medium", "low")),
             "kind": enum(("continuity", "structural", "character", "voice", "prose", "proofread")),
             "chapters": array(INTEGER), "evidence_ids": array(enum(ids)), "problem": TEXT, "fix": TEXT, "preserve": TEXT})),
-        "ending_resolved": {"type": "boolean"}, "limitations": TEXT})
+        "ending_resolved": {"type": "boolean"}, "limitations": TEXT}
+    if passes == AUDIT_PASSES:
+        fields["causal_traces"] = trace_schema(catalog)
+    return obj(fields)
 
 
 def validate_review(path: Path, schema: dict, catalog: dict, passes: list[str], *, max_chapter: int):
@@ -332,6 +350,8 @@ def validate_review(path: Path, schema: dict, catalog: dict, passes: list[str], 
                 report["errors"].append("Every finding needs source evidence and affected chapters")
             if any(not 1 <= n <= max_chapter for n in finding["chapters"]):
                 report["errors"].append("Finding references an unplanned chapter")
+        if "causal_traces" in schema["properties"]:
+            report["errors"] += validate_traces(data, catalog)
         report["catalog_sha256"] = digest(encoded(catalog))
     report["valid"] = not report["errors"]
     return report

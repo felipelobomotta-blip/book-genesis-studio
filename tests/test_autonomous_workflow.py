@@ -236,9 +236,18 @@ def fixture_response(call_id, packet, schema, root):
         findings = [{"severity": "high", "kind": "character", "chapters": [1],
             "evidence_ids": [catalog["sources"][-1]["passages"][0]["id"]], "problem": "The courier has not confessed.",
             "fix": "Let the courier confess before the door opens.", "preserve": "The letter and the opened door."}] if defective else []
-        return {"verdict": "revise" if defective else "pass", "coverage": names,
+        result = {"verdict": "revise" if defective else "pass", "coverage": names,
                 "checks": [{"name": name, "result": "finding" if defective else "pass", "reason": "Checked the assigned sources."} for name in passes],
                 "findings": findings, "ending_resolved": True, "limitations": "Synthetic response for deterministic integration tests only."}
+        if "causal_traces" in props:
+            ids = [p["id"] for s in catalog["sources"] if s["source"].startswith("chapter-") for p in s["passages"][1:]]
+            result["causal_traces"] = [{"id": f"t{n}", "kind": kind, "subject": "The courier carries a stolen letter.",
+                "recipient": "The courier", "story_time": "Before the recipient opens the door.",
+                "acquisition_or_setup_evidence_ids": ids[:1], "use_or_payoff_evidence_ids": ids[-1:],
+                "reader_disclosure_evidence_ids": ids[:1], "basis": "observed", "status": "supported",
+                "reason": "Synthetic location contract only, not a literary judgment.", "limitations": "Synthetic fixture."}
+                for n, kind in enumerate(("knowledge", "promise_payoff"), 1)]
+        return result
     if "dimensions" in props:
         catalog = json.loads(packet.split("Complete frozen manuscript:\n", 1)[1].split("\ncatalog_sha256:")[0])
         ids = [p["id"] for c in catalog["chapters"] for p in c["passages"]]

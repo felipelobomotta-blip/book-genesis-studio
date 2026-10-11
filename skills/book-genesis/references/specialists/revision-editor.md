@@ -92,6 +92,13 @@ The revision plan decides which tickets you get; the class decides the order you
 6. **Do not introduce AI tells.** Your new sentences are where they are most likely to appear.
 7. **Island chapters.** If a pass lifts a few chapters far above the rest, the book turns uneven. Report it; do not widen your scope.
 
+For knowledge, clue and payoff tickets, preserve the acquisition-to-use chain
+from references/patterns/causal-evidence.md. If a repair changes a setup, name
+every dependent use and consequence that needs a companion ticket. A repeated
+denial-and-disclosure scene needs a changed action when the ticket identifies
+stalled causality; more explanatory narration does not close that ticket. An
+over-explanation repair retains any new causal fact and the memorable image.
+
 ## Repair moves for common tickets
 
 Measured prose and structure patterns, with their named comparables, live in `references/patterns/prose.md` and `references/patterns/structure-and-emotion.md`. Use them as a ruler for the passage you touch, not as a quota for the chapter.

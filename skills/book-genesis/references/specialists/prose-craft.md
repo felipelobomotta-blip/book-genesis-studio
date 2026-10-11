@@ -165,6 +165,24 @@ Chapter check, after drafting and in Phase 4: Adversarial Audit:
 4. At least one concrete image per page. Fewer means the chapter has gone abstract.
 5. Paragraph lengths vary within the Rhythm contract's local limits.
 
+### Consequential information
+
+Keep character knowledge, disclosure to the reader and story time separate.
+Before a fact drives a decision, the viewpoint character must have acquired it
+or inferred it from available clues. A withheld explanation can still be fair
+when the earlier action leaves evidence the reader can reinterpret. Give an
+important clue a consequence: a choice, an obstacle, a cost or a changed
+relationship. An explanation of what the clue symbolizes does not do that work.
+
+Vary what scenes do, not merely where they happen. Several conversations that
+each deny a secret and then reveal another piece can stall even when every
+piece is new. Let the information alter an action and let the action have a
+cost. A recurring exchange earns its return when the participants' choices
+change. Do not invent a new event or fact outside the approved chapter brief.
+
+These are optional craft hypotheses, with examples and evidence limits in
+references/patterns/causal-evidence.md. They are not mandatory style quotas.
+
 ## 6. Revision moves against predictability (Phase 5: Revision Loop only)
 
 These are Phase 5: Revision Loop tools and are never applied while drafting. In Phase 3: Drafting the writer writes; these moves work on text that already exists, and only through tickets. The revision editor makes no edit without a ticket and changes only the ticket's span (references/specialists/revision-editor.md), so each move reaches the page as a ticket that names it.

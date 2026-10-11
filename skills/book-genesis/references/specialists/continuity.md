@@ -109,6 +109,7 @@ The hardest contradictions to see from inside one chapter, so this check gets th
 
 - **Room audit.** For every scene with several characters, list who is present at each reveal, and who entered or left before it. A character who left before the secret was spoken does not know it.
 - **Knowledge path.** For every piece of knowledge a character uses, in dialogue, action, an emotional reaction or narration inside their head, confirm one of: present at the reveal; told on the page; told plausibly off the page (medium: consider showing it); discovered; inferred from clues the reader has seen.
+- **Source trace.** Record the fact, recipient, acquisition event, story time and later use with exact chapter passages. Separate disclosure to the reader from acquisition by the character. A flashback or later explanation can establish earlier knowledge. Observed events and derived inferences need their sources; a plausible unshown route remains unknown rather than a proved contradiction. Use references/patterns/causal-evidence.md to state the evidence limits.
 - **Communications.** A character who cites "the message" or "the call" received one on the page, or the text clearly implies it.
 - **Classic violations.** Reacting to news before it arrives (the reaction was written before the delivery); referencing an event that has not happened yet; narration revealing a point-of-view character's thoughts about something they do not know.
 

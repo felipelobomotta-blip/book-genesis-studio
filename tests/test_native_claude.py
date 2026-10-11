@@ -271,6 +271,41 @@ raise SystemExit(settings.get("exit", 0))
         self.assertFalse(self.output.exists())
         self.assertIn(b"bounded command size", result.stderr)
 
+    def test_repeated_nullable_plan_fields_share_definitions_without_losing_constraints(self):
+        from native_claude import factor_native_schema
+        fields = {f"/chapters/{n}/on_page_resolution": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                  for n in range(222)}
+        original = {"type": "object", "properties": {"edits": {"type": "object", "properties": fields,
+            "required": list(fields), "additionalProperties": False}}, "required": ["edits"], "additionalProperties": False}
+        frozen = json.dumps(original, sort_keys=True)
+        factored = factor_native_schema(original)
+        self.assertEqual(frozen, json.dumps(original, sort_keys=True))
+        self.assertEqual(original["properties"]["edits"]["required"], factored["properties"]["edits"]["required"])
+        self.assertFalse(factored["properties"]["edits"]["additionalProperties"])
+        for path, value in factored["properties"]["edits"]["properties"].items():
+            definition = value["$ref"].split("/")[-1]
+            self.assertEqual(fields[path], factored["$defs"][definition])
+        self.schema.write_text(json.dumps(original), encoding="utf-8")
+        result = self.run_bridge(structured_output={"edits": dict.fromkeys(fields)})
+        self.assertEqual(0, result.returncode, result.stderr.decode("utf-8"))
+        received = read_json(self.root / "received.json")
+        self.assertIn("shared definitions", result.stderr.decode("utf-8"))
+        self.assertIn(json.dumps(original, ensure_ascii=False), received["packet"])
+        self.assertLess(len(subprocess.list2cmdline(received["argv"]).encode("utf-16-le")) // 2, 24000)
+        self.assertEqual({"edits": dict.fromkeys(fields)}, json.loads(self.output.read_bytes()))
+
+    def test_shared_schema_preserves_existing_definitions_and_avoids_scoped_id_rebinding(self):
+        from native_claude import factor_native_schema
+        nullable = {"anyOf": [{"type": "string"}, {"type": "null"}]}
+        original = {"type": "object", "$defs": {"bg0": {"type": "integer"}},
+            "properties": {f"p{n}": nullable for n in range(80)}, "required": [f"p{n}" for n in range(80)],
+            "additionalProperties": False}
+        factored = factor_native_schema(original)
+        self.assertEqual({"type": "integer"}, factored["$defs"]["bg0"])
+        self.assertTrue(all(v["$ref"] != "#/$defs/bg0" for v in factored["properties"].values()))
+        original["properties"]["scoped"] = {"$id": "https://example.invalid/schema", **nullable}
+        self.assertEqual(original, factor_native_schema(original))
+
 
 if __name__ == "__main__":
     unittest.main()
