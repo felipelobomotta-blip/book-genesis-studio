@@ -73,6 +73,23 @@ class EvidencePassageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_catalog(wire[:-4])
 
+    def test_dense_markdown_fields_remain_separate_and_source_bound(self):
+        fields = [f"**Field {n}:** The exact value {n}." for n in range(150)]
+        text = "\n\n".join(fields)
+        self.assertEqual(fields, evidence_passages(text))
+        catalog = text_catalog({"outline": text})
+        self.assertEqual(fields, [p["text"] for p in catalog["sources"][0]["passages"]])
+        self.assertEqual(catalog, parse_catalog(render_catalog(catalog)))
+
+    def test_structural_fields_do_not_absorb_adjacent_dense_prose(self):
+        field = "**Point of view:** Ada."
+        text = self.dense_text() + "\n\nBefore the field.\n\n" + field + "\n\nAfter the field."
+        blocks = evidence_passages(text)
+        self.assertIn(field, blocks)
+        index = blocks.index(field)
+        self.assertTrue(blocks[index - 1].endswith("Before the field."))
+        self.assertEqual("After the field.", blocks[index + 1])
+
 
 if __name__ == "__main__":
     unittest.main()

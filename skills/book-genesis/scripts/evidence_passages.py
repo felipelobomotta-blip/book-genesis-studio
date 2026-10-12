@@ -8,8 +8,9 @@ def evidence_passages(text: str, *, separator: str = r"\n[ \t]*\n") -> list[str]
     """Keep small catalogs unchanged; bound citation overhead in dense ones.
 
     Each block is an exact contiguous substring of the supplied visible text.
-    All nonempty paragraphs occur once, in their original order. Headings and
-    an individually long paragraph remain separate. There is no summarization,
+    All nonempty paragraphs occur once, in their original order. Headings,
+    Markdown field labels and individually long paragraphs remain separate.
+    There is no summarization,
     truncation, paragraph reflow, or change to the source file or its hash.
     """
     visible = text.strip()
@@ -35,7 +36,10 @@ def evidence_passages(text: str, *, separator: str = r"\n[ \t]*\n") -> list[str]
     for start, end in spans:
         paragraph = visible[start:end]
         count = len(paragraph.split())
-        if re.match(r"\s*#{1,6}\s", paragraph):
+        # Plan coverage consumes each controller-rendered **Field:** as its
+        # own citation. Preserve those boundaries even in long outlines; prose
+        # compaction must not erase the structure its consumers depend on.
+        if re.match(r"\s*(?:#{1,6}\s|\*\*[^*\n]+:\*\*)", paragraph):
             flush()
             blocks.append(paragraph)
             continue

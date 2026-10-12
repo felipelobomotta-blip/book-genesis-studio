@@ -18,6 +18,16 @@ from test_autonomous_workflow import COMMAND, fixture_response, receipt_transpor
 
 
 class PlanChapterCoverageTests(unittest.TestCase):
+    @staticmethod
+    def long_plan():
+        plan = fixture_response('architecture', '', plan_schema(24), Path('.'))
+        template = plan['chapters'][0]
+        plan['chapters'] = [{**copy.deepcopy(template), 'number': number,
+                            'title': f'Delivery stage {number}',
+                            'events': 'Word target 3400. The courier chooses the next delivery route.'}
+                           for number in range(1, 25)]
+        return plan
+
     def setUp(self):
         plan = fixture_response('architecture', '', plan_schema(2), Path('.'))
         rendered = render_plan(plan)
@@ -47,6 +57,63 @@ class PlanChapterCoverageTests(unittest.TestCase):
         requirements = chapter_requirements(catalog)
         self.assertEqual([1, 2], [r['chapter'] for r in requirements])
         self.assertEqual(4, len(requirements[0]['checks']))
+
+    def test_twenty_four_chapter_plan_keeps_every_required_field_citation(self):
+        plan = self.long_plan()
+        rendered = render_plan(plan)
+        outline = rendered['artifacts/07-outline.md']
+        self.assertGreater(len(outline.split('\n\n')), 128)
+        catalog = text_catalog({'approved-brief': 'Return the letter before departure.',
+            'outline': outline, 'ledger': rendered['artifacts/09-continuity-ledger.md']})
+        requirements = chapter_requirements(catalog)
+        self.assertEqual(list(range(1, 25)), [row['chapter'] for row in requirements])
+        passages = {p['id']: p['text'] for source in catalog['sources'] for p in source['passages']}
+        for row in requirements:
+            self.assertEqual(4, len(row['checks']))
+            for check in row['checks']:
+                for passage_id in check['required_evidence_ids']:
+                    self.assertTrue(passages[passage_id].startswith('**'))
+                    self.assertNotIn('\n\n**', passages[passage_id])
+        schema = review_schema(catalog, passes=PLAN_PASSES)
+        report = fixture_response('plan-check-1', 'Complete sources:\n' + json.dumps(catalog), schema, Path('.'))
+        with tempfile.TemporaryDirectory() as tmp:
+            response = Path(tmp) / 'response.json'
+            response.write_bytes(encoded(report))
+            validation = validate_review(response, schema, catalog, PLAN_PASSES, max_chapter=24)
+            self.assertTrue(validation['valid'], validation['errors'])
+
+    def test_an_actually_missing_field_still_blocks_a_long_plan(self):
+        plan = self.long_plan()
+        rendered = render_plan(plan)
+        outline = rendered['artifacts/07-outline.md'].replace('**Point of view:**', '**Other:**', 1)
+        with self.assertRaisesRegex(ValueError, 'missing a required chapter field'):
+            chapter_requirements(text_catalog({'outline': outline}))
+
+    def test_full_twenty_four_chapter_planning_reaches_drafting_without_author_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            freeze(root / '.book-genesis/project.json', encoded({'host': 'codex', 'collaboration': 'autonomous',
+                'author_name': 'QA', 'model': 'exact-test-model', 'effort': 'high',
+                'idea': 'Deliver the letter.', 'language': 'English'}))
+            freeze(root / '.book-genesis/skills/.book-genesis-install.json', b'{}')
+            calls = []
+            def generate(call_id, packet, schema, book):
+                calls.append(call_id)
+                if 'canon' in schema['properties']:
+                    return self.long_plan()
+                return fixture_response(call_id, packet, schema, book)
+            options = dict(chapters=24, min_words=80000, max_words=88000,
+                           transport=receipt_transport(generate))
+            with redirect_stdout(io.StringIO()):
+                workflow = BookWorkflow(root, COMMAND, **options)
+                workflow.planning()
+                before = len(calls)
+                BookWorkflow(root, COMMAND, **options).planning()
+            self.assertEqual(3, workflow.journal.data['phase'])
+            self.assertTrue((root / 'artifacts/07-outline.md').is_file())
+            self.assertEqual(before, len(calls))
+            review = read_json(root / 'work/host-calls/wf-plan-check-1-1/response')
+            self.assertEqual(list(range(1, 25)), [row['chapter'] for row in review['chapter_checks']])
 
     def test_duplicate_chapter_or_check_cannot_claim_complete_coverage(self):
         changed = copy.deepcopy(self.data)
