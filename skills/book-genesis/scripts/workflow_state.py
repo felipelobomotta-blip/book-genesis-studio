@@ -427,6 +427,10 @@ class Journal:
         if step["status"] == "completed":
             self.verify_files(step["evidence"])
             return self.root / step["response"], read_json(self.root / step["validation"])
+        if step["status"] == "blocked_input_size":
+            blocked = step["attempts"][-1]
+            self.verify_files(blocked["input_evidence"])
+            raise WorkflowError(blocked["error"])
         while True:
             rows = step["attempts"]
             if rows and rows[-1]["status"] == "provider_wait":
@@ -478,6 +482,25 @@ class Journal:
                     ).encode("utf-8") + raw
             attempt_packet = folder / f"packet-attempt-{len(rows)}.md"
             freeze(attempt_packet, actual_packet)
+            # The isolated Codex exec host caps the entire user turn, including
+            # format feedback and a rejected producer response. Token-window
+            # settings do not lift that character cap. Do not send a known
+            # impossible request or fabricate a native receipt for it.
+            if "exec" in command["argv"] and "--ignore-user-config" in command["argv"]:
+                characters, limit = len(actual_packet.decode("utf-8")), 1048576
+                if characters > limit:
+                    error = (f"Codex input has {characters} characters; native character limit is {limit}. "
+                             "No native call was dispatched; complete input and prior attempts are preserved.")
+                    inputs = [self.record_file(folder / "packet.md"), self.record_file(attempt_packet)]
+                    if schema is not None:
+                        inputs.append(self.record_file(folder / "schema.json"))
+                    inputs += attempt.get("feedback_evidence", [])
+                    attempt.update(status="input_too_large", native_dispatched=False,
+                        input_characters=characters, input_character_limit=limit,
+                        input_evidence=inputs, error=error, finished_at=self.now())
+                    step["status"] = "blocked_input_size"
+                    self.save()
+                    raise WorkflowError(error)
             try:
                 # Recover a crash after the native refusal was saved, without
                 # redispatching or changing that original failed receipt.

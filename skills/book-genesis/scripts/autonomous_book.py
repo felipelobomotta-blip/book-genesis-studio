@@ -43,6 +43,7 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
     plan_repair_schema, plan_repair_targets, plan_edit_items, apply_plan_edits, validate_shape, character_context, production_facts)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
+from revision_context import render_context as render_revision_context
 
 
 def production_allowance(chapters, remaining, used, min_words, max_words):
@@ -755,7 +756,8 @@ class BookWorkflow:
                 "shared resolution. They are proposed changes, not established canon. Your chapter and every companion "
                 "must form a consistent complete book before any of them can be accepted. "
                 "Planning notes do not prove that a planned event actually happened.\n\n" + self.ref("specialists/revision-editor.md")
-                + "\n\n" + json.dumps({"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
+                + "\n\n")
+            editor_context = {"task": score_blind(task), "shared_revision_strategy": score_blind(strategy),
                     "companion_tasks": score_blind(companion_tasks or []),
                     "unaccepted_companion_proposals": staged_companions or {},
                     "craft_knowledge": None if factual else revision_knowledge(self.skill, self.config["language"]),
@@ -766,7 +768,8 @@ class BookWorkflow:
                     "characters": (self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
-                    "production_words": {"min": low, "max": high}}, ensure_ascii=False))
+                    "production_words": {"min": low, "max": high}}
+            packet += render_revision_context(editor_context, prefix_chars=len(packet))
         schema = correction_schema(original_text, allow_unchanged=allow_unchanged) if factual else PROSE_SCHEMA
         def validate_factual(path):
             report = validate_json(path, schema)
