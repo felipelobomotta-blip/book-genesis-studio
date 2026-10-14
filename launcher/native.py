@@ -191,6 +191,7 @@ def run_attached(argv: list[str], *, cwd: Path | None = None, on_start: Callable
     try:
         with _parent_signals(process):
             if job is not None:
+                process._book_genesis_job = job
                 job.assign(process.pid)
             if on_start is not None:
                 on_start(process.pid)

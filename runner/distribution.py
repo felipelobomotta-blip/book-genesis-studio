@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import time
 from typing import Callable, Mapping
 from uuid import uuid4
 
@@ -557,6 +558,29 @@ def install_suite(
     return _result(True, destination_root, errors=[], backups=[str(path) for path in sorted(used_backups)], **plan)
 
 
+def _promote_staged(source: Path, target: Path) -> None:
+    """Retry transient Windows sharing denial, without replacing a new target."""
+    initial = source.stat()
+    identity = initial.st_dev, initial.st_ino
+    delays = iter((0.05, 0.10, 0.20, 0.40, 0.80))
+    while True:
+        if target.exists() or _is_link(target):
+            raise FileExistsError(f"installation target appeared during promotion: {target}")
+        current = source.stat()
+        if _is_link(source) or (current.st_dev, current.st_ino) != identity:
+            raise OSError(f"staged installation changed during promotion: {source}")
+        try:
+            source.rename(target)
+            return
+        except PermissionError as exc:
+            if os.name != "nt" or getattr(exc, "winerror", None) not in (5, 32, 33):
+                raise
+            delay = next(delays, None)
+            if delay is None:
+                raise
+            time.sleep(delay)
+
+
 def _swap_groups(
     groups: list[tuple[Path, dict[str, Path], Path, object]],
     *,
@@ -564,7 +588,7 @@ def _swap_groups(
 ) -> set[Path]:
     """Stage every group first, then swap them all; any failure restores every swap made so far."""
     stages: list[Path] = []
-    swapped: list[tuple[Path, Path | None, Path | None]] = []
+    swapped: list[tuple[Path, Path | None, Path | None, bool]] = []
     used: set[Path] = set()
     record_target: Path | None = None
     record_backup: Path | None = None
@@ -598,8 +622,9 @@ def _swap_groups(
                         backup = backup_root / name
                         disabled = _move_to_backup(target, backup)
                         used.add(backup_root)
-                    swapped.append((target, backup, disabled))
-                    (stage / name).rename(target)
+                    swapped.append((target, backup, disabled, False))
+                    _promote_staged(stage / name, target)
+                    swapped[-1] = (target, backup, disabled, True)
             if record_target is not None and staged_record is not None:
                 staged_record.write_bytes(build_record())
                 if record_target.exists() or _is_link(record_target):
@@ -615,9 +640,12 @@ def _swap_groups(
                     _remove(record_target)
                 if record_backup is not None and record_backup.exists():
                     record_backup.rename(record_target)
-            for target, backup, disabled in reversed(swapped):
-                _remove(target)
-                if backup is not None:
+            for target, backup, disabled, promoted in reversed(swapped):
+                if promoted:
+                    _remove(target)
+                # A failed rename never acquired an externally created target.
+                # Retain both that target and the original backup in this case.
+                if backup is not None and not target.exists() and not _is_link(target):
                     _restore_backup(backup, target, disabled)
             raise
     finally:

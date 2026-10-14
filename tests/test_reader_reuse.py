@@ -74,13 +74,13 @@ class ReaderReuseTests(unittest.TestCase):
             self.workflow.panel("original-again", [snapshot[0]])
         self.assertEqual(before, len(self.calls))
 
-    def test_rubric_replicates_still_run_in_two_distinct_contexts(self):
+    def test_rubric_replicates_still_run_in_three_distinct_contexts(self):
         before = len(self.calls)
         with redirect_stdout(io.StringIO()):
             result = self.workflow.rubric("replicate-check", self.workflow.snapshot("rubric-copy"))
-        self.assertEqual(before + 2, len(self.calls))
-        self.assertEqual(2, len(result["readings"]))
-        self.assertNotEqual(result["readings"][0]["report"], result["readings"][1]["report"])
+        self.assertEqual(before + 3, len(self.calls))
+        self.assertEqual(3, len(result["readings"]))
+        self.assertEqual(3, len({reading["report"] for reading in result["readings"]}))
 
     def test_reader_receives_only_previous_300_words_and_changed_context_gets_new_reads(self):
         snapshot = self.workflow.snapshot("context-original")

@@ -51,6 +51,13 @@ Where the host's documentation does not guarantee that a subagent cannot see the
 
 ## Aggregation
 
+Obtain three separate rubric readings in fresh contexts with the same allowed
+packet. Preserve all three original reports and their validations, including
+unfavorable or unassessed dimensions. Do not stop after favorable reports or
+count one response as multiple evaluators. The autonomous runner reserves a
+distinct native step for each reading; resuming those completed steps reuses
+their own original receipts without creating replacement judgments.
+
 Before a new rubric call, freeze all assigned chapters with `scripts/prepare_rubric.py --chapter <canonical-chapter> --output <fresh-catalog.json>`, repeating `--chapter` for the complete assigned set. This includes every visible body paragraph in order with a stable passage ID, plus source hashes. Supply the catalog as the manuscript, its returned `catalog_sha256`, and the allowed criteria and context. Do not summarize it or select favorable paragraphs. Generate the matching schema with `scripts/validate_rubric.py --schema --catalog <fresh-catalog.json>` and use the host's structured-output facility when supported. The critic returns passage references instead of recopying prose; explanations and unfavorable findings remain unrestricted.
 
 Before aggregating rubric scores, validate each unmodified JSON report with `scripts/validate_rubric.py --chapter <canonical-chapter> --report <raw-report.json> --catalog <fresh-catalog.json> --expected-chapters <approved-count>`, repeating `--chapter` for the full supplied set. Save the original validation receipt beside that raw response. The receipt resolves each selected ID to its source chapter and exact passage without changing the critic's raw response. Validation rebuilds the complete catalog from the current manuscript: missing, altered or stale paragraphs, invented IDs and a mismatched catalog digest fail. Only `status: passed` permits a complete-book rubric aggregate: a missing dimension, `null` score, sample or mismatched coverage cannot become a passing gate. Legacy schema-1 exact-quote reports remain verifiable without `--catalog`. A receipt validates source evidence and format, not the truth of a critic's interpretation or literary quality.

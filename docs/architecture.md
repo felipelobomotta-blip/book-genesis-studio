@@ -18,6 +18,13 @@ The host agent does the writing with the author's own account and selected model
 
 `workflow_state.py` reserves calls and revision passes before dispatch, stores immutable request/evidence bindings, recovers interrupted publications and rejects unrecorded manuscript changes. `workflow_roles.py` validates structured planning and review artifacts. The host's model can produce creative work and judgments but cannot edit control state or choose when to export. The existing guard serializes native calls, preserves each attempt, and reports completion only after the child exits and its response is saved. The controlled path has Codex and [Claude subscription transports](native-claude-transport.md); each host's real acceptance status is tracked separately from guided and synthetic tests.
 
+On Windows, the launcher and installed native-call guard share one private
+kill-on-close job implementation. Response publication requires verified owned
+tree shutdown, including descendants whose parent already exited. Unrelated
+processes are outside that job. [The recovery record](rubric-consensus-20261012.md)
+also describes bounded installation sharing retries and the three-reading
+assessment contract.
+
 `provider_wait.py` recognizes only native Claude quota refusals with zero usage and an explicit session reset in a known IANA timezone. A pinned data-only timezone archive and Python's standard-library reader make the UTC conversion portable to Windows without installing dependencies. Ambiguous future times are rejected. The journal retains these failed physical requests and waits durably without spending a generated-output attempt. It permits eight deferrals and twelve cumulative waiting hours per book, verifies their original evidence on resume/export, and never changes account, model or provider. Other transport errors remain blocking failures.
 
 Writer packets carry the relevant approved character cards and the complete preceding chapter. This keeps motivations, newly introduced identities and object transfers available even when a writer-generated summary omits them. Future chapter resolutions and quality targets remain outside that packet.
@@ -38,7 +45,7 @@ Creative tasks sharing issue IDs are also coordinated. `creative_groups.py` stag
 
 Architecture format retries include the complete immutable rejected producer response and all duplicate-field diagnostics. The producer consolidates conflicting edits; the controller never chooses an after value by array order. The original two-format-attempt and three-substantive-repair budgets remain unchanged. Completed-book resume calls the full execution-evidence verifier before checking current readers and delivery, so a changed old revision source cannot be hidden by a valid final export.
 
-Reader panels reuse the earliest original validated response only when the complete packet, response schema and selected native command are identical. Negative readings are retained as well as positive ones. A changed chapter receives new readings, and changed evidence blocks reuse. Two rubric replicas still run separately; this reuse policy does not turn one judgment into two independent evaluations. See [the observed native regressions](native-regressions-20261011.md) for the evidence behind these changes.
+Reader panels reuse the earliest original validated response only when the complete packet, response schema and selected native command are identical. Negative readings are retained as well as positive ones. A changed chapter receives new readings, and changed evidence blocks reuse. Three rubric replicas run as separate native steps; this reuse policy does not turn one judgment into several independent evaluations. All three original judgments remain visible, and a disagreement of at least 1.5 points lowers confidence. See [the observed native regressions](native-regressions-20261011.md) for the evidence behind the reader reuse changes.
 
 ## The pipeline
 

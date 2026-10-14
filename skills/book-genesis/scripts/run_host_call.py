@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any
 
@@ -231,8 +232,24 @@ def _acquire_book_lock(lock_path: Path, *, call_id: str) -> dict[str, Any]:
         raise
 
 
+def _new_windows_job() -> tuple[Any, int]:
+    # This guard is also loaded by file path by the native launcher. Resolve
+    # the installed sibling without depending on the caller's sys.path.
+    spec = spec_from_file_location("book_genesis_windows_job", Path(__file__).with_name("windows_job.py"))
+    if spec is None or spec.loader is None:
+        raise ImportError("The packaged Windows process ownership helper is missing")
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.WindowsJob(), module.CREATE_SUSPENDED
+
+
 def _terminate_owned_tree(process: subprocess.Popen[bytes]) -> bool:
     if os.name == "nt":
+        job = getattr(process, "_book_genesis_job", None)
+        if job is not None:
+            # The private job includes descendants whose parent has exited.
+            # Query its active count rather than relying on taskkill's exit.
+            return job.stop()
         try:
             result = subprocess.run(
                 ["taskkill", "/PID", str(process.pid), "/T", "/F"],
@@ -406,6 +423,8 @@ def run_host_call(
     child_cwd: Path | None = None
     release_lock = True
     preserve_child_cwd = False
+    job = None
+    owned_shutdown_verified = None
     try:
         if call_dir.exists():
             raise ValueError("call-id directory appeared while acquiring the book lock; use a new call-id")
@@ -423,7 +442,10 @@ def run_host_call(
             child_temp_base, child_cwd = _fresh_child_cwd(book_root)
             argv = _replace_placeholders(argv, output=paths["response_pending"], cwd=child_cwd)
             with paths["packet"].open("rb") as packet_handle, paths["stdout"].open("xb") as stdout_handle, paths["stderr"].open("xb") as stderr_handle:
-                creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
+                creationflags = 0
+                if os.name == "nt":
+                    job, suspended_flag = _new_windows_job()
+                    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | suspended_flag
                 process = subprocess.Popen(
                     argv,
                     stdin=packet_handle,
@@ -434,6 +456,10 @@ def run_host_call(
                     start_new_session=os.name != "nt",
                     creationflags=creationflags,
                 )
+                if job is not None:
+                    process._book_genesis_job = job
+                    job.assign(process.pid)
+                    job.resume(process.pid)
                 child_pid = process.pid
                 lock_metadata["child_pid"] = child_pid
                 _write_lock(lock_path, lock_metadata)
@@ -441,18 +467,28 @@ def run_host_call(
                     process_returncode = process.wait(timeout=timeout)
                 except subprocess.TimeoutExpired:
                     timed_out = True
-                    if _terminate_and_reap_owned(process):
+                    owned_shutdown_verified = _terminate_and_reap_owned(process)
+                    if owned_shutdown_verified:
                         process_returncode = process.returncode
                     else:
                         shutdown_unverified = True
                         release_lock = False
                         preserve_child_cwd = True
                         process_returncode = process.poll()
+                if job is not None and not timed_out:
+                    # A successful parent may leave background descendants.
+                    # Drain only this private job before publishing its output.
+                    owned_shutdown_verified = _terminate_and_reap_owned(process)
+                    if not owned_shutdown_verified:
+                        shutdown_unverified = True
+                        release_lock = False
+                        preserve_child_cwd = True
         except (Exception, KeyboardInterrupt) as exc:
             interrupted = isinstance(exc, KeyboardInterrupt)
             termination_error: str | None = None
-            if process is not None and process.poll() is None:
-                if not _terminate_and_reap_owned(process):
+            if process is not None and (job is not None or process.poll() is None):
+                owned_shutdown_verified = _terminate_and_reap_owned(process)
+                if not owned_shutdown_verified:
                     release_lock = False
                     preserve_child_cwd = True
                     termination_error = "owned child could not be terminated and reaped; active lock retained"
@@ -472,6 +508,8 @@ def run_host_call(
                 "pending_response_sha256": _file_hash(paths["response_pending"]),
                 "exit_code": None,
                 "interrupted": interrupted,
+                "owned_process_boundary": "windows_job" if job is not None else "process_group",
+                "owned_shutdown_verified": owned_shutdown_verified,
                 "error": error,
                 "paths": _receipt_paths(book_root, paths),
                 "started_at": started,
@@ -494,7 +532,8 @@ def run_host_call(
             response_read_error = f"could not persist or read the response: {exc}"
         failed_reason = response_read_error
         if shutdown_unverified:
-            failed_reason = "native host call exceeded timeout and owned child shutdown was not verified; active lock retained"
+            outcome = "exceeded timeout" if timed_out else "completed"
+            failed_reason = f"native host call {outcome} and owned child shutdown was not verified; active lock retained"
         elif timed_out:
             failed_reason = f"native host call exceeded timeout_seconds={timeout:g}; owned child tree was terminated"
         elif process_returncode != 0:
@@ -519,6 +558,8 @@ def run_host_call(
             "pending_response_sha256": _file_hash(paths["response_pending"]),
             "exit_code": process_returncode,
             "error": failed_reason,
+            "owned_process_boundary": "windows_job" if job is not None else "process_group",
+            "owned_shutdown_verified": owned_shutdown_verified,
             "paths": _receipt_paths(book_root, paths),
             "started_at": started,
             "finished_at": _now(),
@@ -528,6 +569,8 @@ def run_host_call(
             raise HostCallError(failed_reason, receipt=receipt)
         return receipt
     finally:
+        if job is not None:
+            job.close()
         if not preserve_child_cwd:
             _cleanup_child_cwd(child_temp_base, child_cwd)
         if release_lock:

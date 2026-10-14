@@ -34,6 +34,7 @@ CHILD_SOURCE = r'''
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import time
 
@@ -43,7 +44,18 @@ control.mkdir(parents=True, exist_ok=True)
 (control / "invocations.log").open("a", encoding="utf-8").write(f"{os.getpid()}\n")
 (control / "started").write_text(str(os.getpid()), encoding="ascii")
 
-if mode == "wait":
+if mode in {"tree-wait", "orphan"}:
+    descendant = subprocess.Popen(
+        [sys.executable, "-c",
+         "import pathlib,sys,time; p=pathlib.Path(sys.argv[1]); "
+         "deadline=time.monotonic()+60\n"
+         "while not p.exists() and time.monotonic()<deadline: time.sleep(.01)",
+         str(control / "release-descendant")],
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    (control / "descendant.pid").write_text(str(descendant.pid), encoding="ascii")
+
+if mode in {"wait", "tree-wait"}:
     while not (control / "release").exists():
         time.sleep(0.01)
 elif mode == "empty":
@@ -309,6 +321,99 @@ class HostCallTests(unittest.TestCase):
         response = self.state / "work" / "host-calls" / "stdout-only" / "response"
         self.assertIn("diagnostic stdout", response.read_text(encoding="utf-8"))
 
+    def release_test_descendant(self, control: Path) -> None:
+        """Clean up only the fixture's descendant even when an assertion fails."""
+        control.mkdir(parents=True, exist_ok=True)
+        (control / "release-descendant").write_text("go", encoding="ascii")
+        marker = control / "descendant.pid"
+        if marker.exists():
+            pid = int(marker.read_text(encoding="ascii"))
+            deadline = time.monotonic() + 3
+            while self.pid_alive(pid) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertFalse(self.pid_alive(pid), "fixture descendant did not stop")
+
+    @unittest.skipUnless(os.name == "nt", "Windows native tree ownership")
+    def test_timeout_reaps_descendants_when_taskkill_is_unavailable_and_retry_works(self) -> None:
+        control = self.root / "tree-timeout"
+        unrelated = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+        try:
+            # Reproduce the observed external tree-command failure. The actual
+            # child and descendant remain real Windows processes.
+            with patch.object(subprocess, "run", side_effect=subprocess.TimeoutExpired("taskkill", 3)):
+                with self.assertRaises(HostCallError) as raised:
+                    self.call("tree-timeout", "tree-wait", control=control, timeout=3)
+            parent = int((control / "started").read_text(encoding="ascii"))
+            descendant = int((control / "descendant.pid").read_text(encoding="ascii"))
+            self.assertFalse(self.pid_alive(parent))
+            self.assertFalse(self.pid_alive(descendant), "owned descendant survived timeout")
+            self.assertIsNone(unrelated.poll(), "unrelated process was stopped")
+            self.assertTrue(raised.exception.receipt["owned_shutdown_verified"])
+            self.assertFalse((self.state / "work/host-calls/.active.lock").exists())
+            failed_bytes = self.receipt_path("tree-timeout").read_bytes()
+            self.assertEqual("completed", self.call("tree-retry")["status"])
+            self.assertEqual(failed_bytes, self.receipt_path("tree-timeout").read_bytes())
+        finally:
+            unrelated.terminate()
+            unrelated.wait(timeout=3)
+            self.release_test_descendant(control)
+
+    @unittest.skipUnless(os.name == "nt", "Windows native tree ownership")
+    def test_successful_parent_cannot_leave_an_owned_background_descendant(self) -> None:
+        control = self.root / "orphan"
+        try:
+            result = self.call("orphan", "orphan", control=control)
+            descendant = int((control / "descendant.pid").read_text(encoding="ascii"))
+            self.assertFalse(self.pid_alive(descendant), "response was published with a live descendant")
+            self.assertEqual("completed", result["status"])
+            self.assertTrue(result["owned_shutdown_verified"])
+            self.assertFalse((self.state / "work/host-calls/.active.lock").exists())
+        finally:
+            self.release_test_descendant(control)
+
+    @unittest.skipUnless(os.name == "nt", "Windows native tree ownership")
+    def test_metadata_failure_after_parent_exit_still_verifies_descendant_shutdown(self) -> None:
+        control = self.root / "orphan-metadata"
+
+        def fail_after_parent_exit(path, value):
+            deadline = time.monotonic() + 3
+            while self.pid_alive(value["child_pid"]) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertFalse(self.pid_alive(value["child_pid"]), "fixture parent did not finish")
+            self.assertTrue((control / "descendant.pid").exists())
+            raise OSError("metadata unavailable after parent exit")
+
+        try:
+            with patch.object(host_guard, "_write_lock", side_effect=fail_after_parent_exit):
+                with self.assertRaises(HostCallError) as raised:
+                    self.call("orphan-metadata", "orphan", control=control)
+            self.assertIs(raised.exception.receipt["owned_shutdown_verified"], True)
+            descendant = int((control / "descendant.pid").read_text(encoding="ascii"))
+            self.assertFalse(self.pid_alive(descendant))
+            self.assertFalse((self.state / "work/host-calls/.active.lock").exists())
+            self.assertFalse((self.receipt_path("orphan-metadata").parent / "response").exists())
+        finally:
+            self.release_test_descendant(control)
+
+    @unittest.skipUnless(os.name == "nt", "Windows isolated guard loading")
+    def test_guard_loaded_by_file_path_works_without_scripts_on_python_path(self) -> None:
+        loader = self.root / "isolated_loader.py"
+        loader.write_text(
+            "from importlib.util import spec_from_file_location, module_from_spec\n"
+            "import json, sys\n"
+            "spec = spec_from_file_location('isolated_guard', sys.argv[1])\n"
+            "guard = module_from_spec(spec); spec.loader.exec_module(guard)\n"
+            "print(json.dumps(guard.run_host_call(sys.argv[2], 'isolated', sys.argv[3], sys.argv[4])))\n",
+            encoding="utf-8",
+        )
+        result = subprocess.run(
+            [sys.executable, "-I", str(loader), str(SCRIPT_ROOT / "run_host_call.py"),
+             str(self.state), str(self.packet), self.command_json()],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("completed", json.loads(result.stdout)["status"])
+
     def test_explicit_output_path_missing_is_not_completed_by_stdout(self) -> None:
         with self.assertRaises(HostCallError):
             self.call("missing-output", "missing-output")
@@ -488,7 +593,8 @@ class HostCallTests(unittest.TestCase):
             self.assertIsNone(unrelated_proc.poll(), "timeout killed a process not owned by this call")
         finally:
             (unrelated / "release").write_text("go", encoding="ascii")
-            unrelated_proc.wait(timeout=2)
+            unrelated_proc.communicate(timeout=2)
+            runner.communicate(timeout=5)
 
     def test_stale_owner_with_live_child_remains_blocked(self) -> None:
         control = self.root / "control-stale"
@@ -506,7 +612,7 @@ class HostCallTests(unittest.TestCase):
             self.assertIsNone(child.poll())
         finally:
             (control / "release").write_text("go", encoding="ascii")
-            child.wait(timeout=2)
+            child.communicate(timeout=2)
 
 
 if __name__ == "__main__":

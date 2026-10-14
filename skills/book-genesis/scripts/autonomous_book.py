@@ -553,7 +553,9 @@ class BookWorkflow:
             + "\n\nComplete frozen manuscript:\n" + json.dumps(catalog, ensure_ascii=False)
             + "\ncatalog_sha256: " + catalog_digest(catalog))
         rows = []
-        for number in (1, 2):
+        # Separate native steps retain every judgment, including an unfavorable
+        # third reading. Never reuse one response as another rubric replica.
+        for number in (1, 2, 3):
             response, validation = self.call(f"{key}-{number}", packet, rubric_schema(catalog),
                 lambda p: validate_rubric(snapshot, p, expected_chapters=self.contract["chapters"], catalog_path=folder / "catalog.json"))
             rows.append({"report": str(response.relative_to(self.root)), "validation": validation, "data": read_json(response)})
