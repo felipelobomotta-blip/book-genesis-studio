@@ -209,7 +209,7 @@ def fixture_response(call_id, packet, schema, root):
                 for key in props["chapters"]["items"]["properties"] if key not in ("number", "title")}} for n in (1, 2)],
             "canon": {key: ["The courier returns a stolen letter and confesses."] for key in props["canon"]["properties"]}}
     if "edits" in props:
-        data = json.loads(packet.split("\nProposed plan:\n", 1)[1].split("\nSupported defects:\n", 1)[0])
+        data = json.JSONDecoder().raw_decode(packet.split("\nProposed plan:\n", 1)[1])[0]
         edits = dict.fromkeys(props["edits"]["properties"])
         edits["/chapters/0/events"] = data["chapters"][0]["events"] + " The courier confesses before the door opens."
         return {"edits": edits}

@@ -202,6 +202,67 @@ def plan_repair_schema(data):
                                for path in sorted(plan_text_fields(data))})})
 
 
+def plan_repair_targets(data, catalog, findings):
+    """Bind cited review passages to literal editable fields, without judging them."""
+    fields = plan_text_fields(data)
+    addresses = [{"chapter": row["number"], "title": row["title"], "prefix": f"/chapters/{index}"}
+                 for index, row in enumerate(data["chapters"])]
+    rendered = render_plan(data)
+    texts = {"outline": rendered["artifacts/07-outline.md"], "ledger": rendered["artifacts/09-continuity-ledger.md"]}
+    spans = {name: [] for name in texts}
+    positions = {name: 0 for name in texts}
+
+    def bind(source, fragment, path):
+        start = texts[source].find(fragment, positions[source])
+        if start < 0:
+            raise ValueError("Plan repair field differs from rendered source: " + path)
+        end = start + len(fragment)
+        spans[source].append((start, end, path))
+        positions[source] = end
+
+    # Record literal rendered spans in their actual order. Continuations and
+    # compacted bullet groups can then cite all overlapping fields without
+    # guessing a chapter/index from the passage ID or matching repeated words.
+    for index, chapter in enumerate(data["chapters"]):
+        prefix = f"/chapters/{index}"
+        bind("outline", f"## Chapter {chapter['number']}: {chapter['title']}", prefix + "/title")
+        for key, value in chapter.items():
+            if key not in ("number", "title"):
+                bind("outline", f"**{key.replace('_', ' ').capitalize()}:** {value}", prefix + "/" + key)
+    for index, promise in enumerate(data["promises"]):
+        prefix = f"/promises/{index}"
+        bind("outline", f"**Promise:** {promise['promise']}", prefix + "/promise")
+        bind("outline", f"**Setup, chapters {promise['setup_chapters']}:** {promise['setup_action']}", prefix + "/setup_action")
+        bind("outline", f"**Resolution, chapters {promise['payoff_chapters']}:** {promise['on_page_resolution']}", prefix + "/on_page_resolution")
+    for section in ("writer_facts", "canon"):
+        for category, facts in data[section].items():
+            for index, fact in enumerate(facts):
+                bind("ledger", "- " + fact, f"/{section}/{category}/{index}")
+    wanted = {identifier for finding in findings for identifier in finding["evidence_ids"]}
+    evidence = []
+    seen = set()
+    for source in catalog["sources"]:
+        name = source["source"]
+        cursor = 0
+        if name in texts and source["sha256"] != digest(texts[name].encode("utf-8")):
+            raise ValueError("Plan repair catalog differs from the current rendered " + name)
+        for passage in source["passages"]:
+            paths = []
+            if name in texts:
+                start = texts[name].find(passage["text"], cursor)
+                if start < 0:
+                    raise ValueError("Plan repair passage differs from rendered source: " + passage["id"])
+                cursor = start + len(passage["text"])
+                paths = [path for begin, end, path in spans[name] if begin < cursor and end > start]
+            if passage["id"] in wanted:
+                evidence.append({"passage_id": passage["id"], "source": source["source"],
+                                 "text": passage["text"], "editable_paths": paths})
+                seen.add(passage["id"])
+    if wanted != seen:
+        raise ValueError("Unknown plan repair evidence: " + ", ".join(sorted(wanted - seen)))
+    return {"chapter_addresses": addresses, "editable_fields": fields, "cited_evidence": evidence}
+
+
 def plan_edit_items(edits):
     """Literal map application; never select between conflicting alternatives.
 

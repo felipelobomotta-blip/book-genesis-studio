@@ -108,14 +108,15 @@ class HostCallTests(unittest.TestCase):
             "sys.path.insert(0, sys.argv[1])\n"
             "import run_host_call as host_guard\n"
             "from run_host_call import run_host_call, HostCallError\n"
-            "if len(sys.argv) > 6 and sys.argv[6] == 'fail-lock':\n"
+            "if len(sys.argv) > 6 and sys.argv[6] in {'fail-lock', 'record-child'}:\n"
             "    original = host_guard._write_lock\n"
             "    def fail_after_spawn(path, value):\n"
             "        if value.get('child_pid') is not None:\n"
             "            control = Path(json.loads(sys.argv[5])['argv'][3])\n"
             "            control.mkdir(parents=True, exist_ok=True)\n"
             "            (control / 'owned-child.pid').write_text(str(value['child_pid']), encoding='ascii')\n"
-            "            raise OSError('metadata write injected failure')\n"
+            "            if sys.argv[6] == 'fail-lock':\n"
+            "                raise OSError('metadata write injected failure')\n"
             "        original(path, value)\n"
             "    host_guard._write_lock = fail_after_spawn\n"
             "if len(sys.argv) > 7 and sys.argv[7] == 'slow-tree':\n"
@@ -573,23 +574,32 @@ class HostCallTests(unittest.TestCase):
     def test_timeout_terminates_only_owned_child(self) -> None:
         owned = self.root / "control-owned"
         unrelated = self.root / "control-unrelated"
+        # A valid timeout can reap a child before Python reaches its marker.
+        # Delay startup deliberately and observe its PID from the controller.
+        self.child.write_text("import time; time.sleep(0.3)\n" + self.child.read_text(encoding="utf-8"), encoding="utf-8")
         unrelated_proc = subprocess.Popen(self.command("wait", unrelated, explicit_output=False), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         command_json = self.command_json("wait", owned, timeout=0.08)
         runner = subprocess.Popen(
-            [sys.executable, str(self.runner), str(SCRIPT_ROOT), str(self.state), "timeout", str(self.packet), command_json],
+            [sys.executable, str(self.runner), str(SCRIPT_ROOT), str(self.state), "timeout", str(self.packet), command_json, "record-child"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
         try:
             self.wait_for_started(unrelated)
-            self.wait_for_started(owned)
             try:
                 runner.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 runner.kill()
                 runner.wait(timeout=2)
                 self.fail("owned timeout call did not return")
+            child_pid = int((owned / "owned-child.pid").read_text(encoding="ascii"))
+            self.assertFalse(self.pid_alive(child_pid), "owned child survived timeout")
+            receipt = json.loads(self.receipt_path("timeout").read_text(encoding="utf-8"))
+            self.assertEqual("failed", receipt["status"])
+            self.assertIn("exceeded timeout_seconds=0.08", receipt["error"])
+            self.assertTrue(receipt["owned_shutdown_verified"])
+            self.assertFalse((self.state / "work/host-calls/.active.lock").exists())
             self.assertIsNone(unrelated_proc.poll(), "timeout killed a process not owned by this call")
         finally:
             (unrelated / "release").write_text("go", encoding="ascii")

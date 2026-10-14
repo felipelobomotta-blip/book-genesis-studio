@@ -40,7 +40,7 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
     INTEGER, array, artifact_schema, enum, obj, text_catalog, review_schema, hook_schema, validate_hook,
     validate_json, validate_prose, validate_prose_text, validate_review, neutral_contract_schema,
     plan_schema, validate_neutral, render_plan,
-    plan_repair_schema, plan_edit_items, apply_plan_edits, validate_shape, character_context, production_facts)
+    plan_repair_schema, plan_repair_targets, plan_edit_items, apply_plan_edits, validate_shape, character_context, production_facts)
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 
@@ -256,8 +256,9 @@ class BookWorkflow:
             for attempt in range(4):
                 freeze(self.root / f"work/plan-candidates/plan-{attempt}.json", encoded(data))
                 rendered = render_plan(data)
-                review = self.review(f"plan-check-{attempt}", {"approved-brief": inputs["artifacts/00-brief.md"],
-                    "outline": rendered["artifacts/07-outline.md"], "ledger": rendered["artifacts/09-continuity-ledger.md"]}, PLAN_PASSES,
+                review_sources = {"approved-brief": inputs["artifacts/00-brief.md"],
+                    "outline": rendered["artifacts/07-outline.md"], "ledger": rendered["artifacts/09-continuity-ledger.md"]}
+                review = self.review(f"plan-check-{attempt}", review_sources, PLAN_PASSES,
                     "Verify the plan against the neutral approved brief. Examine every chapter and every timeline/world-rule entry. "
                     "A contradiction of an exact constraint blocks drafting. Use revise for any such contradiction. "
                     "Treat ordinary approximate durations as approximate. Do not invent exact requirements. "
@@ -276,7 +277,15 @@ class BookWorkflow:
                 repair += "If several defects affect a field, consolidate their changes into its single replacement value, "
                 repair += "not alternative values or sequential patches. At least one field must change substantively. "
                 repair += "Replacement fields contain ONLY current story facts, never what was fixed, who reviewed it, pass/fail or process history."
+                repair += (" Use the supplied chapter_addresses and cited_evidence.editable_paths literally. "
+                    "Chapter numbers are not array indexes: Chapter 8 uses /chapters/7, not /chapters/8. "
+                    "Never infer an edit path from a passage ID, a chapter number or a property's display order. "
+                    "Match the current editable_fields text to the cited passage before choosing the replacement slot. "
+                    "The address map identifies sources; it does not decide which story resolution is correct.")
                 repair += "\nProposed plan:\n" + json.dumps(data, ensure_ascii=False, sort_keys=True)
+                repair += "\nExact repair targets:\n" + json.dumps(
+                    plan_repair_targets(data, text_catalog(review_sources), review["data"]["findings"]),
+                    ensure_ascii=False)
                 repair += "\nSupported defects:\n" + json.dumps(review["data"]["findings"], ensure_ascii=False, sort_keys=True)
                 earlier = []
                 for previous in range(attempt):
