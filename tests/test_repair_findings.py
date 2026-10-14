@@ -66,6 +66,31 @@ class RepairFindingTests(unittest.TestCase):
         finding["original_evidence"] = finding["proposed_evidence"]
         self.assertTrue(self.errors(finding))
 
+    def test_missing_quote_feedback_locates_field_row_and_exact_same_source_matches(self):
+        finding = self.finding()
+        correct = finding["proposed_evidence"][0]["passage_id"]
+        wrong = self.quote(self.proposals[1], "Ada gave the brass fork to Cal.")["passage_id"]
+        finding["proposed_evidence"][0]["passage_id"] = wrong
+        before = encoded(finding)
+        errors = self.errors(finding)
+        self.assertEqual(1, len(errors))
+        self.assertIn("proposed_evidence[1]", errors[0])
+        self.assertIn(f"passage_id={wrong}", errors[0])
+        self.assertIn("proposed/chapter-01.md", errors[0])
+        self.assertIn(f"Exact quote matches within this same source: {correct}", errors[0])
+        self.assertIn("The school door was locked by Ada.", errors[0])
+        self.assertEqual(before, encoded(finding))
+        self.assertNotIn("verdict", errors[0])
+
+    def test_quote_feedback_never_suggests_another_version_or_invented_text(self):
+        finding = self.finding()
+        finding["proposed_evidence"][0]["quote"] = "The school door remained open."
+        errors = self.errors(finding)
+        self.assertTrue(any("No exact quote match exists in this source" in e for e in errors))
+        self.assertFalse(any("Exact quote matches within this same source:" in e for e in errors))
+        finding["proposed_evidence"][0]["quote"] = "The school door had been locked by Ada."
+        self.assertTrue(any("No exact quote match exists in this source" in e for e in self.errors(finding)))
+
     def test_unchanged_custody_cannot_be_claimed_as_an_introduced_regression(self):
         finding = self.finding()
         finding["original_evidence"] = [self.quote(self.originals[1], "Ada gave the brass fork to Cal.")]

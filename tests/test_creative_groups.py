@@ -185,6 +185,44 @@ class CreativeGroupTests(unittest.TestCase):
         self.assertEqual([1], self.workflow.journal.data["revision_chapters"])
         self.assertEqual(7, len(self.calls))
 
+    def test_precise_quote_feedback_repairs_a_negative_report_without_reversing_its_verdict(self):
+        self.block = True
+        original = self.generate
+        attempts, correct = [], []
+        def wrong_passage(call_id, packet, schema, root):
+            report = original(call_id, packet, schema, root)
+            if "chapters" not in schema["properties"]:
+                return report
+            attempts.append(call_id)
+            if len(attempts) == 1:
+                catalog = parse_catalog(packet.split("\nCatalog wire:\n", 1)[1])
+                source = next(s for s in catalog["sources"] if s["source"] == "proposed/chapter-01.md")
+                passage = next(p for p in source["passages"] if p["text"].startswith("The gate is closed."))
+                correct.append(passage["id"])
+                report["findings"][0]["proposed_evidence"][0]["quote"] = passage["text"]
+            else:
+                feedback = packet.split("Deterministic output validation rejected", 1)[1]
+                self.assertIn("proposed_evidence[1]", feedback)
+                self.assertIn("proposed/chapter-01.md", feedback)
+                self.assertIn("Exact quote matches within this same source: " + correct[0], feedback)
+                self.assertNotIn('"verdict"', feedback)
+                self.assertNotIn("Previous rejected producer response", packet)
+            return report
+        self.workflow.transport = receipt_transport(wrong_passage)
+        outcomes = self.run_group()
+        self.assertTrue(all(r["decision"] == "reject" for r in outcomes))
+        self.assert_originals()
+        self.assertEqual(2, len(attempts))
+        self.assertFalse(any("preference" in c for c in self.calls))
+        step = self.workflow.journal.data["steps"]["revision-1-creative-group-1-3-check"]
+        self.assertEqual("completed", step["status"])
+        self.assertEqual("block", read_json(self.root / step["response"])["verdict"])
+        self.assertFalse(step["request"]["feedback_response"])
+        calls = len(self.calls)
+        self.workflow = self.new_workflow()
+        self.assertEqual(outcomes, self.run_group())
+        self.assertEqual(calls, len(self.calls))
+
     def test_invalid_member_does_not_discard_valid_companion_without_full_book_review(self):
         self.invalid = {3}
         result = self.run_group()
