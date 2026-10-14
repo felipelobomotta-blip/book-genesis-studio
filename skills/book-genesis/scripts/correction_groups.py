@@ -13,6 +13,18 @@ from workflow_roles import TEXT, INTEGER, array, enum, obj, text_catalog, valida
 from workflow_state import WorkflowError, digest, encoded, freeze, read_json, verified_review_packet
 
 
+def group_key(kind, number, tasks):
+    """Leave room for native reader suffixes; retain legacy short identifiers."""
+    if kind not in {"facts", "creative"}:
+        raise WorkflowError("Unsupported revision group kind")
+    members = [t["chapter"] for t in tasks]
+    prefix = f"revision-{number}-{kind}-group-"
+    key = prefix + "-".join(map(str, members))
+    if len(key) <= 70:
+        return key
+    return prefix + f"{min(members)}-{max(members)}-" + digest(encoded(members))[:24]
+
+
 def connected_tasks(tasks, *, mode="factual"):
     """Shared historical issue IDs connect tasks of one kind transitively."""
     if mode not in {"factual", "creative"}:
@@ -200,6 +212,7 @@ def verify_receipt(journal, manifest_path, call_key, receipt_path):
     for row in manifest["publications"]:
         if journal.data["canonical"].get(row["target"]) != row["candidate"]["sha256"]:
             raise WorkflowError("Correction-group receipt has no completed publication")
+    verify_reviewed_manuscript(journal, manifest, promoted=True)
     journal.check_canonical()
     return manifest
 
@@ -238,12 +251,24 @@ def replace_verified(target, candidate, before, transaction_id):
         holder.unlink()
 
 
+def verify_reviewed_manuscript(journal, manifest, *, promoted=False):
+    """V2 groups retain original members: their complete reviewed canon must match."""
+    if manifest["schema_version"] == 2:
+        original = {"manuscript/chapters/" + name.removeprefix("original/"): row["sha256"]
+                    for name, row in manifest["sources"].items() if name.startswith("original/")}
+        if promoted:
+            original.update({row["target"]: row["candidate"]["sha256"] for row in manifest["publications"]})
+        if journal.data["canonical"] != original:
+            raise WorkflowError("Correction group's complete reviewed manuscript is stale")
+
+
 def recover(journal):
     pending = journal.data["pending_mutation"]
     journal.verify_files([pending["manifest"]])
     manifest = verified_group(journal, journal.root / pending["manifest"]["path"], pending["review_key"])
     if pending.get("kind") != manifest["kind"]:
         raise WorkflowError("Reserved group kind differs from its verified manifest")
+    verify_reviewed_manuscript(journal, manifest)
     publications = manifest["publications"]
     targets = {row["target"] for row in publications}
     interrupted_holders = []
@@ -306,11 +331,7 @@ def publish(journal, manifest_path, call_key, receipt_path):
     manifest = verified_group(journal, manifest_path, call_key)
     if not manifest["publications"]:
         raise WorkflowError("An unchanged group cannot be published as a revision")
-    if manifest["kind"] == "factual_correction_group" and manifest["schema_version"] == 2:
-        original = {"manuscript/chapters/" + name.removeprefix("original/"): row["sha256"]
-                    for name, row in manifest["sources"].items() if name.startswith("original/")}
-        if journal.data["canonical"] != original:
-            raise WorkflowError("Correction group's complete reviewed manuscript is stale")
+    verify_reviewed_manuscript(journal, manifest)
     for row in manifest["publications"]:
         if journal.data["canonical"].get(row["target"]) != row["before"]:
             raise WorkflowError("Correction group's accepted manuscript is stale")

@@ -101,8 +101,17 @@ def catalog_for(journal, manifest):
 
 
 def packet_for(manifest, catalog):
-    return (INSTRUCTIONS + "\n" + FINDING_INSTRUCTIONS + "\nTasks and shared strategy:\n" + json.dumps(
-        {"tasks": manifest["tasks"], "strategy": manifest["strategy"]}, ensure_ascii=False, sort_keys=True)
+    instructions = INSTRUCTIONS
+    assignments = {"tasks": manifest["tasks"], "strategy": manifest["strategy"]}
+    if manifest.get("schema_version") == 2:
+        instructions += ("\nRetained members have no usable changed proposal. Their ORIGINAL prose remains in the proposed book, "
+            "and their assigned tickets remain UNRESOLVED. Review only the actual proposed replacements; "
+            "do not count a retained member as repaired. Block any proposed repair that depends on an absent companion edit "
+            "or leaves its own assigned ticket incomplete. An unrelated unresolved ticket in a retained original is not "
+            "by itself a reason to discard an otherwise complete, consistent repair. No failed response is candidate prose.\n")
+        assignments["retained_members"] = manifest["retained_members"]
+    return (instructions + "\n" + FINDING_INSTRUCTIONS + "\nTasks and shared strategy:\n" + json.dumps(
+        assignments, ensure_ascii=False, sort_keys=True)
         + "\nComplete sources (lossless text blocks):\n"
         + "Each S line names a source and its unchanged file hash. Each P line gives a passage ID and its text length; "
           "the following text is that complete evidence block. Cite the supplied full passage IDs. "
@@ -144,15 +153,46 @@ def verify_step(journal, key, packet, schema):
     return response
 
 
+def retained_record(journal, path):
+    """Keep rejected attempts and no-op evidence bound to the retained original."""
+    outcome = read_json(path)
+    if outcome.get("mode") != "creative" or outcome.get("decision") != "reject":
+        raise WorkflowError("Retained creative member must have an original rejected outcome")
+    records = outcome.get("evidence", [])
+    records = [records] if isinstance(records, dict) else list(records)
+    if outcome.get("candidate"):
+        records.append(outcome["candidate"])
+    step = journal.data["steps"].get(path.stem.removesuffix("-outcome"), {})
+    records += step.get("evidence", []) + step.get("rejected_evidence", [])
+    records = [journal.record_file(path)] + records
+    journal.verify_files(records)
+    return {"chapter": outcome["chapter"], "status": "unresolved_original_retained",
+            "reason": outcome["reason"], "outcome": journal.record_file(path), "evidence": records}
+
+
+def verify_retained(journal, manifest):
+    for row in manifest.get("retained_members", []):
+        journal.verify_files([row["outcome"]] + row["evidence"])
+        if row != retained_record(journal, journal.root / row["outcome"]["path"]):
+            raise WorkflowError("Retained creative member differs from its rejected evidence")
+        if f"original/chapter-{row['chapter']:02d}.md" not in manifest["sources"]:
+            raise WorkflowError("Retained creative member is missing its complete original")
+
+
 def verify(journal, manifest_path, call_key):
     manifest = read_json(manifest_path)
-    if manifest.get("kind") != "creative_revision_group" or manifest.get("schema_version") != 1:
+    if manifest.get("kind") != "creative_revision_group" or manifest.get("schema_version") not in (1, 2):
         raise WorkflowError("Unsupported creative revision group")
+    retained = manifest.get("retained_members", [])
+    if (manifest["schema_version"] == 1 and retained) or (manifest["schema_version"] == 2 and not retained):
+        raise WorkflowError("Creative group version differs from its retained members")
+    verify_retained(journal, manifest)
     catalog = catalog_for(journal, manifest)
     members = [r["chapter"] for r in manifest["publications"]]
-    if len(members) < 2 or len(set(members)) != len(members):
+    assigned = members + [r["chapter"] for r in retained]
+    if not members or len(assigned) < 2 or len(set(assigned)) != len(assigned):
         raise WorkflowError("Creative group requires distinct chapters")
-    if (sorted(t["chapter"] for t in manifest["tasks"]) != sorted(members)
+    if (sorted(t["chapter"] for t in manifest["tasks"]) != sorted(assigned)
             or any(t["mode"] != "creative" for t in manifest["tasks"])):
         raise WorkflowError("Creative group publications differ from its tasks")
     if {n for n in manifest["sources"] if n.startswith("proposed/")} != {f"proposed/chapter-{n:02d}.md" for n in members}:
@@ -165,7 +205,8 @@ def verify(journal, manifest_path, call_key):
         name = f"chapter-{row['chapter']:02d}.md"
         if (row["target"] != "manuscript/chapters/" + name
                 or row["before"] != manifest["sources"]["original/" + name]["sha256"]
-                or row["candidate"] != manifest["sources"]["proposed/" + name]):
+                or row["candidate"] != manifest["sources"]["proposed/" + name]
+                or (manifest["schema_version"] == 2 and row["before"] == row["candidate"]["sha256"])):
             raise WorkflowError("Creative group publication differs from its reviewed sources")
     for kind in ("accepted", "candidate"):
         row = manifest["volumes"][kind]
@@ -193,11 +234,11 @@ def verify(journal, manifest_path, call_key):
 
 
 def execute(workflow, number, tasks, strategy):
-    from correction_groups import publish, verify_receipt
+    from correction_groups import group_key, publish, verify_receipt
     from export_book import Chapter, count_prose_words
     from editorial_feedback import score_blind
     journal, root = workflow.journal, workflow.root
-    key = f"revision-{number}-creative-group-" + "-".join(str(t["chapter"]) for t in tasks)
+    key = group_key("creative", number, tasks)
     folder = root / "work/creative-groups" / key
     manifest_path = folder / "manifest.json"
     outcomes_path = root / f"evaluations/decisions/{key}-outcomes.json"
@@ -220,23 +261,25 @@ def execute(workflow, number, tasks, strategy):
             prepared.append(staged)
             if "decision" not in staged:
                 companions[staged["target"].name] = staged["candidate"].read_bytes().decode("utf-8")
-        if any("decision" in p for p in prepared):
-            for p in prepared:
-                if "decision" in p:
-                    evidence.append(journal.record_file(root / f"evaluations/decisions/revision-{number}-c{p['chapter']:02d}-outcome.json"))
-                else:
-                    evidence += [journal.record_file(p["accepted"]), journal.record_file(p["candidate"])]
+        retained = [retained_record(journal,
+            root / f"evaluations/decisions/revision-{number}-c{p['chapter']:02d}-outcome.json")
+            for p in prepared if "decision" in p]
+        evidence += [record for row in retained for record in row["evidence"]]
+        prepared = [p for p in prepared if "decision" not in p]
+        if not prepared:
             return save_outcomes(workflow, tasks, key, outcomes_path, "reject",
-                "At least one coordinated proposal was invalid or unchanged; every original chapter is retained.", evidence)
+                "No changed validated proposal remains; every original chapter is retained.", evidence, retained)
         sources = {"original/" + p.name: journal.record_file(p) for p in prepared[0]["manuscript"]}
         sources.update({"proposed/" + p["target"].name: journal.record_file(p["candidate"]) for p in prepared})
         sources.update({"contract/" + n: journal.record_file(root / "artifacts" / n) for n in
                         ("00-brief.md", "03-characters.md", "05-voice.md")})
-        manifest = {"schema_version": 1, "kind": "creative_revision_group", "tasks": score_blind(tasks),
+        manifest = {"schema_version": 2 if retained else 1, "kind": "creative_revision_group", "tasks": score_blind(tasks),
             "strategy": score_blind(strategy), "sources": sources, "comparison_key": key + "-preference",
             "preference_decision": preference_path.relative_to(root).as_posix(),
             "publications": [{"chapter": p["task"]["chapter"], "target": p["target"].relative_to(root).as_posix(),
                 "before": digest(p["accepted"].read_bytes()), "candidate": journal.record_file(p["candidate"])} for p in prepared]}
+        if retained:
+            manifest["retained_members"] = retained
         volumes = {}
         for kind in ("accepted", "candidate"):
             path = folder / (kind + ".md")
@@ -255,7 +298,8 @@ def execute(workflow, number, tasks, strategy):
         decision, reason = "reject", "Combined creative revisions violate the frozen production length."
         if workflow.contract["min_words"] <= total <= workflow.contract["max_words"]:
             catalog = catalog_for(journal, manifest)
-            members = [t["chapter"] for t in tasks]
+            members = [row["chapter"] for row in manifest["publications"]]
+            verify_retained(journal, manifest)
             schema = schema_for(catalog, members)
             try:
                 response, _ = workflow.call(call_key, packet_for(manifest, catalog), schema,
@@ -275,6 +319,8 @@ def execute(workflow, number, tasks, strategy):
                     if decision == "promote":
                         publish(journal, manifest_path, call_key, receipt_path)
     evidence += [journal.record_file(manifest_path)] + list(manifest["sources"].values()) + list(manifest["volumes"].values())
+    retained = manifest.get("retained_members", [])
+    evidence += [record for row in retained for record in row["evidence"]]
     for step_key, step in journal.data["steps"].items():
         if step_key == call_key or step_key.startswith(manifest["comparison_key"] + "-"):
             evidence += step.get("evidence", []) + step.get("rejected_evidence", [])
@@ -286,18 +332,20 @@ def execute(workflow, number, tasks, strategy):
     if decision == "promote":
         evidence.append(journal.record_file(receipt_path))
         changed = journal.data.setdefault("revision_chapters", [])
-        for task in tasks:
-            if task["chapter"] not in changed:
-                changed.append(task["chapter"])
+        for row in manifest["publications"]:
+            if row["chapter"] not in changed:
+                changed.append(row["chapter"])
         journal.save()
         workflow.sync()
-    return save_outcomes(workflow, tasks, key, outcomes_path, decision, reason, evidence)
+    return save_outcomes(workflow, tasks, key, outcomes_path, decision, reason, evidence, retained)
 
 
-def save_outcomes(workflow, tasks, key, path, decision, reason, evidence):
-    outcomes = [{"chapter": t["chapter"], "mode": "creative", "decision": decision,
-                 "reason": reason, "group": key} for t in tasks]
+def save_outcomes(workflow, tasks, key, path, decision, reason, evidence, retained=()):
+    kept = {row["chapter"]: row for row in retained}
+    outcomes = [{"chapter": t["chapter"], "mode": "creative", "decision": "reject" if t["chapter"] in kept else decision,
+                 "reason": kept[t["chapter"]]["reason"] if t["chapter"] in kept else reason, "group": key} for t in tasks]
     workflow.journal.verify_files(evidence)
     freeze(path, encoded({"outcomes": outcomes, "evidence": evidence}))
-    workflow.log(f"Revision group | {decision} | chapters " + ", ".join(str(t["chapter"]) for t in tasks))
+    workflow.log(f"Revision group | {decision} | chapters " + ", ".join(str(t["chapter"]) for t in tasks if t["chapter"] not in kept)
+                 + (" | retained unresolved originals: " + ", ".join(map(str, kept)) if kept else ""))
     return outcomes

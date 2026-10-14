@@ -63,6 +63,7 @@ class CreativeGroupTests(unittest.TestCase):
             "author_name": "QA", "model": "exact-test-model", "effort": "high", "idea": "Rescue through the gate.", "language": "English"}))
         freeze(self.root / ".book-genesis/skills/.book-genesis-install.json", b'{}')
         self.calls, self.block, self.prefer, self.malformed, self.noop = [], False, True, False, False
+        self.invalid = set()
         self.workflow = self.new_workflow()
         self.originals = {}
         for n in (1, 2, 3):
@@ -84,12 +85,14 @@ class CreativeGroupTests(unittest.TestCase):
         self.calls.append(call_id)
         props = schema["properties"]
         if "prose" in props:
-            context = json.loads(packet.rsplit("\n\n", 1)[1])
-            self.assertEqual(1, len(context["companion_tasks"]))
-            if context["task"]["chapter"] == 3:
+            context, _ = json.JSONDecoder().raw_decode('{"task":' + packet.split('\n\n{"task":', 1)[1])
+            self.assertEqual(len(self.tasks) - 1, len(context["companion_tasks"]))
+            if context["task"]["chapter"] == 3 and 1 not in self.invalid:
                 self.assertIn("closed", context["unaccepted_companion_proposals"]["chapter-01.md"])
                 self.assertIn("open", context["other_current_chapters"]["chapter-01.md"])
             prose = context["accepted_chapter"]
+            if context["task"]["chapter"] in self.invalid:
+                return {"prose": "# Too short\n\nNo scene.", "continuity_delta": "No usable proposal."}
             if not (self.noop and context["task"]["chapter"] == 3):
                 prose = prose.replace("The passage is open.", "The gate is closed. She chooses the window.")
             return {"prose": prose, "continuity_delta": "The gate is closed; she uses the window."}
@@ -174,11 +177,150 @@ class CreativeGroupTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
             self.run_group()
 
-    def test_unchanged_member_cannot_partially_publish_the_group(self):
+    def test_unchanged_member_is_retained_while_valid_companion_still_needs_both_reviews(self):
         self.noop = True
+        result = self.run_group()
+        self.assertEqual(["promote", "reject"], [r["decision"] for r in result])
+        self.assertEqual(self.originals["chapter-03.md"], (self.root / "manuscript/chapters/chapter-03.md").read_bytes())
+        self.assertEqual([1], self.workflow.journal.data["revision_chapters"])
+        self.assertEqual(7, len(self.calls))
+
+    def test_invalid_member_does_not_discard_valid_companion_without_full_book_review(self):
+        self.invalid = {3}
+        result = self.run_group()
+        self.assertEqual(["promote", "reject"], [r["decision"] for r in result])
+        self.assertEqual(self.originals["chapter-03.md"], (self.root / "manuscript/chapters/chapter-03.md").read_bytes())
+        self.assertEqual([1], self.workflow.journal.data["revision_chapters"])
+        self.assertEqual(8, len(self.calls))
+        manifest = read_json(self.root / "work/creative-groups/revision-1-creative-group-1-3/manifest.json")
+        self.assertEqual(2, manifest["schema_version"])
+        self.assertEqual([3], [r["chapter"] for r in manifest["retained_members"]])
+        self.assertNotIn("proposed/chapter-03.md", manifest["sources"])
+        self.assertIn("The passage is open.", groups.volume(self.workflow.journal, manifest, True).decode())
+        self.workflow = self.new_workflow()
+        self.assertEqual(result, self.run_group())
+        self.assertEqual(8, len(self.calls))
+
+    def test_partial_group_still_blocks_a_dependency_on_the_missing_repair(self):
+        self.invalid = {3}
+        original = self.generate
+        def missing_companion(call_id, packet, schema, root):
+            if "chapters" not in schema["properties"]:
+                return original(call_id, packet, schema, root)
+            self.calls.append(call_id)
+            assignments, _ = json.JSONDecoder().raw_decode(packet.split("Tasks and shared strategy:\n", 1)[1])
+            self.assertEqual([3], [r["chapter"] for r in assignments["retained_members"]])
+            self.assertEqual("unresolved_original_retained", assignments["retained_members"][0]["status"])
+            self.assertEqual([1, 3], [t["chapter"] for t in assignments["tasks"]])
+            self.assertIn("depends on an absent companion edit", packet)
+            sources = {s["source"]: s for s in parse_catalog(packet.split("\nCatalog wire:\n", 1)[1])["sources"]}
+            self.assertNotIn("proposed/chapter-03.md", sources)
+            retained_open = any("The passage is open." in p["text"] for p in sources["original/chapter-03.md"]["passages"])
+            proposed_closed = any("The gate is closed." in p["text"] for p in sources["proposed/chapter-01.md"]["passages"])
+            self.assertTrue(retained_open and proposed_closed)
+            return group_report(packet, schema, blocked=retained_open and proposed_closed)
+        self.workflow.transport = receipt_transport(missing_companion)
         self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
         self.assert_originals()
-        self.assertEqual(2, len(self.calls))
+        self.assertEqual(4, len(self.calls))
+        self.assertTrue(any("-check-" in c for c in self.calls))
+        self.assertFalse(any("preference" in c for c in self.calls))
+
+    def test_all_invalid_members_keep_originals_without_review_or_poll(self):
+        self.invalid = {1, 3}
+        self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
+        self.assert_originals()
+        self.assertEqual(4, len(self.calls))
+        self.assertFalse(any("-check-" in c or "preference" in c for c in self.calls))
+
+    def test_partial_group_keeps_preference_rejection_and_never_changes_retained_member(self):
+        self.invalid, self.prefer = {3}, False
+        self.assertTrue(all(r["decision"] == "reject" for r in self.run_group()))
+        self.assert_originals()
+        self.assertEqual(8, len(self.calls))
+
+    def test_failed_native_attempt_tampering_blocks_partial_group_replay(self):
+        self.invalid = {3}
+        self.run_group()
+        response = next((self.root / "work/host-calls").glob("*-revision-1-c03-*/response"))
+        response.write_bytes(response.read_bytes() + b" ")
+        with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
+            self.run_group()
+        self.assertEqual(8, len(self.calls))
+
+    def test_all_rejected_group_also_preserves_failed_native_evidence(self):
+        self.invalid = {1, 3}
+        self.run_group()
+        response = next((self.root / "work/host-calls").glob("*-revision-1-c01-*/response"))
+        response.write_bytes(response.read_bytes() + b" ")
+        with self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
+            self.run_group()
+
+    def test_new_retained_canon_after_review_prevents_partial_publication(self):
+        self.invalid = {3}
+        compare = self.workflow.compare_revision
+        def change_retained(*args, **kwargs):
+            result = compare(*args, **kwargs)
+            original = self.root / "manuscript/chapters/chapter-03.md"
+            original.write_bytes(original.read_bytes() + b"\nNew authorized canon.\n")
+            self.workflow.journal.data["canonical"]["manuscript/chapters/chapter-03.md"] = groups.digest(original.read_bytes())
+            self.workflow.journal.save()
+            return result
+        self.workflow.compare_revision = change_retained
+        with self.assertRaisesRegex(WorkflowError, "complete reviewed manuscript is stale"):
+            self.run_group()
+        self.assertEqual(self.originals["chapter-01.md"], (self.root / "manuscript/chapters/chapter-01.md").read_bytes())
+
+    def three_member_partial(self):
+        self.invalid = {3}
+        self.tasks.insert(1, {**self.tasks[0], "chapter": 2})
+
+    def test_partial_group_recovers_only_changed_members_without_repolling(self):
+        self.three_member_partial()
+        self.interrupt()
+        self.workflow = self.new_workflow()
+        result = self.run_group()
+        self.assertEqual(["promote", "promote", "reject"], [r["decision"] for r in result])
+        self.assertEqual([1, 2], self.workflow.journal.data["revision_chapters"])
+        self.assertEqual(self.originals["chapter-03.md"], (self.root / "manuscript/chapters/chapter-03.md").read_bytes())
+        self.assertEqual(9, len(self.calls))
+
+    def test_recovery_rejects_a_new_canonical_retained_chapter_not_seen_by_reviewers(self):
+        self.three_member_partial()
+        self.interrupt()
+        target = self.root / "manuscript/chapters/chapter-03.md"
+        target.write_bytes(target.read_bytes() + b"\nNew canonical fact.\n")
+        # Even a recorded update cannot make the old whole-book review current.
+        self.workflow.journal.data["canonical"]["manuscript/chapters/chapter-03.md"] = groups.digest(target.read_bytes())
+        self.workflow.journal.save()
+        with self.assertRaisesRegex(WorkflowError, "complete reviewed manuscript is stale"):
+            self.new_workflow()
+        self.assertEqual(self.originals["chapter-02.md"], (self.root / "manuscript/chapters/chapter-02.md").read_bytes())
+
+    def test_receipt_without_outcomes_rejects_a_new_canonical_retained_chapter(self):
+        self.invalid = {3}
+        with patch.object(groups, "save_outcomes", side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_group()
+        self.assertTrue((self.root / "evaluations/promotions/revision-1-creative-group-1-3.json").exists())
+        self.assertFalse((self.root / "evaluations/decisions/revision-1-creative-group-1-3-outcomes.json").exists())
+        self.assertIsNone(self.workflow.journal.data["pending_mutation"])
+        target = self.root / "manuscript/chapters/chapter-03.md"
+        target.write_bytes(target.read_bytes() + b"\nNew canonical fact after publication.\n")
+        self.workflow.journal.data["canonical"]["manuscript/chapters/chapter-03.md"] = groups.digest(target.read_bytes())
+        self.workflow.journal.save()
+        self.workflow = self.new_workflow()
+        with self.assertRaisesRegex(WorkflowError, "complete reviewed manuscript is stale"):
+            self.run_group()
+        self.assertEqual(8, len(self.calls))
+
+    def test_receipt_without_outcomes_resumes_unchanged_partial_group_without_polling(self):
+        self.invalid = {3}
+        with patch.object(groups, "save_outcomes", side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_group()
+        self.workflow = self.new_workflow()
+        result = self.run_group()
+        self.assertEqual(["promote", "reject"], [r["decision"] for r in result])
+        self.assertEqual(8, len(self.calls))
 
     def interrupt(self):
         original = transactions.replace_verified
@@ -230,6 +372,12 @@ class CreativeGroupTests(unittest.TestCase):
 
 class FullCreativeGroupDeliveryTests(unittest.TestCase):
     def test_whole_workflow_exports_group_then_completed_resume_detects_changed_sources(self):
+        self.check_delivery(partial=False)
+
+    def test_whole_workflow_exports_partial_group_and_preserves_rejected_member_evidence(self):
+        self.check_delivery(partial=True)
+
+    def check_delivery(self, partial):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             freeze(root / ".book-genesis/project.json", encoded({"host": "codex", "collaboration": "autonomous",
@@ -249,7 +397,8 @@ class FullCreativeGroupDeliveryTests(unittest.TestCase):
                     result["tasks"] = [{**result["tasks"][0], "chapter": n} for n in (1, 2)]
                 if "prose" in props and "revision-" in call_id:
                     context = json.loads(packet.rsplit("\n\n", 1)[1])
-                    result["prose"] = context["accepted_chapter"].replace("held the stolen letter", "chose to confess")
+                    result["prose"] = (context["accepted_chapter"] if partial and context["task"]["chapter"] == 2
+                        else context["accepted_chapter"].replace("held the stolen letter", "chose to confess"))
                 if "checks" in props:
                     for finding in result.get("findings", []):
                         finding["chapters"] = [1, 2]
@@ -276,7 +425,10 @@ class FullCreativeGroupDeliveryTests(unittest.TestCase):
                 self.assertEqual(0, BookWorkflow(root, COMMAND, **options).run())
             self.assertEqual(count, len(calls))
             path = root / "work/creative-groups/revision-1-creative-group-1-2/manifest.json"
-            source = root / read_json(path)["sources"]["original/chapter-01.md"]["path"]
+            manifest = read_json(path)
+            self.assertEqual(2 if partial else 1, manifest["schema_version"])
+            self.assertEqual([1] if partial else [1, 2], [r["chapter"] for r in manifest["publications"]])
+            source = root / manifest["sources"]["original/chapter-01.md"]["path"]
             source.write_bytes(source.read_bytes() + b"Changed original evidence.")
             with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, "evidence is missing or changed"):
                 BookWorkflow(root, COMMAND, **options).run()

@@ -846,8 +846,8 @@ class BookWorkflow:
         return outcome
 
     def revise_factual_group(self, number, tasks, strategy):
-        from correction_groups import (schema_for, validate_report, packet_for, publish, verify_receipt)
-        key = f"revision-{number}-facts-group-" + "-".join(str(t["chapter"]) for t in tasks)
+        from correction_groups import (group_key, schema_for, validate_report, packet_for, publish, verify_receipt)
+        key = group_key("facts", number, tasks)
         folder = self.root / "work/correction-groups" / key
         manifest_path = folder / "manifest.json"
         result_path = self.root / f"evaluations/decisions/{key}.json"
