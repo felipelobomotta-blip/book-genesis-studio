@@ -12,9 +12,11 @@ from revision_viability import CHECKS
 from decide_comparison import decide
 from repair_findings import finding_schema, validate_findings, INSTRUCTIONS as FINDING_INSTRUCTIONS
 from catalog_wire import render_catalog
+from group_review_schema import (build_schema, expand_schema, normalized_report,
+                                 INSTRUCTIONS as SCOPED_REPORT_INSTRUCTIONS)
 
 
-def schema_for(catalog, members):
+def _legacy_schema_for(catalog, members):
     names = [s["source"] for s in catalog["sources"]]
     ids = [p["id"] for s in catalog["sources"] for p in s["passages"]]
     return obj({"catalog_sha256": enum((digest(encoded(catalog)),)), "verdict": enum(("pass", "block")),
@@ -29,10 +31,18 @@ def schema_for(catalog, members):
             {n: f"proposed/chapter-{n:02d}.md" for n in members}), "limitations": TEXT})
 
 
+def schema_for(catalog, members, *, report_version=2):
+    if report_version == 1:
+        return _legacy_schema_for(catalog, members)
+    if report_version == 2:
+        return build_schema(catalog, members)
+    raise ValueError('Unsupported creative report contract')
+
+
 def validate_report(path, schema, catalog, members):
-    validation = validate_json(path, schema)
+    validation = validate_json(path, expand_schema(schema) if '$defs' in schema else schema)
     if validation["valid"]:
-        data = read_json(path)
+        data = normalized_report(read_json(path))
         if sorted(data["coverage"]) != sorted(s["source"] for s in catalog["sources"]):
             validation["errors"].append("Creative group must cover each complete source exactly once")
         if sorted(r["chapter"] for r in data["chapters"]) != sorted(members):
@@ -103,7 +113,9 @@ def catalog_for(journal, manifest):
 def packet_for(manifest, catalog):
     instructions = INSTRUCTIONS
     assignments = {"tasks": manifest["tasks"], "strategy": manifest["strategy"]}
-    if manifest.get("schema_version") == 2:
+    if manifest.get("schema_version") == 3:
+        instructions += "\n" + SCOPED_REPORT_INSTRUCTIONS + "\n"
+    if manifest.get("schema_version") in (2, 3) and manifest.get("retained_members"):
         instructions += ("\nRetained members have no usable changed proposal. Their ORIGINAL prose remains in the proposed book, "
             "and their assigned tickets remain UNRESOLVED. Review only the actual proposed replacements; "
             "do not count a retained member as repaired. Block any proposed repair that depends on an absent companion edit "
@@ -181,7 +193,7 @@ def verify_retained(journal, manifest):
 
 def verify(journal, manifest_path, call_key):
     manifest = read_json(manifest_path)
-    if manifest.get("kind") != "creative_revision_group" or manifest.get("schema_version") not in (1, 2):
+    if manifest.get("kind") != "creative_revision_group" or manifest.get("schema_version") not in (1, 2, 3):
         raise WorkflowError("Unsupported creative revision group")
     retained = manifest.get("retained_members", [])
     if (manifest["schema_version"] == 1 and retained) or (manifest["schema_version"] == 2 and not retained):
@@ -197,7 +209,7 @@ def verify(journal, manifest_path, call_key):
         raise WorkflowError("Creative group publications differ from its tasks")
     if {n for n in manifest["sources"] if n.startswith("proposed/")} != {f"proposed/chapter-{n:02d}.md" for n in members}:
         raise WorkflowError("Creative group contains missing or extra proposals")
-    schema = schema_for(catalog, members)
+    schema = schema_for(catalog, members, report_version=2 if manifest["schema_version"] == 3 else 1)
     response = verify_step(journal, call_key, packet_for(manifest, catalog), schema)
     if not validate_report(response, schema, catalog, members)["valid"] or read_json(response)["verdict"] != "pass":
         raise WorkflowError("Creative group lacks a valid passing repair check")
@@ -206,7 +218,7 @@ def verify(journal, manifest_path, call_key):
         if (row["target"] != "manuscript/chapters/" + name
                 or row["before"] != manifest["sources"]["original/" + name]["sha256"]
                 or row["candidate"] != manifest["sources"]["proposed/" + name]
-                or (manifest["schema_version"] == 2 and row["before"] == row["candidate"]["sha256"])):
+                or (manifest["schema_version"] in (2, 3) and row["before"] == row["candidate"]["sha256"])):
             raise WorkflowError("Creative group publication differs from its reviewed sources")
     for kind in ("accepted", "candidate"):
         row = manifest["volumes"][kind]
@@ -255,9 +267,10 @@ def execute(workflow, number, tasks, strategy):
         decision, reason = "promote", "Complete creative group passed repair review and blind preference."
     else:
         prepared, companions = [], {}
-        for task in tasks:
+        for index, task in enumerate(tasks):
             staged = workflow.revise_chapter(number, task, strategy, stage_only=True,
-                companion_tasks=[t for t in tasks if t != task], staged_companions=companions)
+                companion_tasks=[t for t in tasks if t != task], staged_companions=companions,
+                remaining_companions=tasks[index + 1:])
             prepared.append(staged)
             if "decision" not in staged:
                 companions[staged["target"].name] = staged["candidate"].read_bytes().decode("utf-8")
@@ -273,7 +286,7 @@ def execute(workflow, number, tasks, strategy):
         sources.update({"proposed/" + p["target"].name: journal.record_file(p["candidate"]) for p in prepared})
         sources.update({"contract/" + n: journal.record_file(root / "artifacts" / n) for n in
                         ("00-brief.md", "03-characters.md", "05-voice.md")})
-        manifest = {"schema_version": 2 if retained else 1, "kind": "creative_revision_group", "tasks": score_blind(tasks),
+        manifest = {"schema_version": 3, "kind": "creative_revision_group", "tasks": score_blind(tasks),
             "strategy": score_blind(strategy), "sources": sources, "comparison_key": key + "-preference",
             "preference_decision": preference_path.relative_to(root).as_posix(),
             "publications": [{"chapter": p["task"]["chapter"], "target": p["target"].relative_to(root).as_posix(),
@@ -300,7 +313,7 @@ def execute(workflow, number, tasks, strategy):
             catalog = catalog_for(journal, manifest)
             members = [row["chapter"] for row in manifest["publications"]]
             verify_retained(journal, manifest)
-            schema = schema_for(catalog, members)
+            schema = schema_for(catalog, members, report_version=2)
             try:
                 response, _ = workflow.call(call_key, packet_for(manifest, catalog), schema,
                     lambda p: validate_report(p, schema, catalog, members), feedback=True)

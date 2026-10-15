@@ -44,6 +44,7 @@ from workflow_roles import (AUDIT_PASSES, PLAN_PASSES, PROOF_PASSES, PROSE_SCHEM
 from workflow_issues import reconcile_issues
 from workflow_state import Journal, WorkflowError, atomic, digest, encoded, freeze, read_json
 from revision_context import render_context as render_revision_context
+from revision_plan_context import render_plan_context
 
 
 def production_allowance(chapters, remaining, used, min_words, max_words):
@@ -639,7 +640,7 @@ class BookWorkflow:
         reasons = [{"dimension": d["name"], "reason": d["reason"], "evidence": d["evidence"]}
                    for reading in measurement["rubric"]["readings"] for d in reading["data"]["dimensions"]]
         reports = [report for panel in measurement["panels"] for report in panel["reports"]]
-        packet = ("Create one bounded, coherent revision plan. Use only this packet; no tools. "
+        prefix = ("Create one bounded, coherent revision plan. Use only this packet; no tools. "
             "Fix supported high-severity audit defects first, then shared reader stops, then the weakest craft risks. "
             "Address setup AND consequences; do not substitute more explanation for a missing scene. "
             "Give at most one factual task and one creative task per affected chapter. First separate strictly factual "
@@ -658,7 +659,8 @@ class BookWorkflow:
             "Do not change the approved premise, POV, time window, chapter count or production length. "
             "A later pass must learn from failed earlier strategies rather than repeat them. "
             "A harmless taste difference is not a mandate to rewrite. Defer low-priority suggestions explicitly.\n\n"
-            + self.ref("specialists/revision-editor.md") + "\n\n" + json.dumps({
+            + self.ref("specialists/revision-editor.md") + "\n\n")
+        context = {
                 "craft_knowledge": revision_knowledge(self.skill, self.config["language"]),
                 "current_sources": self.neutral_sources(self.snapshot(f"measure-{measurement['number']}")),
                 **score_blind({"audit_findings": measurement["audit"]["data"]["findings"],
@@ -667,7 +669,8 @@ class BookWorkflow:
                     "unresolved_findings": open_issues,
                     "reader_experience": reports, "craft_observations": reasons,
                     "earlier_revision_outcomes": [row.get("outcomes", []) for row in self.journal.data["passes"][:number - 1]],
-                    "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]})}, ensure_ascii=False, sort_keys=True))
+                    "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]})}
+        packet = prefix + render_plan_context(context, prefix_chars=len(prefix))
         def validate(path):
             report = validate_json(path, schema)
             if report["valid"]:
@@ -684,7 +687,8 @@ class BookWorkflow:
         response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
         return read_json(response)
 
-    def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None, staged_companions=None):
+    def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None,
+                       staged_companions=None, remaining_companions=None):
         n = task["chapter"]
         factual = task["mode"] == "factual"
         # A broad factual ticket may include already-correct chapters. A group
@@ -718,6 +722,11 @@ class BookWorkflow:
                     text.splitlines()[0][2:], "\n".join(text.splitlines()[1:]), digest(text.encode("utf-8"))))
         low = max(100, self.contract["min_words"] - (current_words - original_words))
         high = self.contract["max_words"] - (current_words - original_words)
+        # Unpublished creative companions may supply later scene expansion.
+        # The last member and the final assembled group still owe the full
+        # production floor; no individual proposal becomes canon here.
+        if stage_only and not factual and remaining_companions:
+            low = 100
         context = []
         for adjacent in (n - 1, n + 1):
             if 1 <= adjacent <= self.contract["chapters"]:
@@ -769,6 +778,14 @@ class BookWorkflow:
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}
+            if stage_only and not factual and remaining_companions:
+                editor_context["coordinated_length"] = {
+                    "remaining_chapters": [row["chapter"] for row in remaining_companions],
+                    "final_book_min_words": self.contract["min_words"],
+                    "final_book_max_words": self.contract["max_words"],
+                    "rule": "These future companions are not written or accepted yet. Do not pad this scene "
+                        "to meet an intermediate whole-book floor. The complete simultaneous proposed book "
+                        "must still meet the final range before review or publication. Keep the existing upper allowance."}
             packet += render_revision_context(editor_context, prefix_chars=len(packet))
         schema = correction_schema(original_text, allow_unchanged=allow_unchanged) if factual else PROSE_SCHEMA
         def validate_factual(path):

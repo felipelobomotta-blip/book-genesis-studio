@@ -21,8 +21,10 @@ from test_autonomous_workflow import COMMAND, receipt_transport, fixture_respons
 def group_report(packet, schema, blocked=False):
     catalog = parse_catalog(packet.split("\nCatalog wire:\n", 1)[1].split("\n\nDeterministic output validation rejected", 1)[0])
     sources = {s["source"]: s for s in catalog["sources"]}
-    members = schema["properties"]["chapters"]["items"]["properties"]["chapter"]["enum"]
-    return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
+    scoped = "report_schema_version" in schema["properties"]
+    members = ([int(key[len("chapter-"):]) for key in schema["properties"]["chapters"]["properties"]]
+        if scoped else schema["properties"]["chapters"]["items"]["properties"]["chapter"]["enum"])
+    report = {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
         "verdict": "block" if blocked else "pass", "coverage": list(sources),
         "chapters": [{"chapter": n, "checks": [{"name": name, "result": "block" if blocked else "pass",
             "reason": "Synthetic coordinated repair evidence.", "evidence_ids": [sources[s]["passages"][-1]["id"] for s in
@@ -39,6 +41,26 @@ def group_report(packet, schema, blocked=False):
                (("original_evidence", "original"), ("proposed_evidence", "proposed"))},
             "supporting_evidence": [],
         }] if blocked else [], "limitations": "Synthetic code test only."}
+    if scoped:
+        # Test producer emits the explicitly versioned contract; production
+        # validation never supplies a missing citation or rewrites a verdict.
+        locations = {p["id"]: s["source"] for s in catalog["sources"] for p in s["passages"]}
+        chapters = {}
+        for member in report["chapters"]:
+            number = member["chapter"]
+            own = {"original_evidence_ids": f"original/chapter-{number:02d}.md",
+                   "proposed_evidence_ids": f"proposed/chapter-{number:02d}.md"}
+            checks = {}
+            for check in member["checks"]:
+                checks[check["name"]] = {"result": check["result"], "reason": check["reason"],
+                    **{field: [pid for pid in check["evidence_ids"] if locations[pid] == source]
+                       for field, source in own.items()},
+                    "supporting_evidence_ids": [pid for pid in check["evidence_ids"]
+                        if locations[pid] not in own.values()]}
+            chapters[f"chapter-{number:02d}"] = {"checks": checks}
+        report.update(report_schema_version=2, chapters=chapters,
+                      coverage={name: "read" for name in report["coverage"]})
+    return report
 
 
 def comparison_report(call_id, packet, schema, root, prefer=True):
@@ -110,6 +132,42 @@ class CreativeGroupTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             return groups.execute(self.workflow, 1, self.tasks, "Close the gate in both affected chapters and use the window.")
 
+    def legacy_receipt_fixture(self, version):
+        # All calls in this helper are synthetic unit-test receipts. Reuse the
+        # same source-bound volumes and anonymous votes, then supply the exact
+        # old correctness contract; no real historical book is relabelled.
+        if version == 2:
+            self.invalid = {3}
+        self.run_group()
+        key = "revision-1-creative-group-1-3"
+        manifest = read_json(self.root / "work/creative-groups" / key / "manifest.json")
+        manifest["schema_version"] = version
+        legacy = self.root / f"fixture/legacy-v{version}/manifest.json"
+        freeze(legacy, encoded(manifest))
+        catalog = groups.catalog_for(self.workflow.journal, manifest)
+        members = [row["chapter"] for row in manifest["publications"]]
+        schema = groups.schema_for(catalog, members, report_version=1)
+        call_key = f"legacy-v{version}-check"
+        with redirect_stdout(io.StringIO()):
+            self.workflow.call(call_key, groups.packet_for(manifest, catalog), schema,
+                lambda path: groups.validate_report(path, schema, catalog, members))
+        receipt = read_json(self.root / "evaluations/promotions" / (key + ".json"))
+        receipt.update(manifest=self.workflow.journal.record_file(legacy), review_key=call_key)
+        path = legacy.parent / "promotion.json"
+        freeze(path, encoded(receipt))
+        count = len(self.calls)
+        original_receipt = path.read_bytes()
+        self.assertEqual(manifest, transactions.verify_receipt(self.workflow.journal, legacy, call_key, path))
+        self.assertEqual(manifest, transactions.verify_receipt(self.workflow.journal, legacy, call_key, path))
+        self.assertEqual(count, len(self.calls))
+        self.assertEqual(original_receipt, path.read_bytes())
+
+    def test_legacy_v1_review_and_promotion_receipt_replay_without_new_calls(self):
+        self.legacy_receipt_fixture(1)
+
+    def test_legacy_v2_partial_review_and_promotion_receipt_replay_without_new_calls(self):
+        self.legacy_receipt_fixture(2)
+
     def assert_originals(self):
         for name, raw in self.originals.items():
             self.assertEqual(raw, (self.root / "manuscript/chapters" / name).read_bytes())
@@ -154,13 +212,11 @@ class CreativeGroupTests(unittest.TestCase):
                 return report
             attempts.append(call_id)
             if len(attempts) == 1:
-                member = next(r for r in report["chapters"] if r["chapter"] == 3)
-                check = next(c for c in member["checks"] if c["name"] == "Preserved strengths")
-                check["evidence_ids"] = check["evidence_ids"][1:]
+                report["chapters"]["chapter-03"]["checks"]["Preserved strengths"]["original_evidence_ids"] = []
             else:
-                self.assertIn("Chapter 3, check 'Preserved strengths'", packet)
-                self.assertIn("missing evidence from original/chapter-03.md", packet)
-                self.assertNotIn("missing evidence from original/chapter-01.md", packet)
+                feedback = packet.split("Deterministic output validation rejected", 1)[1]
+                self.assertIn("response.chapters.chapter-03.checks.Preserved strengths.original_evidence_ids", feedback)
+                self.assertNotIn("response.chapters.chapter-01", feedback)
             return report
         self.workflow.transport = receipt_transport(omit_original)
         self.assertTrue(all(r["decision"] == "promote" for r in self.run_group()))
@@ -231,7 +287,7 @@ class CreativeGroupTests(unittest.TestCase):
         self.assertEqual([1], self.workflow.journal.data["revision_chapters"])
         self.assertEqual(8, len(self.calls))
         manifest = read_json(self.root / "work/creative-groups/revision-1-creative-group-1-3/manifest.json")
-        self.assertEqual(2, manifest["schema_version"])
+        self.assertEqual(3, manifest["schema_version"])
         self.assertEqual([3], [r["chapter"] for r in manifest["retained_members"]])
         self.assertNotIn("proposed/chapter-03.md", manifest["sources"])
         self.assertIn("The passage is open.", groups.volume(self.workflow.journal, manifest, True).decode())
@@ -308,6 +364,24 @@ class CreativeGroupTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkflowError, "complete reviewed manuscript is stale"):
             self.run_group()
         self.assertEqual(self.originals["chapter-01.md"], (self.root / "manuscript/chapters/chapter-01.md").read_bytes())
+
+    def test_new_unassigned_canon_after_full_group_review_prevents_publication(self):
+        compare = self.workflow.compare_revision
+        def change_unassigned(*args, **kwargs):
+            result = compare(*args, **kwargs)
+            target = self.root / "manuscript/chapters/chapter-02.md"
+            target.write_bytes(target.read_bytes() + b"\nA separately authorized new fact.\n")
+            self.workflow.journal.data["canonical"]["manuscript/chapters/chapter-02.md"] = groups.digest(target.read_bytes())
+            self.workflow.journal.save()
+            return result
+        self.workflow.compare_revision = change_unassigned
+        with self.assertRaisesRegex(WorkflowError, "complete reviewed manuscript is stale"):
+            self.run_group()
+        for n in (1, 3):
+            self.assertEqual(self.originals[f"chapter-{n:02d}.md"],
+                (self.root / f"manuscript/chapters/chapter-{n:02d}.md").read_bytes())
+        self.assertIn(b"A separately authorized new fact.",
+            (self.root / "manuscript/chapters/chapter-02.md").read_bytes())
 
     def three_member_partial(self):
         self.invalid = {3}
@@ -464,7 +538,7 @@ class FullCreativeGroupDeliveryTests(unittest.TestCase):
             self.assertEqual(count, len(calls))
             path = root / "work/creative-groups/revision-1-creative-group-1-2/manifest.json"
             manifest = read_json(path)
-            self.assertEqual(2 if partial else 1, manifest["schema_version"])
+            self.assertEqual(3, manifest["schema_version"])
             self.assertEqual([1] if partial else [1, 2], [r["chapter"] for r in manifest["publications"]])
             source = root / manifest["sources"]["original/chapter-01.md"]["path"]
             source.write_bytes(source.read_bytes() + b"Changed original evidence.")
