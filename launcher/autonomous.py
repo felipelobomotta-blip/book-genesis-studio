@@ -1,10 +1,37 @@
 """Launch the verified skill's controlled workflow, retaining native sign-in."""
 from pathlib import Path
+import os
 import subprocess
 import sys
 from uuid import uuid4
 
 from launcher.native import codex_scoped_command, find_native, run_attached
+
+
+def _same_frozen_command(frozen, selected):
+    if frozen == selected:
+        return True
+    if os.name != "nt" or not isinstance(frozen, dict) or not isinstance(selected, dict):
+        return False
+    frozen_argv = frozen.get("argv")
+    selected_argv = selected.get("argv")
+    if not isinstance(frozen_argv, list) or not isinstance(selected_argv, list) or len(frozen_argv) != len(selected_argv):
+        return False
+    path_indexes = [0]
+    if len(frozen_argv) > 1 and isinstance(frozen_argv[1], str) and isinstance(selected_argv[1], str):
+        if not frozen_argv[1].startswith("-") and not selected_argv[1].startswith("-"):
+            path_indexes.append(1)
+    frozen_normalized = dict(frozen)
+    selected_normalized = dict(selected)
+    frozen_normalized["argv"] = list(frozen_argv)
+    selected_normalized["argv"] = list(selected_argv)
+    for index in path_indexes:
+        left, right = frozen_argv[index], selected_argv[index]
+        if not isinstance(left, str) or not isinstance(right, str):
+            return False
+        frozen_normalized["argv"][index] = os.path.normcase(left)
+        selected_normalized["argv"][index] = os.path.normcase(right)
+    return frozen_normalized == selected_normalized
 
 
 def controlled_command(executable, *, model, effort, host="codex", bridge=None, context_window=None):
@@ -43,6 +70,24 @@ def controlled_command(executable, *, model, effort, host="codex", bridge=None, 
     return command
 
 
+def recorded_completion(root: Path, code: int) -> str:
+    """Label the saved controller outcome; not a new review or export verification."""
+    import json
+    if code != 0:
+        return 'incomplete'
+    try:
+        delivery = json.loads((root / 'delivery/STATUS.json').read_bytes())
+        final = json.loads((root / 'evaluations/final-measurement.json').read_bytes())
+        if isinstance(delivery, dict) and isinstance(final, dict) and delivery.get('status') == 'delivered':
+            if final.get('passed') is False:
+                return 'exported_draft_literary_gates_unmet'
+            if final.get('passed') is True:
+                return 'export_and_literary_gates_reported_passed'
+    except (OSError, ValueError):
+        pass
+    return 'completed_result_not_verified'
+
+
 def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
     # Import here to keep cli -> autonomous -> cli out of module initialization.
     from launcher.cli import _ownership, _write_json, _now, LOCK
@@ -60,7 +105,7 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
     command_file = root / ".book-genesis/native-command.json"
     if command_file.exists():
         import json
-        if json.loads(command_file.read_text(encoding="utf-8")) != command:
+        if not _same_frozen_command(json.loads(command_file.read_text(encoding="utf-8")), command):
             raise ValueError("The native executable selection changed; preserve the frozen run instead of silently switching")
     else:
         _write_json(command_file, command, exclusive=True)
@@ -89,6 +134,6 @@ def launch_controlled(root: Path, config: dict, *, model, effort, author_name):
             _write_json(path, record)
             raise
         record.update(status="completed" if code == 0 else "blocked", native_exit_code=code, finished_at=_now(),
-                      book_completion="verified_by_controlled_workflow" if code == 0 else "incomplete")
+                      book_completion=recorded_completion(root, code))
         _write_json(path, record)
         return code

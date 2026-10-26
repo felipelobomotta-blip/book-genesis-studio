@@ -148,6 +148,46 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(result, reconcile_issues(workflow, 1, snapshot))
         self.assertEqual(2, len(packets))
 
+    def test_exhausted_invalid_issue_statuses_keep_all_findings_open_with_native_evidence(self):
+        from types import SimpleNamespace
+        from workflow_state import WorkflowError
+        journal = Journal(self.root, {})
+        text = "# One\n\nThe delivery happened Thursday."
+        chapter = self.root / "chapter-01.md"
+        freeze(chapter, text.encode())
+        snapshot = [chapter]
+        catalog = text_catalog({"chapter-01.md": text})
+        response = self.root / "audit-response"
+        freeze(response, encoded({"findings": [{"severity": "high", "kind": "continuity", "chapters": [1],
+            "evidence_ids": ["s01p0002"], "problem": "The delivery date conflicts.",
+            "fix": "Establish one delivery date.", "preserve": "Voice."}]}))
+        freeze(self.root / "work/workflow/audit-original/packet.md", ("Complete sources:\n" + json.dumps(catalog)).encode())
+        journal.data["steps"]["audit-original"] = {"status": "completed", "response": "audit-response",
+            "evidence": [journal.record_file(response)]}
+        calls = []
+
+        def generate(call_id, packet, schema, root):
+            calls.append(call_id)
+            return {"statuses": []}  # invalid even after the format-only retry
+
+        def call(key, packet, schema, validator, **kwargs):
+            return journal.call(key, packet.encode(), schema, COMMAND, validator,
+                                transport=receipt_transport(generate), **kwargs)
+
+        workflow = SimpleNamespace(root=self.root, journal=journal,
+            neutral_sources=lambda _: {"chapter-01.md": text}, call=call)
+        with redirect_stdout(io.StringIO()):
+            result = reconcile_issues(workflow, 1, snapshot)
+        self.assertEqual(2, len(calls))
+        self.assertFalse(result["passed"])
+        self.assertEqual("open", result["statuses"][0]["status"])
+        self.assertEqual("controller_fail_closed_after_invalid_native_responses", result["status_source"])
+        self.assertIn("not a factual determination", result["statuses"][0]["reason"])
+        self.assertTrue(any(row["path"].startswith("work/host-calls/wf-issue-check-1-")
+                            for row in result["evidence"]))
+        self.assertTrue((self.root / "evaluations/issue-status-fallback-1.json").is_file())
+        self.assertEqual("failed", journal.data["steps"]["issue-check-1"]["status"])
+
     def test_factual_fix_reaches_export_without_preference_votes(self):
         root = self.root
         freeze(root / ".book-genesis/project.json", encoded({"schema_version": 1, "host": "codex", "collaboration": "autonomous",
@@ -164,7 +204,9 @@ class RecoveryTests(unittest.TestCase):
                 return {"corrections": [{"from_passage": passage["id"], "through_passage": passage["id"],
                                         "after": passage["text"].replace("Ida Vale", "Ada Vale")}]}
             if "canon_supported" in props:
-                ids = props["evidence"]["items"]["properties"]["passage_id"]["enum"]
+                from catalog_wire import parse_catalog
+                catalog = parse_catalog(packet.split('\nCatalog wire:\n', 1)[1])
+                ids = [p['id'] for s in catalog['sources'] for p in s['passages']]
                 return {"verdict": "pass", "canon_supported": True, "factual_only": True, "dependencies_safe": True,
                     "evidence": [{"passage_id": next(p for p in ids if p.startswith(source)), "reason": "Name matches frozen canon."}
                                  for source in ("accepted-p", "candidate-p", "canon-1-p")], "findings": []}

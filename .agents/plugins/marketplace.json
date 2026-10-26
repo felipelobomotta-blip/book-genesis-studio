@@ -1,0 +1,10 @@
+{
+  "name": "book-genesis",
+  "interface": {"displayName": "Book Genesis"},
+  "plugins": [{
+    "name": "book-genesis",
+    "source": {"source": "local", "path": "./"},
+    "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+    "category": "Productivity"
+  }]
+}

@@ -1,0 +1,293 @@
+{
+  "observed_date": "2026-10-25",
+  "method": "Read-only public documentation and static source inspection via official websites and GitHub connector. No competing app installation, inference, purchase, runtime benchmark, or full-book literary comparison.",
+  "coverage": {
+    "products_and_apps": 16,
+    "open_projects_and_catalogs": 13,
+    "catalog_items_individually_audited": false
+  },
+  "repositories": [
+    {
+      "repository": "danjdewhurst/story-skills",
+      "tree_commit_sha": "57121ee512c6d4218a285c6991193347944f31b0",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "f69fe34bc3d1934b00f06509d51bd7fe3ff188d5",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "src/deaths.js",
+          "ref": "57121ee512c6d4218a285c6991193347944f31b0",
+          "git_blob_sha": "a3d98bf471c1e7ebbf8a4d4c634da8e8d7dadc0b",
+          "observed": true,
+          "url": "https://github.com/danjdewhurst/story-skills/blob/57121ee512c6d4218a285c6991193347944f31b0/src/deaths.js"
+        },
+        {
+          "path": "src/pacing.js",
+          "ref": "57121ee512c6d4218a285c6991193347944f31b0",
+          "git_blob_sha": "9764e293cabf9de8bef9fdfa00e80595475f9b93",
+          "observed": true,
+          "url": "https://github.com/danjdewhurst/story-skills/blob/57121ee512c6d4218a285c6991193347944f31b0/src/pacing.js"
+        }
+      ]
+    },
+    {
+      "repository": "gc4rella/quill",
+      "tree_commit_sha": "bca6723d4413eb834f7f305a9ab73a887c9a5c27",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "f310b9c324a5c1756955037cf055918a600b604d",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "skills/quill/SKILL.md",
+          "ref": "bca6723d4413eb834f7f305a9ab73a887c9a5c27",
+          "git_blob_sha": "b522bda8435d918620539bb65903ad7bd5c387f8",
+          "observed": true,
+          "url": "https://github.com/gc4rella/quill/blob/bca6723d4413eb834f7f305a9ab73a887c9a5c27/skills/quill/SKILL.md"
+        },
+        {
+          "path": "skills/quill/references/workflows.md",
+          "ref": "bca6723d4413eb834f7f305a9ab73a887c9a5c27",
+          "git_blob_sha": "2e7fc05a874fe2533557891bb6b97ab244d046ac",
+          "observed": true,
+          "url": "https://github.com/gc4rella/quill/blob/bca6723d4413eb834f7f305a9ab73a887c9a5c27/skills/quill/references/workflows.md"
+        }
+      ]
+    },
+    {
+      "repository": "guantoubaozi/novel-writing",
+      "tree_commit_sha": "a6db1c892547fc9230b980d9bfd95ce8b92fe73f",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "cc4279efe53cb1cb852cdf92ef621858ee11b8e2",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "scripts/merge_story_updates.py",
+          "ref": "a6db1c892547fc9230b980d9bfd95ce8b92fe73f",
+          "git_blob_sha": "d3dd27db3cbb656bee312e0a50e79149e0132d76",
+          "observed": true,
+          "url": "https://github.com/guantoubaozi/novel-writing/blob/a6db1c892547fc9230b980d9bfd95ce8b92fe73f/scripts/merge_story_updates.py"
+        }
+      ]
+    },
+    {
+      "repository": "luquiluke/claude-book-skill",
+      "tree_commit_sha": "41466d61f9248536509bd07ae3995b3bcdb6c888",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "aa3890c9d52d13ddbe3e9d5e7ceb50bb382e117a",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "references/style-analysis.md",
+          "ref": "41466d61f9248536509bd07ae3995b3bcdb6c888",
+          "git_blob_sha": "4a47766e4ddf89a4b8af3eeec174a16164a74c7d",
+          "observed": true,
+          "url": "https://github.com/luquiluke/claude-book-skill/blob/41466d61f9248536509bd07ae3995b3bcdb6c888/references/style-analysis.md"
+        }
+      ]
+    },
+    {
+      "repository": "Calliope-Editor/writing-skills",
+      "tree_commit_sha": "2fad031982cbbcb00c4da14c2fc9712d2daa78da",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "2ba6f7979b08fdb4611698392bdef2d8771528be",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "skills/editorial/line-editor/SKILL.md",
+          "ref": "2fad031982cbbcb00c4da14c2fc9712d2daa78da",
+          "git_blob_sha": "ae0151748c126c7b54f55be6c00b31a8eef696b0",
+          "observed": true,
+          "url": "https://github.com/Calliope-Editor/writing-skills/blob/2fad031982cbbcb00c4da14c2fc9712d2daa78da/skills/editorial/line-editor/SKILL.md"
+        }
+      ]
+    },
+    {
+      "repository": "zenstory-ai/oh-story-dsh",
+      "tree_commit_sha": "41ed01576febb280ada4742ac3d7f780ff4612ed",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "d78d1929dd23d85d7b620a5aacc242c2de443d5e",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "docs/ARCHITECTURE.md",
+          "ref": "41ed01576febb280ada4742ac3d7f780ff4612ed",
+          "git_blob_sha": "5f80aca83daf75b96bdf7853d9b0d6c91e9572c6",
+          "observed": true,
+          "url": "https://github.com/zenstory-ai/oh-story-dsh/blob/41ed01576febb280ada4742ac3d7f780ff4612ed/docs/ARCHITECTURE.md"
+        }
+      ]
+    },
+    {
+      "repository": "wanrenhuifu/NovelNovel",
+      "tree_commit_sha": "c3b2862d1ae35ae9824453040e48c30cd3e249aa",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "bba5d8e658ba3c4375b1c15964cce448eb656eb2",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "src/domain/loreFilter.ts",
+          "ref": "c3b2862d1ae35ae9824453040e48c30cd3e249aa",
+          "git_blob_sha": "b34ea33f106118b85ba6f09d21552638f3191883",
+          "observed": true,
+          "url": "https://github.com/wanrenhuifu/NovelNovel/blob/c3b2862d1ae35ae9824453040e48c30cd3e249aa/src/domain/loreFilter.ts"
+        }
+      ]
+    },
+    {
+      "repository": "x2802490130-prog/dsh-tool-writing",
+      "tree_commit_sha": "08a3e41164f94cde3de6f64ec42ac11c1cbf406e",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "3de0467687125046487e075b3ed06d93f6cff241",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "lib/worldstate.js",
+          "ref": "08a3e41164f94cde3de6f64ec42ac11c1cbf406e",
+          "git_blob_sha": "2e36b43adc38c23480363191ed31708e60287d4a",
+          "observed": true,
+          "url": "https://github.com/x2802490130-prog/dsh-tool-writing/blob/08a3e41164f94cde3de6f64ec42ac11c1cbf406e/lib/worldstate.js"
+        },
+        {
+          "path": "lib/search.js",
+          "ref": "08a3e41164f94cde3de6f64ec42ac11c1cbf406e",
+          "git_blob_sha": "a7d2636e2ae69c32d888fd059a8f62cf5eaeb403",
+          "observed": true,
+          "url": "https://github.com/x2802490130-prog/dsh-tool-writing/blob/08a3e41164f94cde3de6f64ec42ac11c1cbf406e/lib/search.js"
+        }
+      ]
+    },
+    {
+      "repository": "mushroomfk/long-novel-agent-kit",
+      "tree_commit_sha": "62879683e6d017da86521b7467eee75d39e07567",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "ad2b762e73e1a9610169516fcee1b063134db3dd",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "schemas/proposal.schema.json",
+          "ref": "62879683e6d017da86521b7467eee75d39e07567",
+          "git_blob_sha": "cb92a60e119a3fb9c047380cea1a9af7264a223e",
+          "observed": true,
+          "url": "https://github.com/mushroomfk/long-novel-agent-kit/blob/62879683e6d017da86521b7467eee75d39e07567/schemas/proposal.schema.json"
+        },
+        {
+          "path": "server.py",
+          "ref": "62879683e6d017da86521b7467eee75d39e07567",
+          "git_blob_sha": "ccace6cedbcbd080620a1b4a9ef4d8f45310ab7e",
+          "observed": true,
+          "url": "https://github.com/mushroomfk/long-novel-agent-kit/blob/62879683e6d017da86521b7467eee75d39e07567/server.py"
+        }
+      ]
+    },
+    {
+      "repository": "renky1025/agent-skills",
+      "tree_commit_sha": "f412a01b60a1318b7c17a6ee20659491e9cfb998",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "f4292f6c5cc942f76d65cd13e5115d46adc264b1",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "snowflake-novel-writer/references/snowflake-steps.md",
+          "ref": "f412a01b60a1318b7c17a6ee20659491e9cfb998",
+          "git_blob_sha": "2724b7858d8c74ad5f053187f3c9a3123839a5e4",
+          "observed": true,
+          "url": "https://github.com/renky1025/agent-skills/blob/f412a01b60a1318b7c17a6ee20659491e9cfb998/snowflake-novel-writer/references/snowflake-steps.md"
+        }
+      ]
+    },
+    {
+      "repository": "UnderleveledBuilder/awesome-novel-skills",
+      "tree_commit_sha": "8fa3ca129a1c0cb85229b03cf67bfeb1e0ffa164",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "f24d1df4e8b6b9def61c5abc20585d4e894a0e09",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "evals/README.md",
+          "ref": "8fa3ca129a1c0cb85229b03cf67bfeb1e0ffa164",
+          "git_blob_sha": "64d19ed91271a4381688e39fe98a519453943c1e",
+          "observed": true,
+          "url": "https://github.com/UnderleveledBuilder/awesome-novel-skills/blob/8fa3ca129a1c0cb85229b03cf67bfeb1e0ffa164/evals/README.md"
+        }
+      ]
+    },
+    {
+      "repository": "swiftugandan/book-writing-skill",
+      "tree_commit_sha": "9a763ddbcc96b25cfcbba4b1198716dc6f50e273",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "7e4266d5ea955cbcd37f576edbdd13039e855efd",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "skills/book-writing/scripts/bookkit/verify.py",
+          "ref": "9a763ddbcc96b25cfcbba4b1198716dc6f50e273",
+          "git_blob_sha": "8573559c7583ba9a8692a8318a2de85edec5d1c9",
+          "observed": true,
+          "url": "https://github.com/swiftugandan/book-writing-skill/blob/9a763ddbcc96b25cfcbba4b1198716dc6f50e273/skills/book-writing/scripts/bookkit/verify.py"
+        }
+      ]
+    },
+    {
+      "repository": "Yunshiro/yunn-skills",
+      "tree_commit_sha": "2d94bc84e26dbcdf45b02390fb1cc061a6cdadab",
+      "readme": {
+        "path": "README.md",
+        "ref": "default branch at retrieval",
+        "git_blob_sha": "13f4e8718ef5961d1a50eb349c5a29f59c4ee877",
+        "observed": true
+      },
+      "inspected_files": [
+        {
+          "path": "skills/novel-writer/references/long-form-continuity.md",
+          "ref": "2d94bc84e26dbcdf45b02390fb1cc061a6cdadab",
+          "git_blob_sha": "8c1f132df6e3bc21aa13c397df32b43243d62b43",
+          "observed": true,
+          "url": "https://github.com/Yunshiro/yunn-skills/blob/2d94bc84e26dbcdf45b02390fb1cc061a6cdadab/skills/novel-writer/references/long-form-continuity.md"
+        },
+        {
+          "path": "skills/novel-writer/scripts/check_novel.py",
+          "ref": "2d94bc84e26dbcdf45b02390fb1cc061a6cdadab",
+          "git_blob_sha": "05be048855fc9497c3017fc1a416e906efd20875",
+          "observed": true,
+          "url": "https://github.com/Yunshiro/yunn-skills/blob/2d94bc84e26dbcdf45b02390fb1cc061a6cdadab/skills/novel-writer/scripts/check_novel.py"
+        }
+      ]
+    }
+  ]
+}

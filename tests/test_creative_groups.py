@@ -13,13 +13,16 @@ sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
 import correction_groups as transactions
 import creative_groups as groups
 from catalog_wire import parse_catalog
+from repair_evidence import parse_evidence_catalog, evidence_units
 from autonomous_book import BookWorkflow
 from workflow_state import WorkflowError, encoded, freeze, read_json, verify_execution
 from test_autonomous_workflow import COMMAND, receipt_transport, fixture_response
 
 
 def group_report(packet, schema, blocked=False):
-    catalog = parse_catalog(packet.split("\nCatalog wire:\n", 1)[1].split("\n\nDeterministic output validation rejected", 1)[0])
+    selected = schema['properties'].get('report_schema_version', {}).get('enum') == [3]
+    marker, parser = ('\nSelected evidence wire:\n', parse_evidence_catalog) if selected else ('\nCatalog wire:\n', parse_catalog)
+    catalog = parser(packet.split(marker, 1)[1].split("\n\nDeterministic output validation rejected", 1)[0])
     sources = {s["source"]: s for s in catalog["sources"]}
     scoped = "report_schema_version" in schema["properties"]
     members = ([int(key[len("chapter-"):]) for key in schema["properties"]["chapters"]["properties"]]
@@ -58,8 +61,13 @@ def group_report(packet, schema, blocked=False):
                     "supporting_evidence_ids": [pid for pid in check["evidence_ids"]
                         if locations[pid] not in own.values()]}
             chapters[f"chapter-{number:02d}"] = {"checks": checks}
-        report.update(report_schema_version=2, chapters=chapters,
+        report.update(report_schema_version=3 if selected else 2, chapters=chapters,
                       coverage={name: "read" for name in report["coverage"]})
+        if selected:
+            units = evidence_units(catalog)
+            for finding in report['findings']:
+                for field in ('original_evidence', 'proposed_evidence', 'supporting_evidence'):
+                    finding[field] = [{'passage_id': row['passage_id'], 'unit': 1} for row in finding[field]]
     return report
 
 
@@ -251,16 +259,11 @@ class CreativeGroupTests(unittest.TestCase):
                 return report
             attempts.append(call_id)
             if len(attempts) == 1:
-                catalog = parse_catalog(packet.split("\nCatalog wire:\n", 1)[1])
-                source = next(s for s in catalog["sources"] if s["source"] == "proposed/chapter-01.md")
-                passage = next(p for p in source["passages"] if p["text"].startswith("The gate is closed."))
-                correct.append(passage["id"])
-                report["findings"][0]["proposed_evidence"][0]["quote"] = passage["text"]
+                report['findings'][0]['proposed_evidence'][0]['passage_id'] = 'unknown-source-span'
             else:
                 feedback = packet.split("Deterministic output validation rejected", 1)[1]
-                self.assertIn("proposed_evidence[1]", feedback)
-                self.assertIn("proposed/chapter-01.md", feedback)
-                self.assertIn("Exact quote matches within this same source: " + correct[0], feedback)
+                self.assertIn('proposed_evidence[0]', feedback)
+                self.assertIn('does not match any permitted type or value', feedback)
                 self.assertNotIn('"verdict"', feedback)
                 self.assertNotIn("Previous rejected producer response", packet)
             return report
@@ -287,7 +290,7 @@ class CreativeGroupTests(unittest.TestCase):
         self.assertEqual([1], self.workflow.journal.data["revision_chapters"])
         self.assertEqual(8, len(self.calls))
         manifest = read_json(self.root / "work/creative-groups/revision-1-creative-group-1-3/manifest.json")
-        self.assertEqual(3, manifest["schema_version"])
+        self.assertEqual(4, manifest["schema_version"])
         self.assertEqual([3], [r["chapter"] for r in manifest["retained_members"]])
         self.assertNotIn("proposed/chapter-03.md", manifest["sources"])
         self.assertIn("The passage is open.", groups.volume(self.workflow.journal, manifest, True).decode())
@@ -307,7 +310,7 @@ class CreativeGroupTests(unittest.TestCase):
             self.assertEqual("unresolved_original_retained", assignments["retained_members"][0]["status"])
             self.assertEqual([1, 3], [t["chapter"] for t in assignments["tasks"]])
             self.assertIn("depends on an absent companion edit", packet)
-            sources = {s["source"]: s for s in parse_catalog(packet.split("\nCatalog wire:\n", 1)[1])["sources"]}
+            sources = {s["source"]: s for s in parse_evidence_catalog(packet.split("\nSelected evidence wire:\n", 1)[1])["sources"]}
             self.assertNotIn("proposed/chapter-03.md", sources)
             retained_open = any("The passage is open." in p["text"] for p in sources["original/chapter-03.md"]["passages"])
             proposed_closed = any("The gate is closed." in p["text"] for p in sources["proposed/chapter-01.md"]["passages"])
@@ -538,7 +541,7 @@ class FullCreativeGroupDeliveryTests(unittest.TestCase):
             self.assertEqual(count, len(calls))
             path = root / "work/creative-groups/revision-1-creative-group-1-2/manifest.json"
             manifest = read_json(path)
-            self.assertEqual(3, manifest["schema_version"])
+            self.assertEqual(4, manifest["schema_version"])
             self.assertEqual([1] if partial else [1, 2], [r["chapter"] for r in manifest["publications"]])
             source = root / manifest["sources"]["original/chapter-01.md"]["path"]
             source.write_bytes(source.read_bytes() + b"Changed original evidence.")

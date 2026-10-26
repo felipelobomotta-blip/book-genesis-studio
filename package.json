@@ -1,0 +1,15 @@
+{
+  "name": "dsh-plugin-book-genesis",
+  "version": "5.1.0-beta.7",
+  "description": "Book Genesis skills for DeepSeek Harness: plan, draft, review and export books.",
+  "type": "module",
+  "main": "distribution/deepseek/index.mjs",
+  "exports": {".": "./distribution/deepseek/index.mjs"},
+  "license": "MIT",
+  "author": "Felipe Lobo",
+  "repository": {"type": "git", "url": "https://github.com/felipelobomotta-blip/book-genesis-studio.git"},
+  "keywords": ["dsh-plugin", "agent-skills", "books", "writing"],
+  "files": ["cordis.patch.yml", "distribution/deepseek/", "distribution/portable-suite.json", "skills/", "assets/plugin/", "LICENSE"],
+  "dsh": {"bundle": {"patch": "./cordis.patch.yml"}},
+  "engines": {"node": ">=20", "dsh": ">=0.2.1-rc.2 <0.3.0"}
+}

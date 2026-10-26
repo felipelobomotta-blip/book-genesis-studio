@@ -29,17 +29,17 @@ def small_context():
 
 
 class RevisionPlanHandoffTests(unittest.TestCase):
-    def build(self, root, factory, *, uncompressible=False):
+    def build(self, root, factory, *, uncompressible=False, chapters=3):
         freeze(root / '.book-genesis/project.json', encoded({'host': 'codex', 'collaboration': 'autonomous',
             'author_name': 'QA', 'model': 'exact-test-model', 'effort': 'high',
             'idea': 'A letter reaches its recipient.', 'language': 'English'}))
         freeze(root / '.book-genesis/skills/.book-genesis-install.json', b'{}')
         command = copy.deepcopy(COMMAND)
         command['argv'].insert(2, '--ignore-user-config')
-        workflow = BookWorkflow(root, command, chapters=3, min_words=400, max_words=300000,
+        workflow = BookWorkflow(root, command, chapters=chapters, min_words=chapters * 100, max_words=300000,
             transport=receipt_transport(factory))
         originals = {}
-        for n in (1, 2, 3):
+        for n in range(1, chapters + 1):
             body = (f'# Chapter {n}\n\n' + ''.join(
                 f'Paragraph {i}: Ada carries the sealed letter past the courtyard wall and counts the lit windows.\n\n'
                 for i in range(1800)))
@@ -103,6 +103,41 @@ class RevisionPlanHandoffTests(unittest.TestCase):
             self.assertEqual(1, len(captured))
             for name, text in originals.items():
                 self.assertEqual(text.encode('utf-8'), (root / 'manuscript/chapters' / name).read_bytes())
+
+    def test_retry_feedback_names_duplicate_pairs_and_where_to_attach_missing_issue(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            captured = []
+            issue_id = 'measure-1-audit-f001'
+
+            def generate(call_id, packet, _schema, _root):
+                if call_id.endswith('-1'):
+                    return {'strategy': 'Move the act turn earlier.', 'deferred': [], 'tasks': [
+                        {'chapter': 3, 'ticket': 'Move the turn.', 'preserve': 'Keep the danger and route knowledge.',
+                         'mode': 'creative', 'issue_ids': [], 'revision_class': 'structural'},
+                        {'chapter': 3, 'ticket': 'Tighten the turn.', 'preserve': 'Keep the danger and route knowledge.',
+                         'mode': 'creative', 'issue_ids': [], 'revision_class': 'structural'}]}
+                captured.append(packet)
+                return {'strategy': 'Move the act turn earlier.', 'deferred': [], 'tasks': [
+                    {'chapter': 3, 'ticket': 'Move the turn by compressing pre-turn material.',
+                     'preserve': 'Keep the failed piano move, physical danger, and Ruth\'s route knowledge.',
+                     'mode': 'creative', 'issue_ids': [issue_id], 'revision_class': 'structural'}]}
+
+            workflow, measurement, _ = self.build(root, generate)
+            measurement['issue_ledger']['open'] = [{
+                'id': issue_id, 'requires_resolution': True,
+                'finding': {'chapters': [3], 'problem': 'The act turn is late.', 'severity': 'high'},
+                'original_evidence': []}]
+            with redirect_stdout(io.StringIO()):
+                result = workflow.revision_plan(3, measurement)
+
+            self.assertEqual([issue_id], result['tasks'][0]['issue_ids'])
+            self.assertEqual(1, len(captured))
+            retry_packet = captured[0]
+            self.assertIn('chapter 3 creative', retry_packet)
+            self.assertIn(issue_id, retry_packet)
+            self.assertIn('affected chapter(s): 3', retry_packet)
+            self.assertIn('consolidate', retry_packet.lower())
 
     def test_uncompressible_plan_stays_durably_blocked_without_dispatch_or_budget_reset(self):
         with tempfile.TemporaryDirectory() as temporary:

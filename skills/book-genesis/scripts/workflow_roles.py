@@ -147,7 +147,8 @@ def neutral_contract_schema():
 
 def plan_schema(chapters):
     chapter = obj({"number": INTEGER, **{name: TEXT for name in ("title", "point_of_view", "time_window", "purpose",
-        "scene_pressure", "events", "characters", "continuity", "opening", "ending")}})
+        "scene_pressure", "events", "characters", "continuity", "opening", "ending",
+        "scene_contract", "knowledge_boundary", "arc_change")}})
     return obj({"opening_strategy": TEXT,
         "writer_facts": obj({name: array(TEXT) for name in ("identities", "calendar", "setting")}),
         "promises": {**array(obj({"promise": TEXT, "setup_action": TEXT, "on_page_resolution": TEXT,

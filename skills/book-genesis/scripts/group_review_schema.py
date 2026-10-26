@@ -5,8 +5,8 @@ from workflow_roles import INTEGER, TEXT, array, enum, obj
 from workflow_state import digest, encoded
 
 
-INSTRUCTIONS = (
-    'Use report_schema_version 2. The schema names every required chapter and check '
+_INSTRUCTION_TEMPLATE = (
+    'Use report_schema_version {version}. The schema names every required chapter and check '
     'as an object key; fill each exactly once. coverage names each complete source '
     'with value read. In every check choose original_evidence_ids from that chapter\'s '
     'original prose and proposed_evidence_ids from its proposal. For Canon and causal '
@@ -18,11 +18,20 @@ INSTRUCTIONS = (
 )
 
 
+def instructions_for(version):
+    if version not in (2, 3):
+        raise ValueError('Unsupported source-scoped instruction version')
+    return _INSTRUCTION_TEMPLATE.format(version=version)
+
+
+INSTRUCTIONS = instructions_for(2)  # Byte-identical historical packet contract.
+
+
 def _ref(name):
     return {'$ref': '#/$defs/' + name}
 
 
-def build_schema(catalog, members):
+def build_schema(catalog, members, *, report_version=2):
     originals = {n: f'original/chapter-{n:02d}.md' for n in members}
     proposals = {n: f'proposed/chapter-{n:02d}.md' for n in members}
     prose = _prose(catalog)
@@ -63,7 +72,22 @@ def build_schema(catalog, members):
                          ('supporting_evidence', source_refs)):
         evidence[field]['items']['properties']['passage_id'] = {
             'anyOf': [source_refs[name] for name in names]}
-    result = obj({'report_schema_version': {**INTEGER, 'enum': [2]},
+    if report_version == 3:
+        from repair_evidence import evidence_units
+        units = evidence_units(catalog)
+        # Exact conditional passage/unit schemas exhausted the real native
+        # structured-output budget before generating a response on the 24-chapter
+        # fixture. Keep native source membership compact; local hydration still
+        # enforces the exact pair and rejects impossible units, never repairs them.
+        maximum = max((int(identifier.rsplit('e', 1)[1]) for identifier in units), default=1)
+        for field, names in (('original_evidence', originals.values()),
+                             ('proposed_evidence', proposals.values()),
+                             ('supporting_evidence', source_refs)):
+            evidence[field]['items'] = obj({'passage_id': {'anyOf': [source_refs[name] for name in names]},
+                                            'unit': {**INTEGER, 'enum': list(range(1, maximum + 1))}})
+    elif report_version != 2:
+        raise ValueError('Unsupported source-scoped report version')
+    result = obj({'report_schema_version': {**INTEGER, 'enum': [report_version]},
         'catalog_sha256': enum((digest(encoded(catalog)),)), 'verdict': enum(('pass', 'block')),
         'coverage': obj({s['source']: _ref('read_marker') for s in catalog['sources']}),
         'chapters': obj(chapters), 'findings': findings, 'limitations': TEXT})
@@ -101,10 +125,15 @@ def expand_schema(schema):
     return visit(schema, root=True)
 
 
-def normalized_report(report):
+def normalized_report(report, catalog=None):
     """Validation-only view; preserve the raw native response and its verdict."""
-    if report.get('report_schema_version') != 2:
+    if report.get('report_schema_version') not in (2, 3):
         return report
+    if report['report_schema_version'] == 3:
+        from repair_evidence import hydrate_findings
+        if catalog is None:
+            raise ValueError('Selected evidence requires the frozen source catalog')
+        report = {**report, 'findings': hydrate_findings(report['findings'], catalog)}
     chapters = []
     for key, member in report['chapters'].items():
         checks = []

@@ -62,7 +62,7 @@ def _passages(texts: dict[str, str]) -> dict:
     return result
 
 
-def response_schema(passages: list[str]) -> dict:
+def response_schema(passages: list[str], *, compact: bool = False) -> dict:
     def obj(properties):
         return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
     return obj({
@@ -71,7 +71,7 @@ def response_schema(passages: list[str]) -> dict:
         "factual_only": {"type": "boolean"},
         "dependencies_safe": {"type": "boolean"},
         "evidence": {"type": "array", "items": obj({
-            "passage_id": {"type": "string", "enum": passages},
+            "passage_id": {"type": "string"} if compact else {"type": "string", "enum": passages},
             "reason": {"type": "string"}})},
         "findings": {"type": "array", "items": {"type": "string"},
                      "description": "Unresolved blocking defects within this correction only. Empty for pass. Put positive explanations or unrelated observations in evidence reasons."},
@@ -100,8 +100,10 @@ def validate_report(path: Path, schema: dict) -> dict:
     return validation
 
 
-def _packet(ticket: str, texts: dict[str, str]) -> str:
-    return (
+def _packet(ticket: str, texts: dict[str, str], *, version: int = 2) -> str:
+    if version not in (1, 2):
+        raise CorrectionError("unsupported correction packet version")
+    instructions = (
         "# Factual correction verification\n\n"
         "Use only the supplied sources. Do not read project files or previous reviews. "
         "This is a correctness check, not a preference vote. Either pass or block is valid. "
@@ -126,9 +128,33 @@ def _packet(ticket: str, texts: dict[str, str]) -> str:
         "Put positive explanations and observations about unrelated unchanged defects in evidence reasons. "
         "A block must identify its unresolved defect in findings.\n\n"
         + "## Ticket\n\n" + ticket.strip() + "\n"
-        + "".join(f"\n## Source {row['source']} / [{key}]\n\n{row['text']}\n"
-                  for key, row in _passages(texts).items())
     )
+    passages = _passages(texts)
+    if version == 1:
+        return instructions + "".join(f"\n## Source {row['source']} / [{key}]\n\n{row['text']}\n"
+                                     for key, row in passages.items())
+    from catalog_wire import render_catalog
+    catalog = {"sources": [{"source": source, "sha256": sha256(text.encode('utf-8')).hexdigest(),
+        "passages": [{"id": key, "text": row['text']} for key, row in passages.items() if row['source'] == source]}
+        for source, text in texts.items()]}
+    return instructions + ("\nThe complete sources below use length-framed records: S identifies a source; "
+        "P gives its paragraph ID and exact character length. Read the entire catalog. "
+        "Cite only IDs present in these records; the program checks every ID against the complete sources.\n"
+        "\nCatalog wire:\n") + render_catalog(catalog)
+
+
+def validation_schema(manifest_path: Path) -> dict:
+    """Keep the exhaustive ID enum local; model wire size stays independent of IDs."""
+    manifest = read_json(manifest_path)
+    if manifest.get('schema_version') not in (1, 2):
+        raise CorrectionError('unsupported correction manifest')
+    texts = {}
+    for row in manifest['sources']:
+        path = Path(row['path'])
+        if digest(path) != row['sha256']:
+            raise CorrectionError('correction source changed before validation')
+        texts[row['source']] = path.read_bytes().decode('utf-8-sig')
+    return response_schema(list(_passages(texts)))
 
 
 def _check_versions(texts: dict, accepted: Path) -> int:
@@ -169,8 +195,8 @@ def prepare(accepted: Path, candidate: Path, canon: list[Path], context: list[Pa
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     (output / "review.packet.md").write_bytes(packet.encode("utf-8"))
-    _save(output / "review.schema.json", response_schema(list(_passages(texts))))
-    manifest = {"schema_version": 1, "kind": "factual_correction", "chapter": chapter,
+    _save(output / "review.schema.json", response_schema(list(_passages(texts)), compact=True))
+    manifest = {"schema_version": 2, "kind": "factual_correction", "chapter": chapter,
                 "ticket": ticket, "sources": records,
                 "packet_sha256": digest(output / "review.packet.md"),
                 "schema_sha256": digest(output / "review.schema.json")}
@@ -187,7 +213,7 @@ def verify(manifest_path: Path, call_dir: Path) -> dict:
     """Recheck the original completed call; invalid or blocked is never a pass."""
     manifest_path, call_dir = manifest_path.resolve(), call_dir.resolve()
     manifest = read_json(manifest_path)
-    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1 or manifest.get("kind") != "factual_correction":
+    if not isinstance(manifest, dict) or manifest.get("schema_version") not in (1, 2) or manifest.get("kind") != "factual_correction":
         raise CorrectionError("unsupported correction manifest")
     if not isinstance(manifest.get("sources"), list) or not manifest["sources"] or any(not isinstance(row, dict) for row in manifest["sources"]):
         raise CorrectionError("correction manifest needs source records")
@@ -207,7 +233,7 @@ def verify(manifest_path: Path, call_dir: Path) -> dict:
         raise CorrectionError("missing correction sources")
     if _check_versions(texts, Path(by_source["accepted"]["path"])) != manifest["chapter"]:
         raise CorrectionError("correction chapter identity changed")
-    if sha256(_packet(manifest["ticket"], texts).encode("utf-8")).hexdigest() != manifest["packet_sha256"]:
+    if sha256(_packet(manifest["ticket"], texts, version=manifest['schema_version']).encode("utf-8")).hexdigest() != manifest["packet_sha256"]:
         raise CorrectionError("correction packet does not match its complete sources")
     for name, key in [("review.packet.md", "packet_sha256"), ("review.schema.json", "schema_sha256")]:
         path = manifest_path.parent / name

@@ -104,6 +104,16 @@ class CorrectionReportContractTests(unittest.TestCase):
             self.run_check()
         self.assertFalse(self.decision.exists())
 
+    def test_compact_wire_does_not_allow_invented_passage_ids(self):
+        report = copy.deepcopy(self.report)
+        report['evidence'][2]['passage_id'] = 'canon-1-p99999'
+        self.configure([report, report])
+        self.assertEqual('reject', self.run_check()['decision'])
+        self.assertEqual(2, len(self.packets))
+        self.assertEqual(self.accepted.read_bytes(), self.target.read_bytes())
+        schema = read_json(self.root / 'work/workflow/revision-1-c01-facts-check/schema.json')
+        self.assertNotIn('enum', schema['properties']['evidence']['items']['properties']['passage_id'])
+
 
 if __name__ == "__main__":
     unittest.main()

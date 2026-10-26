@@ -12,7 +12,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills/book-genesis/scripts"))
-from launcher import cli, native
+from launcher import autonomous, cli, native
 from launcher.autonomous import controlled_command
 from run_host_call import command_from_launch
 
@@ -47,6 +47,14 @@ class ScopedCommandTests(unittest.TestCase):
 
     def save_record(self):
         self.receipt_path.write_text(json.dumps(self.record), encoding="utf-8")
+
+    def test_frozen_command_allows_only_windows_executable_path_casing(self):
+        frozen = {"argv": [r"C:\Program Files\nodejs\node.exe", r"C:\Users\felip\AppData\Roaming\npm\node_modules\@openai\codex\bin\codex.js", "exec", "-m", "gpt-5.6-luna"], "timeout_seconds": 900}
+        selected = {"argv": [r"c:\PROGRAM FILES\NODEJS\NODE.EXE", r"c:\users\felip\appdata\roaming\npm\node_modules\@openai\codex\bin\CODEX.js", "exec", "-m", "gpt-5.6-luna"], "timeout_seconds": 900}
+        with patch("launcher.autonomous.os.name", "nt"):
+            self.assertTrue(autonomous._same_frozen_command(frozen, selected))
+            changed_model = {**selected, "argv": [*selected["argv"][:-1], "gpt-5.6-astra"]}
+            self.assertFalse(autonomous._same_frozen_command(frozen, changed_model))
 
     def test_controlled_roles_require_verified_capabilities_and_preserve_security_flags(self):
         help_result = subprocess.CompletedProcess([], 0, "--ignore-user-config --ephemeral", "")

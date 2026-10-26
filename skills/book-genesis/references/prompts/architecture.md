@@ -2,6 +2,10 @@
 
 Turn the foundation into a chapter plan with momentum, a first page that makes a promise, and a ledger that keeps the facts straight for the whole draft.
 
+Apply the Planning section of `references/specialists/editorial-method.md`: connect
+scene goals, choices, costs and consequences; distinguish knowledge acquisition
+from reader disclosure; check repetitive mid-book deferrals before drafting.
+
 When to load: Phase 2. Role: orchestrator as architect, with the continuity specialist.
 
 ## Input

@@ -1,0 +1,6 @@
+{
+  "name": "book-genesis",
+  "owner": {"name": "Felipe Lobo"},
+  "metadata": {"description": "Book Genesis: open writing skills for your own agent."},
+  "plugins": [{"name": "book-genesis", "source": "./", "description": "Your idea. A book you own.", "version": "5.1.0-beta.7"}]
+}

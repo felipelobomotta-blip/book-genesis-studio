@@ -21,6 +21,7 @@ from check_correction import (prepare as prepare_correction, decision as correct
                               validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
 from craft_context import draft_knowledge, revision_knowledge
+from editorial_context import continuity_view, method_section
 from narrative_evidence import INSTRUCTIONS as CAUSAL_EVIDENCE_INSTRUCTIONS
 from editorial_feedback import score_blind
 from reader_experience import draft_reader_experience
@@ -173,7 +174,9 @@ class BookWorkflow:
             "Do not claim you browsed or performed live market research. Supplied dated publisher metadata can "
             "support only its cited edition facts; mark comparison relevance and unverified market hypotheses honestly. "
             "Do not invent process records or review results. The program handles them.\n\n"
-            + instructions + "\n\n" + refs + "\n\nAuthor contract and allowed material:\n" + json.dumps(inputs, ensure_ascii=False))
+            + instructions + "\n\n" + refs
+            + ("\n\n" + method_section(self.skill, 'Planning') if phase in (0, 1, 2) else "")
+            + "\n\nAuthor contract and allowed material:\n" + json.dumps(inputs, ensure_ascii=False))
 
     def planning(self):
         if self.journal.data["phase"] > 0:
@@ -236,7 +239,9 @@ class BookWorkflow:
                 "calendar anchor mapping story days to weekdays and dated deadlines. Keep it under 600 words. "
                 "Exclude future revelations, secret identities, planned rescues and character arc outcomes from that baseline; "
                 "those belong only in their relevant chapter entries and the full canon. Ensure chapter POV and time windows "
-                "agree with this baseline and the author contract. Keep each chapter entry below 300 words, the full canon below 1500, "
+                "agree with this baseline and the author contract. Include scene_contract (goal, resistance, choice, change, cost, consequence), "
+                "knowledge_boundary (before/acquisition/reader disclosure) and arc_change (what changes beyond another clue or delay). "
+                "Keep each chapter entry below 450 words, the full canon below 1500, "
                 "and the opening strategy below 600. The program renders the outline and ledger from those facts. "
                 "Do not include verification claims, process verdicts, a brief-check register, repair history or references to findings. "
                 "An independent verifier and the program supply the separate process record.")
@@ -264,6 +269,10 @@ class BookWorkflow:
                     "Verify the plan against the neutral approved brief. Examine every chapter and every timeline/world-rule entry. "
                     "A contradiction of an exact constraint blocks drafting. Use revise for any such contradiction. "
                     "Treat ordinary approximate durations as approximate. Do not invent exact requirements. "
+                    "Check scene_contract, knowledge_boundary and arc_change under Chapter dependencies: "
+                    "identify repeated deferrals with no consequential change, impossible knowledge acquisition, "
+                    "or missing setup/cost/payoff. Quiet scenes may change a decision or relationship; do not demand "
+                    "a fixed beat percentage or a cliffhanger in every chapter. Cite actual plan evidence for defects. "
                     "Return concise evidence-bound findings, not a new outline. ending_resolved means the planned resolution is causal and complete.")
                 if review["data"]["verdict"] == "pass" and review["data"]["ending_resolved"]:
                     break
@@ -334,6 +343,7 @@ class BookWorkflow:
         self.plan = read_json(self.root / "work/approved-plan.json")
 
     def review(self, key, sources, passes, instructions):
+        already_saved = self.journal.data['steps'].get(key, {}).get('status') == 'completed'
         catalog = text_catalog(sources)
         schema = review_schema(catalog, passes=passes)
         if passes == PLAN_PASSES:
@@ -347,7 +357,10 @@ class BookWorkflow:
             + instructions + "\n\nRequired checks: " + json.dumps(passes) + "\n\nComplete sources:\n" + json.dumps(catalog, ensure_ascii=False))
         response, validation = self.call(key, packet, schema,
             lambda p: validate_review(p, schema, catalog, passes, max_chapter=self.contract["chapters"]), feedback=True)
-        return {"report": str(response.relative_to(self.root)), "validation": validation, "data": read_json(response)}
+        data = read_json(response)
+        if not already_saved:
+            self.log(f"Review | {key} | verdict {data['verdict']} | {len(data['findings'])} findings")
+        return {"report": str(response.relative_to(self.root)), "validation": validation, "data": data}
 
     def snapshot(self, key):
         folder = self.root / "work/snapshots" / key
@@ -370,10 +383,30 @@ class BookWorkflow:
         count = self.contract["chapters"]
         checkpoints = {1, max(1, round(count * .25)), max(1, round(count * .5)), max(1, round(count * .8))}
         all_evidence = []
+        from draft_length_recovery import load_recovery, recover as recover_length
         for entry in self.plan["chapters"]:
             number = entry["number"]
             key = f"draft-{number:02d}"
             target = self.root / f"manuscript/chapters/chapter-{number:02d}.md"
+            recovery = load_recovery(self, key)
+            if recovery is not None:
+                prior = ([c for c in discover_chapters(self.root / 'manuscript/chapters') if c.number < number]
+                         if number > 1 else [])
+                used_before = word_count_receipt(prior)['total']
+                low, high, _ = production_allowance(count, count - number + 1, used_before,
+                    self.contract['min_words'], self.contract['max_words'])
+                record = read_json(recovery['record_path'])
+                if (record['low'], record['high']) != (low, high):
+                    raise WorkflowError('Recovered draft allowance differs from the frozen production contract')
+                # The durable recovery record precedes publication. Resume never
+                # redispatches or recomputes the allowance after a partial publish.
+                staged = self.stage_response(recovery['step'], recovery['response'], corrected_prose=recovery['prose'])
+                if target.exists():
+                    if digest(target.read_bytes()) != digest(staged.read_bytes()):
+                        raise WorkflowError('Recovered draft differs from its staged publication')
+                else:
+                    self.journal.publish(staged, target)
+                    self.sync()
             if not target.exists():
                 used = self.state["manuscript"]["word_count_actual"]
                 remaining = count - number + 1
@@ -411,16 +444,27 @@ class BookWorkflow:
                         "earlier_reader_experience": draft_reader_experience(self.journal, number),
                         "earlier_chapters": earlier,
                         "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
+                        "continuity_source_view": continuity_view(
+                            {**earlier, **({f'chapter-{number-1:02d}.md': previous} if number > 1 else {})},
+                            through=number - 1, provisional=self.demonstrated(number - 1)),
                         "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
                             "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
                             "remaining_chapters_including_this": remaining}}, ensure_ascii=False))
-                response, validation = self.call(key, packet, PROSE_SCHEMA,
-                    lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
-                staged = self.stage_response(key, response)
+                try:
+                    response, validation = self.call(key, packet, PROSE_SCHEMA,
+                        lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
+                except WorkflowError:
+                    recovery = recover_length(self, key, low=low, high=high)
+                    if recovery is None:
+                        raise
+                    response, validation = recovery['response'], recovery['validation']
+                staged = (self.stage_response(recovery['step'], response, corrected_prose=recovery['prose'])
+                          if recovery is not None else self.stage_response(key, response))
                 self.journal.publish(staged, target)
                 self.sync()
                 self.log(f"Chapter {number}/{count} saved | {validation['words']} words | manuscript {self.state['manuscript']['word_count_actual']} words")
-            all_evidence += [self.root / self.journal.data["steps"][key]["validation"]]
+            all_evidence += ([recovery['record_path'], recovery['validation_path']]
+                             if recovery is not None else [self.root / self.journal.data["steps"][key]["validation"]])
             if number in checkpoints:
                 self.panel(f"draft-check-{number:02d}", [target])
             if number % 5 == 0 or number == count:
@@ -439,11 +483,17 @@ class BookWorkflow:
         self.finish(3, all_evidence)
 
     def demonstrated(self, through):
+        from draft_length_recovery import load_recovery
         rows = []
         for number in range(1, through + 1):
             step = self.journal.data["steps"].get(f"draft-{number:02d}")
             if step and step["status"] == "completed":
                 rows.append({"chapter": number, "facts": read_json(self.root / step["response"])["continuity_delta"]})
+            elif step:
+                recovery = load_recovery(self, f'draft-{number:02d}')
+                if recovery is not None:
+                    rows.append({'chapter': number, 'facts': read_json(recovery['source_response'])['continuity_delta'],
+                                 'summary_source': 'Provisional writer summary before a small length edit; current prose takes precedence.'})
         return rows
 
     def stage_response(self, key, response, *, corrected_prose=None):
@@ -670,18 +720,36 @@ class BookWorkflow:
                     "reader_experience": reports, "craft_observations": reasons,
                     "earlier_revision_outcomes": [row.get("outcomes", []) for row in self.journal.data["passes"][:number - 1]],
                     "earlier_strategies": self.journal.data.get("strategies", [])[:number - 1]})}
+        prefix += '\n\n' + method_section(self.skill, 'Revision') + '\n\n'
         packet = prefix + render_plan_context(context, prefix_chars=len(prefix))
         def validate(path):
             report = validate_json(path, schema)
             if report["valid"]:
                 tasks = read_json(path)["tasks"]
                 identities = [(t["chapter"], t["mode"]) for t in tasks]
-                if len(identities) != len(set(identities)) or any(not 1 <= n <= self.contract["chapters"] for n, _ in identities):
-                    report["errors"].append("Revision tasks require unique chapter/mode pairs within the planned chapters")
+                counts = {identity: identities.count(identity) for identity in set(identities)}
+                duplicates = sorted(identity for identity, count in counts.items() if count > 1)
+                if duplicates:
+                    rendered = ", ".join(f"chapter {chapter} {mode}" for chapter, mode in duplicates)
+                    report["errors"].append(
+                        "Revision tasks require unique chapter/mode pairs. Duplicate pairs: " + rendered
+                        + ". Consolidate each repeated pair into one task and merge its ticket and issue_ids; "
+                          "each chapter may have at most one factual and one creative task.")
+                if any(not 1 <= n <= self.contract["chapters"] for n, _ in identities):
+                    report["errors"].append("Revision tasks include a chapter outside the approved chapter range")
                 addressed = {identifier for task in tasks for identifier in task["issue_ids"]}
                 required = {issue["id"] for issue in open_issues if issue["requires_resolution"]}
                 if not required.issubset(addressed):
-                    report["errors"].append("Revision plan omits unresolved required issues: " + ", ".join(sorted(required - addressed)))
+                    missing = sorted(required - addressed)
+                    chapters_by_issue = {issue["id"]: issue.get("finding", {}).get("chapters", [])
+                        for issue in open_issues if issue["id"] in missing}
+                    details = "; ".join(f"{identifier} affected chapter(s): "
+                        + (", ".join(str(chapter) for chapter in chapters_by_issue[identifier]) or "unspecified")
+                        for identifier in missing)
+                    report["errors"].append("Revision plan omits unresolved required issues: "
+                        + ", ".join(missing) + ". Add each missing issue ID to an existing task for its affected "
+                          "chapter(s); create a new task only if that chapter/mode pair is not already present. "
+                          + details)
                 report["valid"] = not report["errors"]
             return report
         response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
@@ -1038,9 +1106,11 @@ class BookWorkflow:
                 + [self.root / f"artifacts/{name}" for name in ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")],
                 context, score_blind(task["ticket"]), bundle, publication_target=self.root / f"manuscript/chapters/{target_name}")
         schema = read_json(bundle / "review.schema.json")
+        from check_correction import validation_schema
+        strict_schema = validation_schema(manifest)
         try:
             response, _ = self.call(key + "-check", (bundle / "review.packet.md").read_bytes(), schema,
-                                   lambda p: validate_correction_report(p, schema))
+                                   lambda p: validate_correction_report(p, strict_schema))
         except WorkflowError:
             evidence = self.rejected_validation_evidence(key + "-check")
             if evidence is None:

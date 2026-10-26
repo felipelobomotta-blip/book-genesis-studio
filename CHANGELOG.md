@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.1.0-beta.7 — 2026-10-26
+
+- Native Codex and Claude Code marketplace manifests, a reproducible allowlisted ZIP and pinned Codex installation instructions.
+- Desktop-only metadata, support/privacy/usage pages and public-directory submission materials.
+- Causal scene contracts, character knowledge boundaries, arc changes and role-specific editorial guidance.
+- Complete accepted-source provenance and literal chapter handoffs; provisional summaries stay explicitly provisional.
+- Source-selected literal repair evidence, lossless catalog reuse and backward-compatible review verification.
+- Read-only activity reporting and separate export/literary completion states.
+- Bounded chapter-length recovery, continuity issue batching and the preceding recovery engine fixes.
+- Historical beta6: 24 chapters / 83,517 words / automated literary score 72.52/100. No beta7 90+ literary or bestseller result is claimed. See the integration report and release validation for exact tests and boundaries.
+
+
 ## Unreleased — 5.1 recovery build
 
 - Preserve the failed original native run and isolated revision replay as explicit acceptance evidence. Add a regression rejecting old reads after an uncited passage changes, and verify that the new guard blocks the exact stale reports from the replay. All 294 Windows tests passed. [Acceptance report and remaining work](docs/native-acceptance-20261010.md).

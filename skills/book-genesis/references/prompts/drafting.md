@@ -8,6 +8,10 @@ When to load: Phase 3. The writer drafts; the orchestrator handles persistence, 
 
 ## The writer's packet
 
+Include only the Drafting section of `references/specialists/editorial-method.md`
+as optional scene/voice/knowledge guidance. Keep the Planning and Revision sections
+out of the draft writer's context, and all three out of blind-reader packets.
+
 Assemble `work/briefs/chapter-NN.md` from the approved files:
 
 - the premise, reader promise, point of view and time window;

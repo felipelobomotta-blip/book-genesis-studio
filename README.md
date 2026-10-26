@@ -8,13 +8,13 @@ Book Genesis gives your AI agent a workflow for turning an idea into a complete 
 
 ![An idea moving through files and writing skills into an open book](assets/brand/book-genesis-workflow.png)
 
-Version 5.1.0-dev · unreleased recovery build · MIT licensed · free · runs on your own agent and account.
+Version 5.1.0-beta.7 · native plugin beta · MIT licensed · free · runs on your own agent and account.
 
 **Try a small review first:** [Catch a character using a secret before learning it](examples/continuity-review/README.md). Three short excerpts, a consistent control, real recorded AI feedback and unchanged manuscript files. Copy the prompt into your agent to run your own review. The supplied verification script checks the saved evidence; it does not call a model.
 
-**Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. This branch is not a published release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
+**Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. Beta 7 carries this recovery work into the native plugin release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Latest quality work:** [Source-bound passage references and real model checks](docs/passage-evidence-20261010.md), [tested headless reviewer commands](docs/scoped-transport-20261010.md), and a [separate correctness check for factual repairs](docs/factual-corrections-20261010.md). [Anonymous A/B readers use frozen paragraph references](docs/comparison-evidence-20261010.md), and [the product verifies and counts their original votes](docs/comparison-decisions-20261010.md). [Windows receipt output preserves Unicode through shell pipelines](docs/windows-evidence-20261010.md). The complete automated suite passed 443 tests. Native planning repairs have one nullable slot per field. Chapter lengths follow the remaining whole-book budget; preferred averages no longer act as arbitrary rejection limits. Connected creative repairs now receive a complete-book dependency check and anonymous whole-book preference comparison before coordinated publication. Tool-free writer and editor packets now include their permitted craft references, and native reader schemas expose the existing emotion-field length constraint. Creative revisions receive a source-bound repair check before blind preference voting. Connected factual corrections are reviewed together and published through a recoverable group transaction. Proven native Claude quota refusals preserve the book and wait for an explicit reset within a durable budget, with portable named-timezone support. [Full-length native trials exposed additional context and review-contract defects](docs/native-regressions-20261011.md); fixes are tested separately and never silently injected into a frozen run. [The earlier autonomous run and its checkpoint replay failed acceptance](docs/native-acceptance-20261010.md). A 90/100 product rating has not been established.
+**Current validation:** beta 6 completed a revised/exported 24-chapter, 83,517-word draft, with a final automated literary result of **72.52/100** and unmet quality gates. Beta 7 adds causal scene contracts, source-selected repair evidence, explicit knowledge boundaries and more precise progress. See the [integration evidence](docs/editorial-integration-20261025.md) and [mechanism-by-mechanism adoption map](docs/research/editorial-adoption-20261025.md). A new beta 7 full-book result above 90/100 has not been established. Historical plugin failures remain in the [native test report](docs/plugin-validation-20261023.md).
 
 ## The goal
 
@@ -31,6 +31,32 @@ A book written with the measured patterns of books readers finish, criticized by
 Everything lives in a folder you own. Close the session, come back tomorrow in any supported agent, and it picks up from the files.
 
 ## Install
+
+**Install beta 7 in your existing agent.** No Book Genesis account or separate API key. Python 3.10+ and your host's local tools are required; your subscription quotas still apply.
+
+**Codex** — paste these two commands into a terminal:
+
+```bash
+codex plugin marketplace add felipelobomotta-blip/book-genesis-studio --ref v5.1.0-beta.7
+codex plugin add book-genesis@book-genesis
+```
+
+**Claude Code** — paste these two commands inside Claude Code:
+
+```text
+/plugin marketplace add felipelobomotta-blip/book-genesis-studio
+/plugin install book-genesis@book-genesis
+```
+
+Start a new conversation in a folder for your book and select **Book Genesis**. Then say:
+
+> Use Book Genesis. My idea is a mystery about a piano tuner who discovers a message hidden in an old recording. Write the complete book in English, revise it and export Markdown and EPUB. Make reasonable creative decisions and continue without chapter-by-chapter approval.
+
+[Download beta 7 ZIP](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/download/v5.1.0-beta.7/book-genesis-5.1.0-beta.7.zip) · [Installation, updates and troubleshooting](docs/plugins.md) · [Release notes](docs/releases/5.1.0-beta.7.md) · [Support](SUPPORT.md)
+
+The GitHub marketplace is available independently of the public plugin directories. **Directory approval is pending; Book Genesis is not listed there yet.** The unattended workflow needs local execution; general ChatGPT web/mobile and Claude chat compatibility is not established. Claude and experimental DeepSeek full-book reliability must be validated separately from installation. [Observed native evidence](docs/plugin-validation-20261023.md).
+
+The standalone skill installer remains available for other hosts:
 
 You need Python 3.10 or newer, Git, and an agent that can read and write files.
 
@@ -55,6 +81,20 @@ What has actually been run where is tracked in [compatibility](docs/compatibilit
 
 ## Start a book
 
+After installing the plugin, open a new Codex conversation in an empty folder
+for your book and send your idea:
+
+> Use Book Genesis. A retired train dispatcher finds a farewell letter inside a station clock. Write the complete book in English, revise it, and export Markdown and EPUB. Make the creative decisions and continue without chapter approvals.
+
+The agent handles setup and the writing workflow. It saves progress, reports
+what it is doing and keeps your manuscript in your folder. To check progress,
+say "How is my book going?" To return later, open the same folder and say
+"Continue my book." Your agent's subscription and permission limits still apply.
+The [local plugin guide](docs/plugins.md) explains installation and current limits.
+
+<details>
+<summary>Optional developer launcher and earlier skill installations</summary>
+
 New unattended projects have a [controlled native execution path](docs/controlled-native-acceptance.md), with durable revision budgets, original-call evidence, phase prerequisites and source-verified export. Codex is in full-length acceptance testing; the added [Claude subscription transport](docs/native-claude-transport.md) has separate validation. Neither path's existence is a claim that the 90/100 quality bar has passed.
 
 ```bash
@@ -70,6 +110,8 @@ Open your agent in an empty folder for the book and say:
 > Use book-genesis. My idea: a retired train dispatcher finds a farewell letter inside a station clock.
 
 In agents with skill commands, `/book-genesis` works too. The agent writes in the language you use. To let it finish without stopping, say "go to the end" at any check-in.
+
+</details>
 
 ## What you install
 

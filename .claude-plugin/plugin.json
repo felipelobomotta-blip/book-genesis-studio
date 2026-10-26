@@ -1,0 +1,11 @@
+{
+  "name": "book-genesis",
+  "version": "5.1.0-beta.7",
+  "description": "Turn an idea into a book with planning, drafting, simulated reader reviews, revision and EPUB export.",
+  "author": {"name": "Felipe Lobo"},
+  "homepage": "https://github.com/felipelobomotta-blip/book-genesis-studio",
+  "repository": "https://github.com/felipelobomotta-blip/book-genesis-studio",
+  "license": "MIT",
+  "keywords": ["books", "writing", "fiction", "editing", "epub"],
+  "skills": "./skills/"
+}

@@ -13,7 +13,18 @@ The goal is a book written with the measured patterns of books readers finish, a
 
 ## Start here
 
-The optional checkout launcher can run a new autonomous Codex project through
+Read `references/pipeline/plugin-onboarding.md` first. It routes new ideas,
+resume, review-only, status and export requests, and keeps the author in a
+simple conversation while you handle the technical steps.
+
+For an autonomous Codex plugin request, follow the onboarding's **controlled
+Codex start** and run the packaged preparation bridge before creating any book
+records. Do not manually construct install receipts, project configuration or
+native commands. Once started, monitor that controller; skip the host-owned
+steps 1–3 below. The plugin routes the conversation; the shared controller owns
+the long-running book.
+
+The optional checkout launcher can also run an autonomous Codex project through
 `scripts/autonomous_book.py`. In that mode a deterministic controller owns state,
 phase prerequisites, revision budgets and delivery; the native model receives
 only a scoped role packet and returns its artifact. Do not start a second

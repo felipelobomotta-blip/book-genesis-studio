@@ -7,6 +7,7 @@ exists and only for their assigned tickets. Blind readers receive none of it.
 """
 import re
 import unicodedata
+from editorial_context import method_section
 
 
 def _read(skill, name):
@@ -27,7 +28,8 @@ def draft_knowledge(skill):
     return {"use": "Optional craft knowledge from the existing skill, not a quota or a live checklist. "
         "Write the scene first. Do not run after-draft checks while composing, imitate a named author, "
         "or open referenced files. The book's voice and character cards govern this chapter.",
-        "specialists/prose-craft.md#sections-1-5": text[start:end].strip()}
+        "specialists/prose-craft.md#sections-1-5": text[start:end].strip(),
+        "integrated_method": method_section(skill, 'Drafting')}
 
 
 def language_tells(language):
@@ -49,4 +51,5 @@ def revision_knowledge(skill, language):
         "Reference examples and measurements are guidance, not quotas or a mandate to imitate their authors. "
         "No tools, further file access or unticketed changes. Do not assign or optimize a score.",
         "language_specific_tells": tells or "No language-specific reference is shipped for this language; do not substitute English rules.",
+        "integrated_method": method_section(skill, 'Revision'),
         "references": {name: _editor_view(_read(skill, name)) for name in paths}}

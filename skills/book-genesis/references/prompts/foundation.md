@@ -2,6 +2,9 @@
 
 Give the book people worth following, a question worth asking, a voice worth hearing for three hundred pages, and an emotional path that earns its ending.
 
+Apply the Planning section of `references/specialists/editorial-method.md` for
+original voice samples, author-corpus confidence and source-dependent nonfiction.
+
 When to load: Phase 1. Role: orchestrator as architect, with the narrative foundation specialist.
 
 ## Method

@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 from typing import Any
+from launcher.activity import collect_activity
 
 
 def _check(argv: list[str], kind: str) -> dict[str, Any]:
@@ -46,6 +47,7 @@ def collect_status(root: Path, scripts: Path) -> dict[str, Any]:
         "technical_checks_passed": False,
         "literary_quality": "not_assessed_by_this_tool",
         "publication_approval": "not_assessed",
+        "activity": collect_activity(root),
     }
     if not (root / "PROJECT_STATE.yaml").is_file():
         report.update(status="prepared", checks={}, reported_quality_gates="not_verified", status_exit_code=1)
@@ -88,6 +90,17 @@ def collect_status(root: Path, scripts: Path) -> dict[str, Any]:
 
 
 def print_status(report: dict[str, Any]) -> None:
+    activity = report.get('activity', {})
+    for row in activity.get('requests', []):
+        elapsed = row.get('seconds_since_reserved')
+        suffix = f" | {elapsed}s since request reservation" if elapsed is not None else ''
+        print(f"Recorded operation: {row['label']} | {row['status']}{suffix}")
+        if row.get('detail'):
+            print(f"Saved diagnostic: {row['detail']}")
+    if activity.get('requests'):
+        print('These are saved journal observations; process liveness is not established by this command.')
+    if activity.get('diagnostic'):
+        print(f"Activity unavailable: {activity['diagnostic']}")
     if report["status"] == "prepared":
         print("Project prepared. No pipeline state has been saved by the native agent yet.")
         print("Next: resume this project to start writing.")

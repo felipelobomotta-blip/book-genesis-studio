@@ -4,6 +4,12 @@ Revise until two gates pass, the readers' and the rubric's, in at most three pas
 
 When to load: Phase 5. Roles: orchestrator coordinates; blind readers, rubric evaluators and the revision editor do the work.
 
+Use the Revision section of `references/specialists/editorial-method.md` for
+diagnosis, dependency scope and focused prose repair. It belongs to the revision
+planner/editor; blind readers do not receive it. Source-selected repair citations
+in the controlled runner are literal controller-rendered spans, not proof that an
+interpretation is right; the independent review still decides semantic support.
+
 ## The two gates
 
 | Gate | Decides | Passes when |

@@ -254,7 +254,7 @@ def replace_verified(target, candidate, before, transaction_id):
 def verify_reviewed_manuscript(journal, manifest, *, promoted=False):
     """Retained groups and scoped creative reviews bind the complete read canon."""
     if (manifest["schema_version"] == 2 or
-            (manifest["kind"] == "creative_revision_group" and manifest["schema_version"] == 3)):
+            (manifest["kind"] == "creative_revision_group" and manifest["schema_version"] in (3, 4))):
         original = {"manuscript/chapters/" + name.removeprefix("original/"): row["sha256"]
                     for name, row in manifest["sources"].items() if name.startswith("original/")}
         if promoted:

@@ -92,7 +92,9 @@ class DistantCorrectionEvidenceTests(unittest.TestCase):
                     passage = next(p for p in context["accepted_chapter"] if "plastic gate" in p["text"])
                     return {"corrections": [{"from_passage": passage["id"], "through_passage": passage["id"],
                         "after": passage["text"].replace("plastic gate", "galvanised mesh gate")}]}
-                ids = schema["properties"]["evidence"]["items"]["properties"]["passage_id"]["enum"]
+                from catalog_wire import parse_catalog
+                catalog = parse_catalog(packet.split('\nCatalog wire:\n', 1)[1])
+                ids = [p['id'] for s in catalog['sources'] for p in s['passages']]
                 # The synthetic checker exercises the real source/receipt gate,
                 # not a claim of model quality. Remote source evidence is required.
                 self.assertIn(marker, packet)

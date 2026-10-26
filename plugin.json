@@ -1,0 +1,49 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "book-genesis",
+  "version": "5.1.0-beta.7",
+  "description": "Turn your idea into a book: plan, draft, review, revise and export in your own agent.",
+  "author": {
+    "name": "Felipe Lobo"
+  },
+  "homepage": "https://github.com/felipelobomotta-blip/book-genesis-studio",
+  "repository": "https://github.com/felipelobomotta-blip/book-genesis-studio",
+  "license": "MIT",
+  "keywords": [
+    "books",
+    "writing",
+    "fiction",
+    "editing",
+    "epub"
+  ],
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/book-genesis/SKILL.md",
+      "interface": {
+        "displayName": "Book Genesis",
+        "shortDescription": "Your idea. A book you own.",
+        "longDescription": "Start with an idea. Book Genesis plans your book, drafts chapters, runs simulated reader reviews, revises and exports Markdown and EPUB. Your files stay in your workspace. Works with your agent's existing model and tools; host quotas apply. Beta: full-book quality varies and bestseller status is never guaranteed.",
+        "developerName": "Felipe Lobo",
+        "category": "Productivity",
+        "brandColor": "#C38A48",
+        "composerIcon": "./assets/plugin/icon.svg",
+        "logo": "./assets/plugin/icon.svg",
+        "defaultPrompt": [
+          "I have an idea for a book. Help me turn it into a complete manuscript.",
+          "Continue my book from its saved progress.",
+          "Review my manuscript for continuity problems without rewriting it."
+        ],
+        "capabilities": [
+          "Plan and draft books",
+          "Review and revise manuscripts",
+          "Export Markdown and EPUB"
+        ],
+        "websiteURL": "https://github.com/felipelobomotta-blip/book-genesis-studio",
+        "supportURL": "https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/SUPPORT.md",
+        "privacyPolicyURL": "https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/PRIVACY.md",
+        "termsOfServiceURL": "https://github.com/felipelobomotta-blip/book-genesis-studio/blob/master/TERMS.md"
+      },
+      "requires_local_executor": true
+    }
+  }
+}
