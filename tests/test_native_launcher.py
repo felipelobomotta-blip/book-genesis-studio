@@ -37,6 +37,14 @@ if mode == "check-effort":
     sys.exit(0 if os.environ.get("CLAUDE_CODE_EFFORT_LEVEL") == expected and os.environ.get("BOOK_GENESIS_TEST_AUTH_BOUNDARY") == "inherited" else 18)
 if mode in {"tree", "orphan"}:
     grandchild = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
+    if mode == "tree" and os.name != "nt":
+        # Reap the fixture's child on group termination. Otherwise a CI PID 1
+        # that does not reap adopted zombies leaves killpg(0) truthfully alive.
+        import signal
+        def reap_on_term(_signum, _frame):
+            grandchild.wait(timeout=3)
+            sys.exit(0)
+        signal.signal(signal.SIGTERM, reap_on_term)
     with open(sys.argv[3] + ".tmp", "w", encoding="utf-8") as handle:
         json.dump({"child": os.getpid(), "grandchild": grandchild.pid}, handle)
     os.replace(sys.argv[3] + ".tmp", sys.argv[3])

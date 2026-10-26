@@ -21,7 +21,7 @@ class RecoveryTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
 
     def test_control_character_is_repaired_inside_reserved_native_attempts(self):
         journal = Journal(self.root, {"model": "exact-test-model", "effort": "high"})

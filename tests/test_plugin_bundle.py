@@ -17,7 +17,7 @@ class PluginBundleTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
 
     def test_clean_archive_is_portable_and_byte_identical(self):
         result = build_bundle(self.root / 'build with spaces')
@@ -134,7 +134,8 @@ class PluginBundleTests(unittest.TestCase):
         target.mkdir()
         class Reparse:
             st_file_attributes = 0x400
-        with patch('os.lstat', side_effect=lambda p, **kw: Reparse() if Path(p) == target else real(p, **kw)):
+        # Explicitly simulate the pre-3.12 API surface on every CI Python.
+        with patch('os.path.isjunction', None, create=True), patch('os.lstat', side_effect=lambda p, **kw: Reparse() if Path(p) == target else real(p, **kw)):
             with self.assertRaisesRegex(ValueError, 'Linked'):
                 _check_path(target, self.root)
 

@@ -2,6 +2,7 @@
 from contextlib import redirect_stdout
 import io
 import json
+import ntpath
 from pathlib import Path
 import subprocess
 import sys
@@ -51,7 +52,7 @@ class ScopedCommandTests(unittest.TestCase):
     def test_frozen_command_allows_only_windows_executable_path_casing(self):
         frozen = {"argv": [r"C:\Program Files\nodejs\node.exe", r"C:\Users\felip\AppData\Roaming\npm\node_modules\@openai\codex\bin\codex.js", "exec", "-m", "gpt-5.6-luna"], "timeout_seconds": 900}
         selected = {"argv": [r"c:\PROGRAM FILES\NODEJS\NODE.EXE", r"c:\users\felip\appdata\roaming\npm\node_modules\@openai\codex\bin\CODEX.js", "exec", "-m", "gpt-5.6-luna"], "timeout_seconds": 900}
-        with patch("launcher.autonomous.os.name", "nt"):
+        with patch("launcher.autonomous.os.name", "nt"), patch("launcher.autonomous.os.path.normcase", side_effect=ntpath.normcase):
             self.assertTrue(autonomous._same_frozen_command(frozen, selected))
             changed_model = {**selected, "argv": [*selected["argv"][:-1], "gpt-5.6-astra"]}
             self.assertFalse(autonomous._same_frozen_command(frozen, changed_model))
