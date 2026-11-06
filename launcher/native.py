@@ -197,15 +197,23 @@ def run_attached(argv: list[str], *, cwd: Path | None = None, on_start: Callable
                 on_start(process.pid)
             if job is not None:
                 job.resume(process.pid)
-            # An untimed wait cannot be interrupted on Windows. A short timed
-            # wait lets Ctrl+C or a termination request reach the cleanup path
-            # while the native process is still alive to be stopped.
-            while True:
-                try:
-                    code = process.wait(timeout=0.2)
-                    break
-                except subprocess.TimeoutExpired:
-                    continue
+            # An untimed wait cannot be interrupted on Windows. Polling plus a
+            # short sleep lets Ctrl+C reach this cleanup path while the owned
+            # process is still alive. process.wait(timeout) cannot be used
+            # there on Python 3.10: its KeyboardInterrupt handler waits again
+            # for whatever time remains, and a negative remainder is passed to
+            # WaitForSingleObject as a DWORD, which waits until the child exits.
+            if os.name == "nt":
+                while process.poll() is None:
+                    time.sleep(0.05)
+                code = process.returncode
+            else:
+                while True:
+                    try:
+                        code = process.wait(timeout=0.2)
+                        break
+                    except subprocess.TimeoutExpired:
+                        continue
     except BaseException:
         with _uninterruptible():
             stopped = guard._terminate_and_reap_owned(process)
