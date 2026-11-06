@@ -8,13 +8,13 @@ Book Genesis gives your AI agent a workflow for turning an idea into a complete 
 
 ![An idea moving through files and writing skills into an open book](assets/brand/book-genesis-workflow.png)
 
-Version 5.1.0-beta.7 · native plugin beta · MIT licensed · free · runs on your own agent and account.
+Version 5.1.0-beta.8 candidate · native plugin beta · MIT licensed · free · runs on your own agent and account. The tag and public ZIP are not published yet; the last published pin remains [v5.1.0-beta.7](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.1.0-beta.7).
 
 **Try a small review first:** [Catch a character using a secret before learning it](examples/continuity-review/README.md). Three short excerpts, a consistent control, real recorded AI feedback and unchanged manuscript files. Copy the prompt into your agent to run your own review. The supplied verification script checks the saved evidence; it does not call a model.
 
 **Recovery build:** [What was recovered from 5.0, what was missing, and what still needs validation](docs/v5-recovery.md). Prose-first drafting is restored; current execution, isolated-review and export safeguards are retained. Beta 7 carries this recovery work into the native plugin release. [Observed recovery checks and remaining validation](docs/recovery-validation-20261009.md).
 
-**Current validation:** beta 6 completed a revised/exported 24-chapter, 83,517-word draft, with a final automated literary result of **72.52/100** and unmet quality gates. Beta 7 adds causal scene contracts, source-selected repair evidence, explicit knowledge boundaries and more precise progress. See the [integration evidence](docs/editorial-integration-20261025.md) and [mechanism-by-mechanism adoption map](docs/research/editorial-adoption-20261025.md). A new beta 7 full-book result above 90/100 has not been established. Historical plugin failures remain in the [native test report](docs/plugin-validation-20261023.md).
+**Current validation:** beta 6 completed a revised/exported 24-chapter, 83,517-word draft, with a final automated literary result of **72.52/100** and unmet quality gates. Beta 7 adds causal scene contracts, source-selected repair evidence, explicit knowledge boundaries and more precise progress. See the [integration evidence](docs/editorial-integration-20261025.md) and [mechanism-by-mechanism adoption map](docs/research/editorial-adoption-20261025.md). A new beta 7 full-book result above 90/100 has not been established. Beta 8, already on `master` and named by this candidate, lets a grouped repair accept viable units independently and adds an explicit runtime recovery. Its pilot changed an evaluation copy only. No beta 8 whole-book result above 90 is claimed. Historical plugin failures remain in the [native test report](docs/plugin-validation-20261023.md). Limits: [beta 8 readiness](docs/releases/5.1.0-beta.8-readiness.md).
 
 ## The goal
 
@@ -32,27 +32,29 @@ Everything lives in a folder you own. Close the session, come back tomorrow in a
 
 ## Install
 
-**Install beta 7 in your existing agent.** No Book Genesis account or separate API key. Python 3.10+ and your host's local tools are required; your subscription quotas still apply.
+**Install the published beta 7 until this candidate is tagged.** No Book Genesis account or separate API key. Python 3.10+ and your host's local tools are required; your subscription quotas still apply. Do not point the pin at `v5.1.0-beta.8` until that tag exists.
 
-**Codex** — paste these two commands into a terminal:
+**Codex, published beta 7** — paste these two commands into a terminal:
 
 ```bash
 codex plugin marketplace add felipelobomotta-blip/book-genesis-studio --ref v5.1.0-beta.7
 codex plugin add book-genesis@book-genesis
 ```
 
-**Claude Code** — paste these two commands inside Claude Code:
+**Claude Code, published repository** — paste these two commands inside Claude Code. This installs the default branch, which may move; a pinned tag is the reproducible choice.
 
 ```text
 /plugin marketplace add felipelobomotta-blip/book-genesis-studio
 /plugin install book-genesis@book-genesis
 ```
 
+After approval, the intended Codex pin is `--ref v5.1.0-beta.8`. That tag is not created by the preparation branch.
+
 Start a new conversation in a folder for your book and select **Book Genesis**. Then say:
 
 > Use Book Genesis. My idea is a mystery about a piano tuner who discovers a message hidden in an old recording. Write the complete book in English, revise it and export Markdown and EPUB. Make reasonable creative decisions and continue without chapter-by-chapter approval.
 
-[Download beta 7 ZIP](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/download/v5.1.0-beta.7/book-genesis-5.1.0-beta.7.zip) · [Installation, updates and troubleshooting](docs/plugins.md) · [Release notes](docs/releases/5.1.0-beta.7.md) · [Support](SUPPORT.md)
+[Download published beta 7 ZIP](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/download/v5.1.0-beta.7/book-genesis-5.1.0-beta.7.zip) · [Installation, updates and troubleshooting](docs/plugins.md) · [Beta 8 candidate notes](docs/releases/5.1.0-beta.8.md) · [Support](SUPPORT.md)
 
 The GitHub marketplace is available independently of the public plugin directories. **Directory approval is pending; Book Genesis is not listed there yet.** The unattended workflow needs local execution; general ChatGPT web/mobile and Claude chat compatibility is not established. Claude and experimental DeepSeek full-book reliability must be validated separately from installation. [Observed native evidence](docs/plugin-validation-20261023.md).
 

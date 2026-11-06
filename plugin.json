@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "book-genesis",
-  "version": "5.1.0-beta.7",
+  "version": "5.1.0-beta.8",
   "description": "Turn your idea into a book: plan, draft, review, revise and export in your own agent.",
   "author": {
     "name": "Felipe Lobo"
