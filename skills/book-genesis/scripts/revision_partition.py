@@ -2,6 +2,9 @@
 from group_review_schema import normalized_report
 from workflow_state import WorkflowError, read_json, encoded, digest, freeze
 
+# Same source-scoped report contract as creative_groups. Schema 5 must not fall back to legacy version 1.
+_REPORT_VERSION_FOR_SCHEMA = {3: 2, 4: 3, 5: 3}
+
 
 def partition_review(manifest, catalog, report):
     """Consume a validated negative review, never turn it into an approval.
@@ -71,7 +74,7 @@ def reviewed_parent(journal, plan):
     manifest = read_json(journal.root / plan['parent_manifest']['path'])
     catalog = groups.catalog_for(journal, manifest)
     members = [p['chapter'] for p in manifest['publications']]
-    schema = groups.schema_for(catalog, members, report_version={3: 2, 4: 3}.get(manifest['schema_version'], 1))
+    schema = groups.schema_for(catalog, members, report_version=_REPORT_VERSION_FOR_SCHEMA.get(manifest['schema_version'], 1))
     response = groups.verify_step(journal, plan['parent_review_key'], groups.packet_for(manifest, catalog), schema)
     if not groups.validate_report(response, schema, catalog, members)['valid']:
         raise WorkflowError('Partition parent lacks a valid complete repair check')
@@ -119,7 +122,7 @@ def execute_partitioned(workflow, number, tasks, strategy, *, staged=None):
     parent = read_json(manifest_path)
     catalog = groups.catalog_for(journal, parent)
     members = [p['chapter'] for p in parent['publications']]
-    schema = groups.schema_for(catalog, members, report_version={3: 2, 4: 3}.get(parent['schema_version'], 1))
+    schema = groups.schema_for(catalog, members, report_version=_REPORT_VERSION_FOR_SCHEMA.get(parent['schema_version'], 1))
     response = groups.verify_step(journal, check_key, groups.packet_for(parent, catalog), schema)
     if not groups.validate_report(response, schema, catalog, members)['valid']:
         raise WorkflowError('Partition parent check is invalid')

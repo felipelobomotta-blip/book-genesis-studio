@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import io
 from contextlib import redirect_stdout
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skills/book-genesis/scripts'))
 from workflow_roles import text_catalog
@@ -47,6 +47,32 @@ class RevisionPartitionTests(unittest.TestCase):
     def test_mutual_dependencies_remain_atomic_and_precede_dependents(self):
         result = self.partition([(1, 2), (2, 1), (3, 2)])
         self.assertEqual([[1, 2], [3]], result['units'])
+
+    def test_schema5_parent_uses_source_scoped_report_not_legacy(self):
+        from revision_partition import reviewed_parent
+        expected = {3: 2, 4: 3, 5: 3}
+        for schema_version, report_version in expected.items():
+            partition = {"schema_version": 1}
+            manifest = {"schema_version": schema_version, "publications": [{"chapter": 1}]}
+            plan = {"parent_manifest": {"path": "parent.json"}, "parent_review_key": "check",
+                    "partition": partition}
+            seen = {}
+
+            def schema_for(catalog, members, *, report_version):
+                seen["members"] = members
+                seen["report_version"] = report_version
+                return {"ok": True}
+
+            with patch("revision_partition.read_json", return_value=manifest), \
+                 patch("creative_groups.catalog_for", return_value={"catalog": True}), \
+                 patch("creative_groups.schema_for", side_effect=schema_for), \
+                 patch("creative_groups.packet_for", return_value=b"packet"), \
+                 patch("creative_groups.verify_step", return_value="response.json"), \
+                 patch("creative_groups.validate_report", return_value={"valid": True}), \
+                 patch("revision_partition.partition_review", return_value=partition):
+                reviewed_parent(MagicMock(), plan)
+            self.assertEqual([1], seen["members"])
+            self.assertEqual(report_version, seen["report_version"])
 
     def test_unknown_passage_cannot_create_or_hide_dependency(self):
         from revision_partition import partition_review
