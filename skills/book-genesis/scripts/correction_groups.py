@@ -43,6 +43,19 @@ def connected_tasks(tasks, *, mode="factual"):
     return sorted(groups, key=lambda g: g[0]["chapter"])
 
 
+def revision_schedule(tasks, *, version):
+    """Preserve old passes; new passes defer purely local cosmetic tickets."""
+    if version not in (1, 2, 3):
+        raise WorkflowError("Unsupported revision schedule")
+    facts = [t for t in tasks if t["mode"] == "factual"]
+    creative = connected_tasks([t for t in tasks if t["mode"] == "creative"], mode="creative")
+    if version == 1:
+        return connected_tasks(facts) + creative
+    cosmetic = [t for t in facts if t.get("revision_class") == "proofread"]
+    essential = [t for t in facts if t.get("revision_class") != "proofread"]
+    return connected_tasks(essential) + creative + [[t] for t in sorted(cosmetic, key=lambda t: t["chapter"])]
+
+
 def schema_for(catalog, members):
     members = sorted(members)
     names = [s["source"] for s in catalog["sources"]]
@@ -122,12 +135,21 @@ result is valid and must be preserved. Return only the required JSON.
 def packet_for(manifest, catalog):
     import json
     instructions = INSTRUCTIONS
-    if manifest.get("schema_version") == 2:
+    if manifest.get("schema_version") in (2, 3):
         instructions += ("\nSome proposed members may be byte-identical to their originals. Verify that each unchanged member "
             "already satisfies its assigned factual ticket and remains consistent with every changed companion. "
             "An unchanged member is valid evidence of retained text, not an automatic pass or an edit. "
             "Block the group if an unchanged member still requires the assigned correction. "
             "Do not demand unrelated changes just to make every member different.\n")
+    if manifest.get("schema_version") == 3:
+        from repair_evidence import render_evidence_catalog
+        return (instructions + "\nTasks:\n" + json.dumps(manifest["tasks"], ensure_ascii=False, sort_keys=True)
+                + "\nComplete sources: S identifies a source and its unchanged hash. P identifies a passage "
+                  "followed by a JSON array of exact text spans; concatenate every span to read the full paragraph. "
+                  "P id @earlier_id repeats that earlier exact text with a distinct passage ID and source. "
+                  "No source or prose is omitted. Read all sources, including unchanged proposals. "
+                  "Cite P IDs in evidence_ids; references are literal reuse, never evidence that a fact is correct.\n"
+                + "\nSelected evidence wire:\n" + render_evidence_catalog(catalog)).encode("utf-8")
     return (instructions + "\nTasks:\n" + json.dumps(manifest["tasks"], ensure_ascii=False, sort_keys=True)
             + "\nSources:\n" + json.dumps(catalog, ensure_ascii=False, sort_keys=True)).encode("utf-8")
 
@@ -135,7 +157,7 @@ def packet_for(manifest, catalog):
 def verify(journal, manifest_path, call_key):
     """Bind a pass to the exact source catalog and its original native receipt."""
     manifest = read_json(manifest_path)
-    if manifest.get("kind") != "factual_correction_group" or manifest.get("schema_version") not in (1, 2):
+    if manifest.get("kind") != "factual_correction_group" or manifest.get("schema_version") not in (1, 2, 3):
         raise WorkflowError("Unsupported correction group")
     unchanged = manifest.get("unchanged_members", [])
     if manifest["schema_version"] == 1 and unchanged:
@@ -181,7 +203,7 @@ def verify(journal, manifest_path, call_key):
             raise WorkflowError("Correction group publication differs from its original source")
         if row["candidate"] != manifest["sources"]["proposed/" + name]:
             raise WorkflowError("Correction group publication differs from its proposed source")
-    if manifest["schema_version"] == 2:
+    if manifest["schema_version"] in (2, 3):
         if (any(row["before"] == row["candidate"]["sha256"] for row in manifest["publications"])
                 or any(row["before"] != row["candidate"]["sha256"] for row in unchanged)):
             raise WorkflowError("Correction group mislabels changed and unchanged members")
@@ -254,7 +276,8 @@ def replace_verified(target, candidate, before, transaction_id):
 def verify_reviewed_manuscript(journal, manifest, *, promoted=False):
     """Retained groups and scoped creative reviews bind the complete read canon."""
     if (manifest["schema_version"] == 2 or
-            (manifest["kind"] == "creative_revision_group" and manifest["schema_version"] in (3, 4))):
+            (manifest["kind"] == "factual_correction_group" and manifest["schema_version"] == 3) or
+            (manifest["kind"] == "creative_revision_group" and manifest["schema_version"] in (3, 4, 5))):
         original = {"manuscript/chapters/" + name.removeprefix("original/"): row["sha256"]
                     for name, row in manifest["sources"].items() if name.startswith("original/")}
         if promoted:

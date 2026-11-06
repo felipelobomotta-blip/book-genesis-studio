@@ -139,6 +139,27 @@ class RevisionPlanHandoffTests(unittest.TestCase):
             self.assertIn('affected chapter(s): 3', retry_packet)
             self.assertIn('consolidate', retry_packet.lower())
 
+    def test_undispatched_oversized_plan_gets_new_identity_and_preserves_old_attempt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            calls = []
+            def generate(call_id, packet, schema, _root):
+                calls.append(call_id)
+                return {'strategy': 'Repair the supported route.', 'deferred': [], 'tasks': [
+                    {'chapter': 1, 'mode': 'creative', 'ticket': 'Repair the route.', 'preserve': 'Letter.',
+                     'revision_class': 'continuity', 'issue_ids': [f'old-{i:02d}' for i in range(40)]}]}
+            workflow, measurement, _ = self.build(root, generate)
+            with redirect_stdout(io.StringIO()), self.assertRaisesRegex(WorkflowError, 'character limit'):
+                workflow.journal.call('revision-plan-3', b'x' * 1048577, None, workflow.command,
+                                      lambda p: {'valid': True}, transport=workflow.transport)
+            old = copy.deepcopy(workflow.journal.data['steps']['revision-plan-3'])
+            with redirect_stdout(io.StringIO()):
+                result = workflow.revision_plan(3, measurement)
+                self.assertEqual(result, workflow.revision_plan(3, measurement))
+            self.assertEqual(old, workflow.journal.data['steps']['revision-plan-3'])
+            self.assertEqual(['wf-revision-plan-3-compact-1'], calls)
+            self.assertEqual('revision-plan-3-compact', workflow.revision_plan_key(3))
+
     def test_uncompressible_plan_stays_durably_blocked_without_dispatch_or_budget_reset(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -160,6 +181,26 @@ class RevisionPlanHandoffTests(unittest.TestCase):
 
 
 class PlanningSpanTests(unittest.TestCase):
+    def test_repeated_complete_outcome_evidence_is_shared_without_dropping_history(self):
+        from revision_plan_context import render_plan_context, decode_plan_context
+        value = small_context()
+        value['current_sources']['chapter-03.md'] = 'Unique prose ' * 60000
+        evidence = [{'path': f'work/snapshot-{n}/chapter.md', 'sha256': str(n).zfill(64)} for n in range(75)]
+        value['earlier_revision_outcomes'] = [[{'chapter': n, 'decision': 'reject', 'evidence': evidence}
+                                              for n in range(24)]]
+        value['earlier_revision_outcomes'][0].append({'chapter': 25, 'decision': 'promote',
+            'evidence': {'path': 'evaluations/accepted.json', 'sha256': 'a' * 64}})
+        before = encoded(value)
+        wire = render_plan_context(value, prefix_chars=20000)
+        self.assertLess(len(wire) + 20000, 900000)
+        view = json.loads(wire)
+        self.assertEqual(2, view['_lossless_context']['version'])
+        self.assertEqual(value, decode_plan_context(view))
+        self.assertEqual(before, encoded(value))
+        view['_lossless_context']['shared_outcome_evidence']['e1'][0]['sha256'] = 'tampered'
+        with self.assertRaises(ValueError):
+            decode_plan_context(view)
+
     def test_small_context_keeps_original_packet_bytes(self):
         from revision_plan_context import render_plan_context
         value = small_context()

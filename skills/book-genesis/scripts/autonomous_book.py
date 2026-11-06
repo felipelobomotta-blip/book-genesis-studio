@@ -679,6 +679,19 @@ class BookWorkflow:
         self.log(f"Review {number} | panel {'passed' if panel_passed else 'needs work'} | audit {audit['data']['verdict']} | calibrated craft floor {score_text(rubric['floor'])}/10")
         return result
 
+    def revision_plan_key(self, number, packet=None):
+        key = f"revision-plan-{number}"
+        step = self.journal.data['steps'].get(key, {})
+        if step.get('status') == 'blocked_input_size':
+            attempt = step['attempts'][-1]
+            self.journal.verify_files(attempt['input_evidence'])
+            if attempt.get('native_dispatched') is not False:
+                raise WorkflowError('Cannot replace a planning request that may have been dispatched')
+            if (key + '-compact' in self.journal.data['steps'] or
+                    packet is not None and len(packet) <= 1048576):
+                return key + '-compact'
+        return key
+
     def revision_plan(self, number, measurement):
         open_issues = measurement["issue_ledger"]["open"]
         issue_ids = [issue["id"] for issue in open_issues]
@@ -697,7 +710,8 @@ class BookWorkflow:
             "corrections supported by existing canon (names, established ages/dates, typos) from creative changes. "
             "Factual typography may remove a redundant Chapter N: prefix while retaining the exact title. "
             "Do not mix stylistic edits into a factual task. New canon choices, viewpoint, actions, event order, motivation "
-            "or a missing scene require creative mode. All factual tasks run before any creative task. "
+            "or a missing scene require creative mode. Essential factual dependencies run before creative repairs; "
+            "pure proofreading runs last. Do not connect unrelated cosmetic edits to structural dependencies. "
             "Factual tasks sharing an issue ID are staged and checked as one complete group. Include EVERY affected "
             "chapter needed for that correction; do not rely on a later creative task to make a factual group coherent. "
             "Resolving competing on-page chronologies is a creative continuity decision, not a factual typo. "
@@ -752,7 +766,7 @@ class BookWorkflow:
                           + details)
                 report["valid"] = not report["errors"]
             return report
-        response, _ = self.call(f"revision-plan-{number}", packet, schema, validate, feedback=True)
+        response, _ = self.call(self.revision_plan_key(number, packet), packet, schema, validate, feedback=True)
         return read_json(response)
 
     def revise_chapter(self, number, task, strategy, *, stage_only=False, companion_tasks=None,
@@ -762,7 +776,7 @@ class BookWorkflow:
         # A broad factual ticket may include already-correct chapters. A group
         # reviewer must still check them, but they must not be changed just to
         # satisfy an artificial per-member edit requirement.
-        allow_unchanged = factual and stage_only
+        allow_unchanged = factual
         key = f"revision-{number}-c{n:02d}" + ("-facts" if factual else "")
         decision_path = self.root / f"evaluations/decisions/{key}.json"
         outcome_path = self.root / f"evaluations/decisions/{key}-outcome.json"
@@ -826,7 +840,10 @@ class BookWorkflow:
                     "Do not invent an edit to make every group member different. ")
             packet = ("Address ONLY the named tickets and their required consequences. Use only this packet; no tools. "
                 + output_instruction +
-                "Do not add new canon to erase a factual problem; honor the supplied existing contract. "
+                ("Do not add new canon to erase a factual problem; honor the supplied existing contract. " if factual else
+                 "For creative tickets, dramatize the explicitly authorized new actions, clue tests and consequences "
+                 "inside the named scenes. Preserve unaffected canon and coordinate every changed dependency; "
+                 "do not merely append an explanation that claims the scene now works. ") +
                 "The revision must remain a real scene, not explanatory compliance. "
                 "Use the complete current manuscript to check distant facts and consequences. "
                 "If companion tasks and unaccepted companion proposals are supplied, coordinate with their explicit "
@@ -884,7 +901,7 @@ class BookWorkflow:
             return outcome
         corrected = apply_passage_corrections(original_text, read_json(response)["corrections"], allow_unchanged=allow_unchanged) if factual else None
         candidate = self.stage_response(key, response, corrected_prose=corrected)
-        if allow_unchanged:
+        if allow_unchanged and stage_only:
             return {"key": key, "task": task, "accepted": accepted, "candidate": candidate,
                     "target": target, "manuscript": manuscript, "outcome_path": outcome_path}
         if candidate.read_bytes() == accepted.read_bytes():
@@ -936,6 +953,14 @@ class BookWorkflow:
     def revise_factual_group(self, number, tasks, strategy):
         from correction_groups import (group_key, schema_for, validate_report, packet_for, publish, verify_receipt)
         key = group_key("facts", number, tasks)
+        # A legacy oversized request was never dispatched. Keep its packet and
+        # attempt intact; the lossless wire receives a separate review identity.
+        legacy_step = self.journal.data["steps"].get(key + "-check", {})
+        if legacy_step.get("status") == "blocked_input_size":
+            self.journal.verify_files(legacy_step["attempts"][-1]["input_evidence"])
+            if legacy_step["attempts"][-1].get("native_dispatched") is not False:
+                raise WorkflowError("Cannot replace a group review that may have been dispatched")
+            key += "-compact"
         folder = self.root / "work/correction-groups" / key
         manifest_path = folder / "manifest.json"
         result_path = self.root / f"evaluations/decisions/{key}.json"
@@ -976,10 +1001,15 @@ class BookWorkflow:
                             ("00-brief.md", "03-characters.md", "07-outline.md", "09-continuity-ledger.md")})
             members = [{"chapter": row["task"]["chapter"], "target": row["target"].relative_to(self.root).as_posix(),
                 "before": digest(row["accepted"].read_bytes()), "candidate": self.journal.record_file(row["candidate"])} for row in prepared]
-            manifest = {"schema_version": 2, "kind": "factual_correction_group", "tasks": score_blind(tasks),
+            manifest = {"schema_version": 3, "kind": "factual_correction_group", "tasks": score_blind(tasks),
                 "sources": {name: self.journal.record_file(path) for name, path in sources.items()},
                 "publications": [row for row in members if row["before"] != row["candidate"]["sha256"]],
                 "unchanged_members": [row for row in members if row["before"] == row["candidate"]["sha256"]]}
+            if manifest_path.exists():
+                existing = read_json(manifest_path)
+                # Existing valid v1/v2 publications keep their original wire.
+                if existing.get("schema_version") in (1, 2):
+                    manifest["schema_version"] = existing["schema_version"]
             freeze(manifest_path, encoded(manifest))
             # Serialization defines source order; reloading keeps paragraph IDs
             # byte-identical after a crash or journal reload.
@@ -1168,7 +1198,11 @@ class BookWorkflow:
         for number in range(1, 4):
             if measurement["passed"]:
                 break
+            new_pass = number > len(self.journal.data["passes"])
             row = self.journal.reserve_pass(number, panel_failed=not measurement["panel_passed"], rubric_failed=not measurement["rubric"]["passed"])
+            if "schedule_version" not in row:
+                row["schedule_version"] = 3 if new_pass else 1
+                self.journal.save()
             self.sync()
             if row["status"] == "completed":
                 self.journal.verify_files([row["measurement"]])
@@ -1179,12 +1213,23 @@ class BookWorkflow:
                     break
                 continue
             try:
-                plan = self.revision_plan(number, measurement)
+                saved_plans = self.journal.data.get("strategies", [])
+                if len(saved_plans) >= number:
+                    step = self.journal.data["steps"][self.revision_plan_key(number)]
+                    if step["status"] != "completed":
+                        raise WorkflowError("Saved revision strategy lacks its original completed response")
+                    self.journal.verify_files(step["evidence"])
+                    plan = read_json(self.root / step["response"])
+                    expected_sources = {"manuscript/chapters/" + name: sha for name, sha in measurement["sources"].items()}
+                    if plan != saved_plans[number - 1] or row["sources"] != expected_sources:
+                        raise WorkflowError("Saved revision strategy differs from its original response or measurement")
+                else:
+                    plan = self.revision_plan(number, measurement)
             except WorkflowError:
                 # A fully drafted, reviewed manuscript can still be delivered
                 # when both plan responses are invalid. Never invent tasks or
                 # rerate unchanged prose. Transport/auth/tampering still block.
-                evidence = self.rejected_validation_evidence(f"revision-plan-{number}")
+                evidence = self.rejected_validation_evidence(self.revision_plan_key(number))
                 if evidence is None:
                     raise
                 row.update(status="completed", stop_reason="invalid_revision_plan", outcomes=[],
@@ -1198,15 +1243,18 @@ class BookWorkflow:
             if len(plans) < number:
                 plans.append(plan)
                 self.journal.save()
-            from correction_groups import connected_tasks
-            outcomes = []
-            for group in connected_tasks([t for t in plan["tasks"] if t["mode"] == "factual"]):
-                outcomes.extend(self.revise_factual_group(number, group, plan["strategy"]) if len(group) > 1 else
-                                [self.revise_chapter(number, group[0], plan["strategy"])])
+            from correction_groups import revision_schedule
             from creative_groups import execute as revise_creative_group
-            for group in connected_tasks([t for t in plan["tasks"] if t["mode"] == "creative"], mode="creative"):
-                outcomes.extend(revise_creative_group(self, number, group, plan["strategy"]) if len(group) > 1 else
-                                [self.revise_chapter(number, group[0], plan["strategy"])])
+            from revision_partition import execute_partitioned
+            outcomes = []
+            for group in revision_schedule(plan["tasks"], version=row["schedule_version"]):
+                if len(group) == 1:
+                    outcomes.append(self.revise_chapter(number, group[0], plan["strategy"]))
+                elif group[0]["mode"] == "factual":
+                    outcomes.extend(self.revise_factual_group(number, group, plan["strategy"]))
+                else:
+                    execute_group = execute_partitioned if row['schedule_version'] >= 3 else revise_creative_group
+                    outcomes.extend(execute_group(self, number, group, plan["strategy"]))
             row.update(status="revisions_saved", outcomes=outcomes)
             self.journal.save()
             current = {p.name: digest(p.read_bytes()) for p in (self.root / "manuscript/chapters").glob("*.md")}
