@@ -32,6 +32,15 @@ def _hash(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
+def _linked(path):
+    """A link at this path itself. Ancestor links are resolved, not refused."""
+    try:
+        info = Path(path).lstat()
+    except OSError:
+        return False
+    return stat.S_ISLNK(info.st_mode) or bool(getattr(info, 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0))
+
+
 def _inventory(root):
     from launcher.cli import _install_path
     root = _install_path(root)
@@ -72,9 +81,11 @@ def recover_runtime(root, archive):
     _scripts()
     from workflow_state import Journal, atomic, encoded, read_json, freeze
 
-    root, archive = Path(root).absolute(), Path(archive).absolute()
-    if root.resolve() != root or archive.resolve() != archive:
+    root, archive = Path(root), Path(archive)
+    if _linked(root) or _linked(archive):
         raise ValueError('Use real, unlinked book and archive paths')
+    # Resolve ancestor links (macOS /var, Windows 8.3 names) before containment.
+    root, archive = root.resolve(), archive.resolve()
     if archive.exists() or archive.is_relative_to(root) or root.is_relative_to(archive):
         raise ValueError('Choose a new archive outside the book')
     if not archive.parent.is_dir():
@@ -149,9 +160,9 @@ def recover_runtime(root, archive):
         after.setdefault('runtime_recoveries', []).append(journal.record_file(receipt))
         verify_recovery(root, after)
         previous = recovery_dir / 'previous-skills'
-        # All rename targets are resolved children of this book's metadata.
+        metadata = (root / '.book-genesis').resolve()
         for path in (old_skills, staged, previous):
-            if not path.resolve().is_relative_to(root / '.book-genesis'):
+            if not path.resolve().is_relative_to(metadata):
                 raise ValueError('Runtime recovery path escapes book metadata')
         old_skills.rename(previous)
         try:

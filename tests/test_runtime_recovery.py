@@ -145,6 +145,25 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(first, read_json(self.base / 'second-original/.book-genesis/workflow.json'))
         read_project(self.book)
 
+    def test_symlinked_ancestor_recovers_and_a_leaf_link_is_refused(self):
+        from launcher.recovery import recover_runtime
+        linked = self.base / 'via-ancestor'
+        try:
+            linked.symlink_to(self.base, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest('cannot create a directory link here: ' + str(exc))
+        book_via = linked / 'book'
+        self.assertNotEqual(book_via.resolve(), book_via)
+        report = recover_runtime(book_via, linked / 'original')
+        self.assertEqual('recovered', report['status'])
+        self.assertEqual(self.prose, (self.book / 'manuscript/chapters/chapter-01.md').read_bytes())
+        self.assertEqual(self.before, read_json(self.archive / '.book-genesis/workflow.json'))
+        leaf = self.base / 'book-link'
+        leaf.symlink_to(self.book, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'unlinked'):
+            recover_runtime(leaf, self.base / 'another-archive')
+        self.assertFalse((self.base / 'another-archive').exists())
+
     def test_archive_inventory_reads_long_nested_runtime_paths(self):
         from launcher.recovery import _inventory
         from launcher.cli import _install_path
