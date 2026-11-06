@@ -16,6 +16,14 @@ from workflow_state import Journal, WorkflowError, encoded, freeze, read_json, v
 from test_autonomous_workflow import COMMAND, receipt_transport, fixture_response
 
 
+def packet_catalog(packet):
+    if "\nSelected evidence wire:\n" in packet:
+        from repair_evidence import parse_evidence_catalog
+        wire = packet.split("\nSelected evidence wire:\n", 1)[1].split("\n\nDeterministic output validation", 1)[0]
+        return parse_evidence_catalog(wire)
+    return json.JSONDecoder().raw_decode(packet.split("\nSources:\n", 1)[1])[0]
+
+
 class CorrectionGroupTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -56,7 +64,7 @@ class CorrectionGroupTests(unittest.TestCase):
                                      "after": p["text"].replace("plastic", "galvanised mesh")}]}
         if self.malformed:
             return {"verdict": "pass"}
-        catalog = json.JSONDecoder().raw_decode(packet.split("\nSources:\n", 1)[1])[0]
+        catalog = packet_catalog(packet)
         by_name = {s["source"]: s for s in catalog["sources"]}
         for n in [task["chapter"] for task in self.tasks]:
             self.assertIn(f"original/chapter-{n:02d}.md", by_name)
@@ -81,6 +89,27 @@ class CorrectionGroupTests(unittest.TestCase):
         tasks = [{"chapter": i, "mode": "factual", "issue_ids": ids} for i, ids in
                  [(1, ["a"]), (2, ["b"]), (3, ["a", "b"]), (4, []), (5, ["c"])]]
         self.assertEqual([[1, 2, 3], [4], [5]], [[t["chapter"] for t in g] for g in groups.connected_tasks(tasks)])
+
+    def test_obsolete_standalone_proofread_may_leave_text_unchanged_without_fake_approval(self):
+        self.tasks = [{**self.tasks[0], 'chapter': 1, 'revision_class': 'proofread'}]
+        with redirect_stdout(io.StringIO()):
+            result = self.workflow.revise_chapter(1, self.tasks[0], 'Proofread after creative repairs.')
+        self.assertEqual('reject', result['decision'])
+        self.assertIn('identical', result['reason'])
+        self.assertEqual(1, len(self.packets))
+        self.assert_original()
+
+    def test_undispatched_oversized_review_is_preserved_beside_compact_recovery(self):
+        key = 'revision-1-facts-group-2-4-check'
+        native = {'argv': ['codex', 'exec', '--ignore-user-config', '-o', '{output}', '-']}
+        with self.assertRaisesRegex(WorkflowError, 'native character limit'):
+            self.workflow.journal.call(key, b'x' * 1048577, None, native, lambda p: {'valid': True})
+        original = read_json(self.workflow.journal.path)['steps'][key]
+        result = self.run_group()
+        self.assertTrue(all(r['decision'] == 'promote' for r in result))
+        self.assertEqual(original, self.workflow.journal.data['steps'][key])
+        self.assertEqual('completed', self.workflow.journal.data['steps'][
+            'revision-1-facts-group-2-4-compact-check']['status'])
 
     def test_complete_group_promotes_both_without_losing_originals_or_calling_again(self):
         result = self.run_group()
@@ -137,7 +166,7 @@ class CorrectionGroupTests(unittest.TestCase):
             if "corrections" in schema["properties"] and "c04-facts" in call_id:
                 return {"corrections": []}
             if "chapters" in schema["properties"]:
-                catalog = json.loads(packet.split("\nSources:\n", 1)[1])
+                catalog = packet_catalog(packet)
                 by_name = {s["source"]: s for s in catalog["sources"]}
                 self.assertIn("plastic gate", str(by_name["proposed/chapter-04.md"]))
                 return {"catalog_sha256": schema["properties"]["catalog_sha256"]["enum"][0],
@@ -301,7 +330,7 @@ class FullGroupDeliveryTests(unittest.TestCase):
                     return {"corrections": [{"from_passage": p["id"], "through_passage": p["id"],
                                              "after": p["text"].replace("Ida Vale", "Ada Vale")}]}
                 if "catalog_sha256" in props and "chapters" in props:
-                    catalog = json.loads(packet.split("\nSources:\n", 1)[1])
+                    catalog = packet_catalog(packet)
                     sources = {s["source"]: s for s in catalog["sources"]}
                     return {"catalog_sha256": props["catalog_sha256"]["enum"][0], "verdict": "pass", "coverage": list(sources),
                         "chapters": [{"chapter": n, "canon_supported": True, "factual_only": True, "dependencies_safe": True,

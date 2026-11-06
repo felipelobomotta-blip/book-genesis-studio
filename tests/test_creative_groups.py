@@ -73,15 +73,47 @@ def group_report(packet, schema, blocked=False):
 
 def comparison_report(call_id, packet, schema, root, prefer=True):
     # The synthetic test can inspect the mapping; native readers cannot.
+    # Directory listing order is not the call order, and each comparison
+    # shuffles A/B, so the vote must use the manifest for this call.
     stripped = json.loads(json.dumps(schema))
     stripped["properties"].pop("compare")
     result = fixture_response(call_id, packet, stripped, root)
     result["schema_version"] = 3
-    paths = list((root / "work/comparisons").glob("*-preference/manifest.private.json"))
-    manifest = read_json(paths[-1])
+    personas = {"primary", "hostile", "adjacent", "casual"}
+    matches = []
+    for path in (root / "work/comparisons").glob("*-preference/manifest.private.json"):
+        rest = call_id.removeprefix(f"wf-{path.parent.name}-")
+        persona, _, attempt = rest.rpartition("-")
+        if rest != call_id and persona in personas and attempt.isdigit():
+            matches.append(path)
+    if len(matches) != 1:
+        raise AssertionError(f"comparison manifest for {call_id} not unique: {matches}")
+    manifest = read_json(matches[0])
     assignment = next(r for r in manifest["readers"] if r["reader"] == result["reader"])
     result["compare"] = next(label for label, kind in assignment["mapping"].items() if kind == ("candidate" if prefer else "accepted"))
     return result
+
+
+class ComparisonManifestOrderTests(unittest.TestCase):
+    def test_vote_uses_the_manifest_for_this_call_when_a_later_directory_sorts_last(self):
+        schema = {"properties": {"turn_page": {}, "reader": {"enum": ["Lena"]},
+                                 "catalog_sha256": {"enum": ["abc"]}, "compare": {}},
+                  "$defs": {"passageId": {"enum": ["p1"]}}}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+
+            def write(folder, candidate_label):
+                path = root / "work/comparisons" / folder
+                path.mkdir(parents=True)
+                other = "B" if candidate_label == "A" else "A"
+                freeze(path / "manifest.private.json", encoded({
+                    "readers": [{"reader": "Lena", "mapping": {candidate_label: "candidate", other: "accepted"}}]}))
+
+            write("revision-1-unit-1-1-aaaaaaaaaaaaaaaa-preference", "A")
+            write("revision-1-unit-2-2-bbbbbbbbbbbbbbbb-preference", "B")
+            older = comparison_report("wf-revision-1-unit-1-1-aaaaaaaaaaaaaaaa-preference-primary-1",
+                                      "You are Lena, a reader.", schema, root, prefer=True)
+        self.assertEqual("A", older["compare"])
 
 
 class CreativeGroupTests(unittest.TestCase):

@@ -191,6 +191,12 @@ def read_project(project: Path, *, verify_snapshot: bool = True) -> dict[str, ob
     result = verify_install(host, destination=_install_path(root / SKILLS))
     if not result["ok"]:
         raise ValueError("Skill snapshot differs from this checkout or its install record. Resume using the original checkout; no automatic upgrade: " + "; ".join(str(item) for item in result["errors"]))
+    workflow_path = root / '.book-genesis/workflow.json'
+    if workflow_path.exists():
+        workflow = json.loads(workflow_path.read_text(encoding='utf-8'))
+        if workflow.get('runtime_recoveries'):
+            from launcher.recovery import verify_recovery
+            verify_recovery(root, workflow)
     if host == "claude":
         # The install record names an absolute agents folder. A moved or copied
         # book would otherwise be checked against the original location.
@@ -385,6 +391,9 @@ def build_parser() -> argparse.ArgumentParser:
     status = commands.add_parser("status", help="Run the existing core's read-only progress and delivery checks")
     status.add_argument("project", type=Path)
     status.add_argument("--json", action="store_true", help="Print the full read-only evidence as one JSON object")
+    recovery = commands.add_parser('recover-runtime', help='Explicitly archive and repair a stopped oversized revision; no model call')
+    recovery.add_argument('project', type=Path)
+    recovery.add_argument('--archive', type=Path, required=True, help='New archive directory outside the book')
     return parser
 
 
@@ -405,6 +414,10 @@ def _run(args: argparse.Namespace) -> int:
             raise ValueError("Open connect in your terminal to complete the official sign-in flow")
         return run_attached(login_argv(args.host))
     root = args.project.expanduser().absolute()
+    if args.command == 'recover-runtime':
+        from launcher.recovery import recover_runtime
+        print(json.dumps(recover_runtime(root, args.archive.expanduser()), indent=2))
+        return 0
     if args.command == "status":
         from launcher.status import collect_status, print_status
 

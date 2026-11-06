@@ -57,6 +57,19 @@ A `continuity` ticket may include directly dependent values inside its quoted sp
 
 ## Targeted repair
 
+For a structural or connective ticket about a clue, distinguish mentioning its
+importance from making it work in the story. Within the authorized span, show
+the character attempting a concrete test or action, its observable result, and
+the decision or consequence it changes. If setup or payoff lies outside that
+span, identify the dependency; another promise to investigate is not a repair.
+Do not turn a factual correction into a newly invented event.
+
+For repetition and pacing tickets, compare what changes across the named scenes.
+Repeated interviews, refusals, notes, or delayed tests need different consequences,
+not merely different wording. For prose tickets, remove explanation that restates
+an image, action, or emotional beat the reader can already infer. Preserve useful
+ambiguity, voice, and necessary information; do not replace repetition with padding.
+
 1. Before you edit a chapter, copy its accepted version to `work/revisions/chapter-NN.pre-rK.md`, where K is the next unused revision number for that chapter (one more than the highest K already there).
 2. Write the revised chapter to `work/attempts/chapter-NN/revision-rK.md`, never to `manuscript/chapters/`. The orchestrator copies it there only after it is accepted: a narrowly factual Phase 3 ticket uses the bounded continuity recheck and hash-verified copy protocol; a Phase 5 factual correction against existing canon uses the fresh correctness check in `references/prompts/revision-loop.md`; a creative revision uses the panel's draft comparison. Both Phase 5 paths use `promote_chapter.py`. The chapter file always holds the last accepted version, and a rejected revision never replaces it.
 3. Change only the quoted passages and their immediate seams: the sentence before and the sentence after each changed span, adjusted only so the join reads (tense, pronoun, transition). The unit of repair is the smallest passage that resolves the defect coherently. When the fix calls for new text, insert it directly next to the named passage. Everything else stays exactly as it was. If the span excludes a necessary setup or consequence, return that dependency before attempting the edit.

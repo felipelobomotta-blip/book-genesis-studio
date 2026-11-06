@@ -51,6 +51,9 @@ def verify_execution(root: Path, *, required_phase: int = 7) -> dict:
     if not path.exists():
         raise WorkflowError("Controlled export needs its durable workflow journal")
     data = read_json(path)
+    if data.get('runtime_recoveries'):
+        from recovery_evidence import verify_recoveries
+        verify_recoveries(root, data)
     if data.get("schema_version") != 1 or data.get("phase", -1) < required_phase or data.get("pending_mutation"):
         raise WorkflowError("Controlled export has unfinished phase or manuscript work")
     def check(row):
@@ -228,6 +231,9 @@ class Journal:
                          "phase_evidence": {}, "steps": {}, "passes": [], "canonical": {},
                          "pending_mutation": None, "status": "running", "started_at": self.now()}
             self.save()
+        if self.data.get('runtime_recoveries'):
+            from recovery_evidence import verify_recoveries
+            verify_recoveries(self.root, self.data)
         self.recover_mutation()
         self.check_canonical()
 
