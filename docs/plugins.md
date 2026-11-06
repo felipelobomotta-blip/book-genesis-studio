@@ -2,9 +2,9 @@
 
 Install Book Genesis in your existing agent, then describe your book. You do not need a Book Genesis account, API key, separate writing application or server. Your host's subscription, quotas and tool permissions still apply. Python 3.10+ is needed for verification and export; the agent checks this before starting.
 
-Version **5.1.0-beta.7** is distributed from the GitHub repository and its [pre-release ZIP](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.1.0-beta.7). It is **not listed in the public plugin directories**. The complete writing workflow requires desktop/local execution; normal web/mobile chat compatibility has not been established.
+The source candidate is **5.1.0-beta.8**. It is **not tagged, not uploaded as a GitHub release, and not listed in the public plugin directories**. The last published package remains [5.1.0-beta.7](https://github.com/felipelobomotta-blip/book-genesis-studio/releases/tag/v5.1.0-beta.7). The complete writing workflow requires desktop/local execution; normal web/mobile chat compatibility has not been established.
 
-Beta 7 adds scene/cost/consequence planning, character knowledge boundaries, voice calibration guidance, source-selected repair citations, bounded chapter-length recovery and clearer saved activity. Read the [integration evidence](editorial-integration-20261025.md) and [release notes](releases/5.1.0-beta.7.md) for validation limits. An update applies to new projects; existing books keep their frozen engine, evidence and attempt budgets.
+Beta 8 adds independent acceptance of viable revision units and an explicit runtime recovery for an oversized, undispatched Phase 5 request. It also corrects macOS ancestor-link recovery checks and Windows Python 3.10 interrupt shutdown. Read the [beta 8 notes](releases/5.1.0-beta.8.md) and the [readiness assessment](releases/5.1.0-beta.8-readiness.md). Beta 7's scene contracts, knowledge boundaries, voice guidance and source-selected citations remain. An update applies to new projects; existing books keep their frozen engine, evidence and attempt budgets.
 
 ## Codex: two commands
 
@@ -17,7 +17,7 @@ codex plugin add book-genesis@book-genesis
 
 Start a new conversation in a writable folder for your book. Enable **Book Genesis** in Plugins if needed, then select it in the composer. Do not generate books inside the plugin installation/cache folder.
 
-The tag pins the tested beta. Register the repository root, not a raw `marketplace.json` URL. The repository contains `.agents/plugins/marketplace.json` for Codex.
+The command above pins the published beta 7 tag. Do not substitute `v5.1.0-beta.8` until that tag exists. Register the repository root, not a raw `marketplace.json` URL. The repository contains `.agents/plugins/marketplace.json` for Codex.
 
 ## Claude Code: two commands
 
@@ -42,7 +42,7 @@ The host may request access to the book folder and permission to run local tools
 
 ## ZIP installation and troubleshooting
 
-1. Download `book-genesis-5.1.0-beta.7.zip` and `SHA256SUMS.txt` from the release.
+1. Download `book-genesis-5.1.0-beta.7.zip` and `SHA256SUMS.txt` from the published release. A beta 8 ZIP is not published by the preparation branch. Maintainers can build a local candidate with the commands at the end of this page; that archive is not a GitHub release asset.
 2. Extract the ZIP into a new folder. Keep hidden `.agents`, `.codex-plugin` and `.claude-plugin` folders. Do not overwrite an installed/frozen book engine.
 3. For Codex, use `codex plugin marketplace add "<absolute path to extracted folder>"`, then `codex plugin add book-genesis@book-genesis`.
 4. For Claude Code, use `/plugin marketplace add <absolute path to extracted folder>`, then `/plugin install book-genesis@book-genesis`.

@@ -1,5 +1,29 @@
 # Changelog
 
+## 5.1.0-beta.8 — 2026-11-06
+
+Prepared for approval. This entry names the tree already merged to `master` at `c2fc628fd5d1266b63e98ed962f6a2db37518a53`. It does not create the tag, the GitHub release, or a public ZIP. The last published install pin remains `v5.1.0-beta.7`.
+
+### Added
+
+- Independent creative revision acceptance after a valid negative coordinated review. Viable units can be checked and published on their own; a failed unit blocks only its dependents. New passes opt into schedule version 3. See [release notes](docs/releases/5.1.0-beta.8.md).
+- Explicit runtime recovery for a stopped Codex book whose Phase 5 request was too large to dispatch. The command does not call a model and does not upgrade a book silently. See [runtime recovery](docs/runtime-recovery.md).
+- Release-candidate notes and a readiness assessment that separate tested hosts, documented hosts, and directory acceptance.
+
+### Changed
+
+- Recovery path checks resolve ancestor links before the containment comparison, so a macOS `/var` alias or a Windows 8.3 name is not treated as a leaf symlink. A symlink at the book or archive itself is still refused.
+- An attached Windows session on Python 3.10 no longer waits inside `Popen.wait` for a negative interrupt grace period. The owned process is polled so Ctrl+C can reach job shutdown.
+- Manifests, `VERSION`, the Claude marketplace entry, and `package.json` now say `5.1.0-beta.8`. The builder rejects a disagreement among those version fields when `VERSION` is present.
+
+### Removed
+
+- Nothing.
+
+### Migration
+
+- Do not replace an installed 5.1.0-beta.7 until this candidate is approved and tagged. Existing books keep their frozen engine until an explicit recovery or a new project. No whole-book score above 90 is claimed.
+
 ## 5.1.0-beta.7 — 2026-10-26
 
 - Native Codex and Claude Code marketplace manifests, a reproducible allowlisted ZIP and pinned Codex installation instructions.
