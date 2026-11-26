@@ -31,7 +31,7 @@ The orchestrator aggregates; readers never do.
 | Defect | A flag counts as a defect only when at least 2 readers raise the same flag, or quote the same paragraph. A single reader's flag is kept as a note. |
 | Stop point | Two readers stopping inside the same paragraph make that paragraph a high-severity ticket. |
 | Memory | The union of `remember_tomorrow` is the list of strengths the revision editor must preserve. |
-| Draft comparison | A revision is accepted when at least 3 of 4 prefer it, or when readers split and the revision has fewer defects. |
+| Draft comparison | A revision is accepted only when the panel is decisive and at least 3 of 4 prefer it. Decisive means no `same` vote and every turn-the-page answer is yes or no. A 2 to 2 split is rejected. A neutral or unsure vote rejects the comparison. Fewer complaints are not fewer defects and do not accept a split. |
 
 Report the table, the tickets it produced, and the preserve list. Never average feelings into a number.
 
