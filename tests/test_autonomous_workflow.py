@@ -296,7 +296,14 @@ def fixture_response(call_id, packet, schema, root):
         if comparison:
             # Test fixture knows the private mapping to exercise a promotion;
             # real readers receive only their anonymous packet and schema.
-            manifest = read_json(root / "work/comparisons/revision-1-c01/manifest.private.json")
+            comp_name = call_id.rsplit("-", 1)[0]
+            specific_manifest = root / f"work/comparisons/{comp_name}/manifest.private.json"
+            if specific_manifest.is_file():
+                manifest_file = specific_manifest
+            else:
+                candidates = list((root / "work/comparisons").glob("*/manifest.private.json"))
+                manifest_file = candidates[0] if candidates else root / "work/comparisons/revision-1-c01/manifest.private.json"
+            manifest = read_json(manifest_file)
             assignment = next(row for row in manifest["readers"] if row["reader"] == reader)
             result["compare"] = next(label for label, identity in assignment["mapping"].items() if identity == "candidate")
         return result

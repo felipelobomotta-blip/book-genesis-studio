@@ -121,6 +121,8 @@ class BookWorkflow:
             "runner_sha256": digest(Path(__file__).read_bytes()), "command": command}
         if weighted_quality_target is not None:
             self.contract["weighted_quality_target"] = weighted_quality_target
+        if self.config.get("autonomous_contract", {}).get("opening_checkpoint_revision"):
+            self.contract["opening_checkpoint_revision"] = True
         self.journal = Journal(self.root, self.contract)
         self.state_path = self.root / "PROJECT_STATE.yaml"
         if not self.state_path.exists():
@@ -537,7 +539,7 @@ class BookWorkflow:
                              if recovery is not None else [self.root / self.journal.data["steps"][key]["validation"]])
             if number in checkpoints:
                 checkpoint_panel = self.panel(f"draft-check-{number:02d}", [target])
-                if number == 1 and not checkpoint_panel["passed"]:
+                if number == 1 and not checkpoint_panel["passed"] and self.contract.get("opening_checkpoint_revision", False):
                     opening_outcome = self.revise_opening_chapter(checkpoint_panel, target)
                     all_evidence.append(self.root / "evaluations/decisions/opening-revision-c01-outcome.json")
                     if opening_outcome.get("decision") == "promote":

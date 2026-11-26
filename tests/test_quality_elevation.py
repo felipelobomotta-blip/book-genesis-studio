@@ -79,7 +79,7 @@ class QualityElevationWorkflowTests(unittest.TestCase):
                 "model": "exact-test-model", "effort": "high",
                 "idea": "Uma carta desaparecida muda o destino de duas irmãs em Minas.",
                 "language": "Brazilian Portuguese",
-                "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5},
+                "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5, "opening_checkpoint_revision": True},
             }))
             freeze(root / ".book-genesis/skills/.book-genesis-install.json", b"{}")
             packets = {}
@@ -183,7 +183,7 @@ class QualityElevationWorkflowTests(unittest.TestCase):
                 "host": "codex", "collaboration": "autonomous", "author_name": "QA",
                 "model": "exact-test-model", "effort": "high",
                 "idea": "A piano tuner finds a coded recording.", "language": "English",
-                "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5},
+                "autonomous_contract": {"chapters": 2, "min_words": 240, "max_words": 600, "quality_target": 8.5, "opening_checkpoint_revision": True},
             }))
             freeze(root / ".book-genesis/skills/.book-genesis-install.json", b"{}")
             seen_calls = []
