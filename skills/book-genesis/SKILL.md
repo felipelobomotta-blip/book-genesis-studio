@@ -80,6 +80,7 @@ Those references are the orchestrator's working set, not a critic packet. Never 
 Load when the phase calls for them:
 
 - `references/specialists/research.md`: comps and market in the book's own language
+- `references/specialists/shower-idea-catalyst.md`: turns a raw shower idea into a high-concept, word-of-mouth story engine without jargon
 - `references/specialists/narrative-foundation.md`: characters, theme, voice and the rhythm contract
 - `references/specialists/prose-craft.md`: openings, chapter endings, dialogue, revision moves
 - `references/specialists/continuity.md`: the ledger and the five-chapter checks

@@ -27,6 +27,9 @@ def draft_reader_experience(journal, before_chapter: int) -> dict:
         if not match or not 0 < int(match[1]) < before_chapter:
             continue
         number = int(match[1])
+        revised_path = journal.root / f"evaluations/draft-check-{number:02d}-revised.json"
+        if revised_path.exists():
+            path = revised_path
         checkpoint = read_json(path)
         source = journal.root / f"manuscript/chapters/chapter-{number:02d}.md"
         if checkpoint.get("scope") != path.stem or checkpoint.get("chapters") != [source.name]:

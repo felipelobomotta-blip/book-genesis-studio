@@ -32,13 +32,18 @@ def draft_knowledge(skill):
         "integrated_method": method_section(skill, 'Drafting')}
 
 
-def language_tells(language):
+def tells_language_code(language):
     normalized = "".join(c for c in unicodedata.normalize("NFKD", language.casefold()) if not unicodedata.combining(c)).strip().replace("_", "-")
     if normalized == "pt" or normalized.startswith(("pt-", "portugues", "brazilian portuguese")):
-        return "patterns/ai-tells-pt-br.md"
+        return "pt-br"
     if normalized == "en" or normalized.startswith(("en-", "english")):
-        return "patterns/ai-tells-en.md"
+        return "en"
     return None
+
+
+def language_tells(language):
+    code = tells_language_code(language)
+    return f"patterns/ai-tells-{code}.md" if code else None
 
 
 def revision_knowledge(skill, language):

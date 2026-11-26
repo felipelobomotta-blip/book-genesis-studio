@@ -7,6 +7,7 @@ phase_0_intake:
   prompt: "references/prompts/intake.md"
   references:
     - "references/specialists/research.md"
+    - "references/specialists/shower-idea-catalyst.md"
     - "references/patterns/index.md"
     - "references/roles/panel.md"
   gate: "intake"

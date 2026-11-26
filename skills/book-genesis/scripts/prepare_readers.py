@@ -15,15 +15,20 @@ from prepare_rubric import build_catalog, catalog_digest
 
 
 def prepare_readers(chapter_paths: list[Path], output_dir: Path, *, audience: str,
-                    language: str = "en", context_chapter: Path | None = None) -> dict:
+                    language: str | None = "en", context_chapter: Path | None = None,
+                    reader_lenses: dict[str, str] | None = None) -> dict:
     if not audience.strip() or "\n" in audience or "\r" in audience:
         raise ValueError("audience must be one line naming the genre and intended reader")
-    if language not in {"en", "pt-br"}:
-        raise ValueError("machine-tell language must be en or pt-br")
+    if language not in {"en", "pt-br", None, "none"}:
+        raise ValueError("machine-tell language must be en, pt-br or none")
     catalog = build_catalog(chapter_paths)
     root = Path(__file__).resolve().parents[1]
     role = (root / "references/roles/blind-reader.md").read_text(encoding="utf-8")
-    tells = (root / f"references/patterns/ai-tells-{language}.md").read_text(encoding="utf-8")
+    if language in {"en", "pt-br"}:
+        tells = (root / f"references/patterns/ai-tells-{language}.md").read_text(encoding="utf-8")
+    else:
+        tells = ("No language-specific machine-prose tells file is shipped for this language. "
+                 "Report awkward or formulaic prose in the manuscript's own language without applying English-only punctuation rules.")
     context_record = None
     context = ""
     if context_chapter is not None:
@@ -34,7 +39,9 @@ def prepare_readers(chapter_paths: list[Path], output_dir: Path, *, audience: st
     output_dir.mkdir(parents=True, exist_ok=False)
     (output_dir / "catalog.json").write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     rows = []
-    for persona, (reader, lens) in READERS.items():
+    for persona, (reader, default_lens) in READERS.items():
+        custom = (reader_lenses or {}).get(persona)
+        lens = custom.strip() if isinstance(custom, str) and custom.strip() and persona != "casual" else default_lens
         packet = (
             f"# Current-draft reading\n\nYou are {reader}, {lens}.\nAudience: {audience.strip()}\n\n"
             "Read the complete supplied prose once and report your actual reading experience. "
@@ -73,7 +80,7 @@ def main() -> int:
     parser.add_argument("--chapter", action="append", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--audience", required=True)
-    parser.add_argument("--language", choices=("en", "pt-br"), default="en")
+    parser.add_argument("--language", choices=("en", "pt-br", "none"), default="en")
     parser.add_argument("--context-chapter", type=Path)
     args = parser.parse_args()
     try:

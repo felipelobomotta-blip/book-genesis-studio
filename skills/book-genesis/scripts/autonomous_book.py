@@ -20,10 +20,11 @@ from check_progress import _parse_yaml_subset, parse_project_state, reconcile_bo
 from check_correction import (prepare as prepare_correction, decision as correction_decision,
                               validate_report as validate_correction_report)
 from correction_edits import apply_passage_corrections, correction_schema, source_passages
-from craft_context import draft_knowledge, revision_knowledge
+from craft_context import draft_knowledge, language_tells, revision_knowledge, tells_language_code
 from editorial_context import continuity_view, method_section
 from narrative_evidence import INSTRUCTIONS as CAUSAL_EVIDENCE_INSTRUCTIONS
 from editorial_feedback import score_blind
+from prose_diagnostics import analyze_manuscript
 from reader_experience import draft_reader_experience
 from research_context import frozen_reference_metadata
 from decide_comparison import decide
@@ -72,6 +73,28 @@ def production_allowance(chapters, remaining, used, min_words, max_words):
 
 def score_text(value):
     return "unassessed" if value is None else f"{value:.2f}"
+
+
+def _chapter_emotional_curve_view(text: str, through_chapter: int, total_chapters: int) -> str:
+    """Keep emotional curve guidance through the current chapter without leaking later plot turns."""
+    if through_chapter >= total_chapters:
+        return text
+    kept: list[str] = []
+    skip_tail_section = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if re.match(r"^(?:#{1,4}\s*)?(?:\*\*)?(?:High-impact beats|Residue)\b", stripped, re.I):
+            skip_tail_section = True
+            continue
+        if skip_tail_section and stripped.startswith("#"):
+            skip_tail_section = False
+        if skip_tail_section:
+            continue
+        row_match = re.match(r"^\|\s*(?:ch(?:apter)?\.?|cap(?:[íi]tulo)?\.?)?\s*(\d+)\s*\|", stripped, re.I)
+        if row_match and int(row_match.group(1)) > through_chapter:
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
 
 
 class BookWorkflow:
@@ -157,6 +180,33 @@ class BookWorkflow:
     def files(self, names):
         return {name: (self.root / name).read_text(encoding="utf-8") for name in names}
 
+    def optional_file(self, name):
+        path = self.root / name
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+
+    def language_tells_text(self):
+        tells = language_tells(self.config["language"])
+        if tells:
+            return self.ref(tells)
+        return ("No language-specific machine-prose tells file is shipped for this language. "
+                "Do not apply English punctuation or tell ceilings; evaluate natural prose in the book's language.")
+
+    def book_reader_lenses(self):
+        lenses = {}
+        for source_name in ("artifacts/01-market-map.md", "artifacts/00-brief.md"):
+            text = self.optional_file(source_name)
+            if not text:
+                continue
+            for persona in ("primary", "hostile", "adjacent"):
+                if persona in lenses:
+                    continue
+                match = re.search(rf"(?im)^\s*[-*]\s*\**{persona}(?:\s+reader)?\**\s*:\s*(.+)$", text)
+                if match:
+                    cleaned = match[1].strip()
+                    if cleaned and len(cleaned) <= 320:
+                        lenses[persona] = cleaned
+        return lenses or None
+
     def artifact_paths(self, phase):
         return [name for name in self.manifest[phase]["outputs"] if name.endswith(".md")]
 
@@ -192,7 +242,12 @@ class BookWorkflow:
                 "reference_metadata": research,
                 "author": self.config["author_name"], "collaboration": "autonomous; make reasonable creative assumptions and record them"})
             packet += "\nReturn the neutral story contract separately; the program renders the brief from it and the author's exact idea/length. "
-            packet += "Keep the market map under 700 words and story engine under 800. No process verdicts, gate outcomes or quality scores in story fields."
+            packet += ("Keep the market map under 850 words and story engine under 1000. "
+                "Include a concise '## Reader lenses' section in artifacts/01-market-map.md with three one-line book-specific reader profiles "
+                "('- Primary: ...', '- Hostile: ...', '- Adjacent: ...') naming what keeps them reading and what makes them quit. "
+                "Include a '## High-concept & word-of-mouth engine' section in artifacts/02-story-engine.md with a 15-second tell-a-friend pitch, "
+                "shelf tropes + subversion, emotional promise, first-10% sample promise, and 2-3 character-driven shareability peaks (as creative hypotheses, never sales promises). "
+                "No process verdicts, gate outcomes or quality scores in story fields.")
             packet += (" Preserve every explicit author requirement. Where the author leaves POV or timing open, "
                 "choose a coherent creative default without inventing an unnecessary exact deadline or rigid viewpoint cycle. "
                 "Describe ordinary durations as approximate; distinguish the central action's deadline from a later aftermath.")
@@ -215,7 +270,10 @@ class BookWorkflow:
         if self.journal.data["phase"] == 1:
             schema = artifact_schema(self.artifact_paths(1))
             response, _ = self.call("foundation", self.phase_packet(1, self.files(self.artifact_paths(0)))
-                + "\nKeep each artifact under 800 words; retain concrete character, voice and story facts. Do not include process claims.", schema, feedback=True)
+                + "\nKeep artifacts/03-characters.md and artifacts/05-voice.md thorough enough for full 7-layer character cards, "
+                "voice cards, differentiation matrix and 3-5 complete original benchmark prose passages (up to 1800 words each); "
+                "keep artifacts/04-theme.md and artifacts/06-emotional-curve.md focused (up to 1000 words each). "
+                "Retain concrete character, voice and story facts. Do not include process claims.", schema, feedback=True)
             self.publish_artifacts(read_json(response))
             self.finish(1, [self.root / name for name in self.artifact_paths(1)])
         if self.journal.data["phase"] == 2:
@@ -420,11 +478,36 @@ class BookWorkflow:
                            for prior in range(1, number - 1)}
                 characters = character_context((self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
                                                entry["characters"] + "\n" + entry["point_of_view"])
+                writer_payload = {"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
+                    "craft_knowledge": draft_knowledge(self.skill),
+                    "stable_story_facts": self.plan["writer_facts"],
+                    "characters": characters,
+                    "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
+                    "earlier_reader_experience": draft_reader_experience(self.journal, number),
+                    "earlier_chapters": earlier,
+                    "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
+                    "continuity_source_view": continuity_view(
+                        {**earlier, **({f'chapter-{number-1:02d}.md': previous} if number > 1 else {})},
+                        through=number - 1, provisional=self.demonstrated(number - 1)),
+                    "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
+                        "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
+                        "remaining_chapters_including_this": remaining}}
+                theme_text = self.optional_file("artifacts/04-theme.md")
+                if theme_text is not None:
+                    writer_payload["theme"] = theme_text
+                curve_text = self.optional_file("artifacts/06-emotional-curve.md")
+                if curve_text is not None:
+                    writer_payload["emotional_curve"] = _chapter_emotional_curve_view(curve_text, number, count)
+                if number == 1:
+                    opening_text = self.optional_file("artifacts/08-opening-strategy.md")
+                    if opening_text is not None:
+                        writer_payload["opening_strategy"] = opening_text
                 packet = ("Write one complete, engrossing chapter. Use only this packet; no tools, files or other agents. "
                     "Return JSON with prose (one leading Markdown heading, then the entire chapter, no commentary) "
                     "and continuity_delta (only facts actually demonstrated here: who learned what, when, place and object custody). "
                     "Dramatize consequential choices and pressure rather than explaining the theme. Trust voice and scene. "
-                    "Honor the approved character cards and stable identities. Read the complete earlier chapters in order "
+                    "Honor the approved character cards, voice benchmarks, emotional curve anchor and stable identities. "
+                    "Read the complete earlier chapters in order "
                     "and then the previous chapter. These are the published story so far, including minor details a "
                     "summary may omit: names, memories, dates, transactions, object custody and who learned what. "
                     "Writer-reported summaries are provisional and must not override those source scenes. "
@@ -436,20 +519,7 @@ class BookWorkflow:
                     f"Aim for approximately {target_words} prose words; the accepted interval is {low} to {high}. "
                     "That interval protects the whole-book budget, not a suggested chapter length; do not expand toward its upper bound. "
                     "Plan the chapter's scene work for that target; finish at its earned ending without repeating the same beat to add length.\n\n"
-                    + json.dumps({"brief": self.files(["artifacts/00-brief.md"]), "chapter": entry,
-                        "craft_knowledge": draft_knowledge(self.skill),
-                        "stable_story_facts": self.plan["writer_facts"],
-                        "characters": characters,
-                        "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
-                        "earlier_reader_experience": draft_reader_experience(self.journal, number),
-                        "earlier_chapters": earlier,
-                        "previous_chapter": previous, "demonstrated_facts": self.demonstrated(number - 1),
-                        "continuity_source_view": continuity_view(
-                            {**earlier, **({f'chapter-{number-1:02d}.md': previous} if number > 1 else {})},
-                            through=number - 1, provisional=self.demonstrated(number - 1)),
-                        "production": {"chapter_words_min": low, "chapter_words_max": high, "chapter_words_target": target_words,
-                            "book_words_min": self.contract["min_words"], "book_words_max": self.contract["max_words"],
-                            "remaining_chapters_including_this": remaining}}, ensure_ascii=False))
+                    + json.dumps(writer_payload, ensure_ascii=False))
                 try:
                     response, validation = self.call(key, packet, PROSE_SCHEMA,
                         lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
@@ -466,7 +536,17 @@ class BookWorkflow:
             all_evidence += ([recovery['record_path'], recovery['validation_path']]
                              if recovery is not None else [self.root / self.journal.data["steps"][key]["validation"]])
             if number in checkpoints:
-                self.panel(f"draft-check-{number:02d}", [target])
+                checkpoint_panel = self.panel(f"draft-check-{number:02d}", [target])
+                if number == 1 and not checkpoint_panel["passed"]:
+                    opening_outcome = self.revise_opening_chapter(checkpoint_panel, target)
+                    all_evidence.append(self.root / "evaluations/decisions/opening-revision-c01-outcome.json")
+                    if opening_outcome.get("decision") == "promote":
+                        revised_panel = self.panel("draft-check-01-revised", [target])
+                        all_evidence.append(self.root / "evaluations/draft-check-01-revised.json")
+                        if not revised_panel["passed"]:
+                            self.log("Opening checkpoint warning | revised chapter 1 still below panel majority; continuing autonomously with recorded warning")
+                    else:
+                        self.log("Opening checkpoint warning | chapter 1 revision retained original; continuing autonomously with recorded warning")
             if number % 5 == 0 or number == count:
                 snap = self.snapshot(f"continuity-{number:02d}")
                 record = self.review(f"continuity-{number:02d}", self.neutral_sources(snap),
@@ -515,9 +595,96 @@ class BookWorkflow:
     def neutral_sources(self, chapters):
         names = ["artifacts/00-brief.md", "artifacts/02-story-engine.md", "artifacts/03-characters.md", "artifacts/04-theme.md",
                  "artifacts/05-voice.md", "artifacts/07-outline.md", "artifacts/08-opening-strategy.md", "artifacts/09-continuity-ledger.md"]
-        return {**self.files(names),
-                "controller/production-counts.json": json.dumps(production_facts(chapters, self.contract), ensure_ascii=False, indent=2),
-                **{path.name: path.read_text(encoding="utf-8") for path in chapters}}
+        sources = self.files(names)
+        curve = self.optional_file("artifacts/06-emotional-curve.md")
+        if curve is not None:
+            sources["artifacts/06-emotional-curve.md"] = curve
+        sources["controller/production-counts.json"] = json.dumps(production_facts(chapters, self.contract), ensure_ascii=False, indent=2)
+        sources["controller/prose-diagnostics.json"] = json.dumps(analyze_manuscript(chapters, self.config["language"]), ensure_ascii=False, indent=2)
+        sources.update({path.name: path.read_text(encoding="utf-8") for path in chapters})
+        return sources
+
+    def revise_opening_chapter(self, opening_panel, target):
+        """One bounded opening-chapter repair when chapter 1 fails the opening panel (drafting.md)."""
+        key = "opening-revision-c01"
+        decision_path = self.root / f"evaluations/decisions/{key}.json"
+        outcome_path = self.root / f"evaluations/decisions/{key}-outcome.json"
+        if outcome_path.exists():
+            return read_json(outcome_path)
+        accepted = self.root / f"work/revisions/{key}/chapter-01.md"
+        if not accepted.exists():
+            freeze(accepted, target.read_bytes())
+        low, high, _ = production_allowance(self.contract["chapters"], self.contract["chapters"], 0,
+            self.contract["min_words"], self.contract["max_words"])
+        stops = [f"{r['reader']} stopped at {r['stopped_at']['passage_id']}: {r['why_stopped']['reason']}"
+                 for r in opening_panel["reports"] if r.get("stopped_at") and r.get("why_stopped")]
+        weak = [f"{r['reader']}: {r['weakest_passage']['reason']} ({r['weakest_passage']['passage_id']})"
+                for r in opening_panel["reports"] if r.get("weakest_passage")]
+        memories = [f"{r['reader']}: {item['reason']} ({item['passage_id']})"
+                    for r in opening_panel["reports"] for item in r.get("remember_tomorrow", [])]
+        shared_flags = opening_panel.get("shared_flags", [])
+        ticket_parts = ["Opening checkpoint: strengthen chapter 1 so readers turn the page while honoring the approved opening strategy, voice and premise."]
+        if shared_flags:
+            ticket_parts.append("Shared flags: " + ", ".join(shared_flags) + ".")
+        if stops:
+            ticket_parts.append("Attention drops: " + " | ".join(stops))
+        if weak:
+            ticket_parts.append("Reader weaknesses: " + " | ".join(weak))
+        task = {"chapter": 1, "mode": "creative", "revision_class": "structural", "issue_ids": [],
+                "ticket": score_blind(" ".join(ticket_parts)),
+                "preserve": score_blind(" | ".join(memories) if memories else "Preserve the approved premise, character voice and opening hook.")}
+        original_text = accepted.read_bytes().decode("utf-8")
+        editor_context = {
+            "task": task,
+            "craft_knowledge": revision_knowledge(self.skill, self.config["language"]),
+            "accepted_chapter": original_text,
+            "brief": (self.root / "artifacts/00-brief.md").read_text(encoding="utf-8"),
+            "characters": (self.root / "artifacts/03-characters.md").read_text(encoding="utf-8"),
+            "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
+            "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
+            "production_words": {"min": low, "max": high},
+        }
+        for field, rel in (("theme", "artifacts/04-theme.md"), ("emotional_curve", "artifacts/06-emotional-curve.md"),
+                           ("opening_strategy", "artifacts/08-opening-strategy.md")):
+            text = self.optional_file(rel)
+            if text is not None:
+                editor_context[field] = text
+        packet = ("Repair chapter 1 after its opening reader checkpoint. Use only this packet; no tools. "
+            "Return JSON with prose (the full revised chapter 1 with its existing heading) and continuity_delta. "
+            "Fix the concrete attention drops and weaknesses while preserving every remembered strength, character identity, "
+            "and voice benchmark. Dramatize rather than explain.\n\n"
+            + self.ref("specialists/revision-editor.md") + "\n\n"
+            + json.dumps(editor_context, ensure_ascii=False))
+        try:
+            response, _ = self.call(key, packet, PROSE_SCHEMA,
+                lambda p: validate_prose(p, low=low, high=high), feedback=True, feedback_response=True)
+        except WorkflowError:
+            evidence = self.rejected_validation_evidence(key)
+            if evidence is None:
+                raise
+            outcome = {"chapter": 1, "mode": "creative", "decision": "reject",
+                       "reason": "Opening revision attempts failed output validation; accepted chapter 1 retained.",
+                       "evidence": evidence}
+            freeze(outcome_path, encoded(outcome))
+            return outcome
+        candidate = self.stage_response(key, response)
+        if candidate.read_bytes() == accepted.read_bytes():
+            decision = {"decision": "reject", "reason": "Opening revision is identical to accepted chapter 1."}
+            freeze(decision_path, encoded(decision))
+        else:
+            decision = self.compare_revision(key, 1, accepted, candidate, [], decision_path)
+            if decision["decision"] == "promote":
+                receipt = self.root / f"evaluations/promotions/{key}.json"
+                self.journal.publish(candidate, target, receipt=receipt,
+                    promote=lambda: promote_chapter(target, candidate, decision_path, receipt))
+                self.sync()
+        outcome = {"chapter": 1, "mode": "creative", "decision": decision["decision"],
+                   "reason": decision.get("reason", "Opening checkpoint comparison"),
+                   "candidate": self.journal.record_file(candidate),
+                   "evidence": self.journal.record_file(decision_path)}
+        freeze(outcome_path, encoded(outcome))
+        self.log(f"Opening checkpoint revision | chapter 1 | {decision['decision']}")
+        return outcome
 
     def panel(self, key, paths):
         bundle = self.root / "work/panels" / key
@@ -534,7 +701,9 @@ class BookWorkflow:
             context = self.root / "work/panel-context" / key / previous.name
             freeze(context, previous.read_bytes())
         if not (bundle / "manifest.private.json").exists():
-            prepare_readers(paths, bundle, audience=self.metadata["genre"] + "; " + self.metadata["audience"], context_chapter=context)
+            prepare_readers(paths, bundle, audience=self.metadata["genre"] + "; " + self.metadata["audience"],
+                            language=tells_language_code(self.config["language"]), context_chapter=context,
+                            reader_lenses=self.book_reader_lenses())
         manifest = read_json(bundle / "manifest.private.json")
         if [(p.resolve().as_posix(), digest(p.read_bytes())) for p in paths] != [(Path(r['path']).as_posix(), r['sha256']) for r in manifest['chapters']]:
             raise WorkflowError("Panel sources changed; existing reads cannot be reused")
@@ -580,11 +749,15 @@ class BookWorkflow:
         return result
 
     def audit(self, key, snapshot):
-        standards = "\n\n".join(self.ref(name) for name in ("roles/auditor.md", "patterns/prose.md",
-            "patterns/structure-and-emotion.md", "patterns/ai-tells-en.md", "specialists/continuity.md", "patterns/causal-evidence.md"))
+        standards = "\n\n".join(
+            [self.ref(name) for name in ("roles/auditor.md", "patterns/prose.md",
+                "patterns/structure-and-emotion.md", "specialists/continuity.md", "patterns/causal-evidence.md")]
+            + [self.language_tells_text()]
+        )
         return self.review(key, self.neutral_sources(snapshot), AUDIT_PASSES, standards
             + "\n\n" + CAUSAL_EVIDENCE_INSTRUCTIONS
             + "\nUse passage IDs in place of copied quotations; the host resolves them without changing your report. "
+            "Use controller/prose-diagnostics.json as deterministic candidate telemetry for Pass 9 (Machine prose), verifying every candidate in context. "
             "Judge the current prose, not planned events as if they had happened. Mark ending_resolved false for an unfulfilled central promise.")
 
     def initial_audit(self):
@@ -606,7 +779,7 @@ class BookWorkflow:
         packet = ("You are an independent read-only literary evaluator. Use only this packet. No tools. "
             "Read the complete manuscript; do not seek previous evaluations. Return the required JSON with genuine evidence.\n\n"
             + self.ref("scoring/rubric-criteria.md") + "\n\n" + self.ref("patterns/prose.md")
-            + "\n\n" + self.ref("patterns/structure-and-emotion.md") + "\n\n" + self.ref("patterns/ai-tells-en.md")
+            + "\n\n" + self.ref("patterns/structure-and-emotion.md") + "\n\n" + self.language_tells_text()
             + "\n\nMarket context (unverified positioning hypotheses):\n" + (self.root / "artifacts/01-market-map.md").read_text(encoding="utf-8")
             + "\n\nMeasured chapter locations:\n" + json.dumps(locations, ensure_ascii=False)
             + "\nAn event lies within its chapter's measured whole-book interval. These are factual positions, "
@@ -699,9 +872,24 @@ class BookWorkflow:
             "preserve": TEXT, "mode": enum(("factual", "creative")),
             "issue_ids": array(enum(issue_ids)) if issue_ids else {**array(TEXT), "maxItems": 0},
             "revision_class": enum(("continuity", "structural", "character", "voice", "prose", "proofread"))}))})
-        # Evaluators keep their scores. Editors get observations, never numbers.
-        reasons = [{"dimension": d["name"], "reason": d["reason"], "evidence": d["evidence"]}
+        # Evaluators keep their scores. Editors get observations ordered from
+        # highest craft risk to strongest dimension, with qualitative priority only (never numbers).
+        dim_summary = measurement["rubric"].get("dimensions") or []
+        scored_dims = [row for row in dim_summary if row.get("calibrated") is not None]
+        ranked_names = [row["name"] for row in sorted(scored_dims, key=lambda r: (r["calibrated"], -r.get("weight", 1.0)))]
+        rank_index = {name: idx for idx, name in enumerate(ranked_names)}
+        def _priority(name):
+            if name not in rank_index:
+                return "unranked"
+            idx = rank_index[name]
+            if idx < 3:
+                return "highest_craft_risk"
+            if idx < 7:
+                return "moderate_craft_risk"
+            return "preserve_strength"
+        reasons = [{"dimension": d["name"], "priority": _priority(d["name"]), "reason": d["reason"], "evidence": d["evidence"]}
                    for reading in measurement["rubric"]["readings"] for d in reading["data"]["dimensions"]]
+        reasons.sort(key=lambda row: rank_index.get(row["dimension"], 99))
         reports = [report for panel in measurement["panels"] for report in panel["reports"]]
         prefix = ("Create one bounded, coherent revision plan. Use only this packet; no tools. "
             "Fix supported high-severity audit defects first, then shared reader stops, then the weakest craft risks. "
@@ -863,6 +1051,15 @@ class BookWorkflow:
                     "existing_canon": (self.root / "artifacts/09-continuity-ledger.md").read_text(encoding="utf-8"),
                     "voice": (self.root / "artifacts/05-voice.md").read_text(encoding="utf-8"),
                     "production_words": {"min": low, "max": high}}
+            if not factual:
+                for field, rel in (("theme", "artifacts/04-theme.md"), ("emotional_curve", "artifacts/06-emotional-curve.md")):
+                    text = self.optional_file(rel)
+                    if text is not None:
+                        editor_context[field] = text
+                if n == 1:
+                    opening_text = self.optional_file("artifacts/08-opening-strategy.md")
+                    if opening_text is not None:
+                        editor_context["opening_strategy"] = opening_text
             if stage_only and not factual and remaining_companions:
                 editor_context["coordinated_length"] = {
                     "remaining_chapters": [row["chapter"] for row in remaining_companions],
@@ -1166,7 +1363,7 @@ class BookWorkflow:
     def compare_revision(self, key, n, accepted, candidate, context, decision_path):
         bundle = self.root / f"work/comparisons/{key}"
         if not (bundle / "manifest.private.json").exists():
-            build_comparison(accepted, candidate, bundle, context)
+            build_comparison(accepted, candidate, bundle, context, reader_lenses=self.book_reader_lenses())
         manifest = read_json(bundle / "manifest.private.json")
         index = {}
         paths = [accepted, candidate, *context]
@@ -1322,10 +1519,14 @@ class BookWorkflow:
                         "minItems": 3, "maxItems": 3}})
         snapshot = self.snapshot("delivery")
         packet = ("Prepare the book's editorial package. Use only this packet, no tools. Return JSON. "
-            "editorial_package includes logline, blurb, full ending-inclusive synopsis, query letter, cover brief and format notes. "
-            "Give exactly three distinct marketing-angle options. Do not change the manuscript or invent author credentials, reviews, awards or verified research. "
+            f"Write editorial_package, positioning and all three options in {self.config['language']}. "
+            "editorial_package includes logline, back-cover blurb, online store description (150-char mobile hook, shelf categories and up to 7 non-trademarked search keywords), "
+            "full ending-inclusive synopsis, query letter, cover brief, format notes, and a Modern Discovery & Word-of-Mouth Kit "
+            "(5-7 verbatim short quotes copied exactly from the supplied chapters with chapter numbers, 3-5 spoiler-free 15-30s short-video/BookTok hook angles, "
+            "a first-10% retail sample check, and 3-5 spoiler-marked book-club discussion questions). "
+            "Give exactly three distinct marketing-angle options. Do not change the manuscript or invent quotes, author credentials, reviews, awards, sales forecasts or verified research. "
             "positioning must distinguish hypotheses from measured results; the host will run a simulated hook test.\n\n"
-            + json.dumps({"book": self.metadata, "author": self.config["author_name"],
+            + json.dumps({"book": self.metadata, "author": self.config["author_name"], "language": self.config["language"],
                          "manuscript": {p.name: p.read_text(encoding="utf-8") for p in snapshot},
                          "market_hypotheses": (self.root / "artifacts/01-market-map.md").read_text(encoding="utf-8")}, ensure_ascii=False))
         def validate(path):
@@ -1337,9 +1538,11 @@ class BookWorkflow:
         package = read_json(response)
         hooks = []
         first = " ".join(snapshot[0].read_text(encoding="utf-8").split()[2:252])
-        for persona, (reader, lens) in READERS.items():
+        custom_lenses = self.book_reader_lenses() or {}
+        for persona, (reader, default_lens) in READERS.items():
+            lens = custom_lenses.get(persona, default_lens)
             report, _ = self.call("hook-" + persona, f"You are {reader}, {lens}. Use only this packet, no tools. "
-                f"Return reader as the exact identity string {json.dumps(reader)}, with your opinions only in each option's reason. "
+                f"Return reader as the exact identity string {json.dumps(reader)}, with your opinions only in each option's reason (written in {self.config['language']}). "
                 "Include each option ID 1, 2, 3 exactly once. For each package, would you click, buy, and keep reading? "
                 "Give honest reasons. This is a simulated preference, not a sale.\n"
                 + json.dumps({"packages": package["options"], "opening_250_words": first}, ensure_ascii=False),

@@ -9,9 +9,15 @@ When to load: Phase 7. Roles: orchestrator, research specialist for positioning,
 - `artifacts/12-editorial-package.md`:
   - logline, one or two sentences, market-legible;
   - back-cover blurb that sells without spoiling the ending;
+  - online store description (with a 150-character above-the-fold hook, phone-scannable paragraphs, 2–3 shelf categories, and up to 7 non-trademarked search keywords);
   - editorial synopsis for professionals, ending included;
   - query letter, with comps and no inflated claims;
   - cover brief that signals genre, tone and audience at thumbnail size;
+  - **modern discovery & word-of-mouth kit** drawn strictly from the finished text (never invented quotes or sales promises):
+    - 5–7 verbatim short quotable passages copied exactly from the finished chapters with chapter citations;
+    - 3–5 spoiler-free 15–30 second short-video / BookTok / Reels hook angles grounded in the real premise, tropes and emotional stakes;
+    - a **first-10% retail sample check** noting where the free sample ends and whether those opening pages deliver the pitch's promise;
+    - 3–5 book-club / reader-community discussion questions (spoiler-marked) tied to the central thematic question;
   - formatting notes for ebook and print.
 - `artifacts/13-positioning.md`: the hook test and the recommended package.
 - `delivery/`: the proofread `manuscript.md`, validated EPUB, `export-receipt.json`, and `EXPORT.md`, produced by the portable `scripts/export_book.py`; DOCX/PDF are optional formats when their libraries already exist (`references/specialists/production.md`).

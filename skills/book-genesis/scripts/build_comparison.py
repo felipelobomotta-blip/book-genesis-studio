@@ -136,7 +136,8 @@ def verify_comparison_catalog(catalog: dict, chapter_paths: list[Path]) -> dict:
 
 
 def build_comparison(accepted: Path, candidate: Path, output_dir: Path,
-                     context: list[Path] | None = None, *, role_path: Path | None = None) -> dict[str, Any]:
+                     context: list[Path] | None = None, *, role_path: Path | None = None,
+                     reader_lenses: dict[str, str] | None = None) -> dict[str, Any]:
     accepted_record, accepted_body = _source(accepted)
     candidate_record, candidate_body = _source(candidate)
     if accepted_record["path"] == candidate_record["path"]:
@@ -155,7 +156,9 @@ def build_comparison(accepted: Path, candidate: Path, output_dir: Path,
     secrets.SystemRandom().shuffle(order)
     candidate_first = set(order[:2])
     rows = []
-    for persona, (reader, lens) in READERS.items():
+    for persona, (reader, default_lens) in READERS.items():
+        custom = (reader_lenses or {}).get(persona)
+        lens = custom.strip() if isinstance(custom, str) and custom.strip() and persona != "casual" else default_lens
         mapping = {"A": "candidate", "B": "accepted"} if persona in candidate_first else {"A": "accepted", "B": "candidate"}
         bodies = {"accepted": accepted_body, "candidate": candidate_body}
         records = {"accepted": accepted_record, "candidate": candidate_record}

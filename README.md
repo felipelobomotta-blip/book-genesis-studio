@@ -30,6 +30,19 @@ A book written with the measured patterns of books readers finish, criticized by
 
 Everything lives in a folder you own. Close the session, come back tomorrow in any supported agent, and it picks up from the files.
 
+## Book Genesis Studio (Local Web UI)
+
+Prefer a clean editorial workspace over the terminal? Launch the built-in local studio (zero external dependencies, pure Python standard library, localhost-only):
+
+```bash
+python book_genesis_studio.py
+```
+
+- **Shower-Idea Catalyst:** drop a one-line spark and shape it into 3 distinct high-concept commercial angles (or launch straight into 1-click full-book generation).
+- **Live Editorial Workspace:** track all 8 phases, read finished chapters in clean serif typography (Paper / Sepia / Night modes), pause safely, and resume from the exact last verified checkpoint.
+- **Deterministic Prose X-Ray:** code-only EN & PT-BR telemetry (dialogue share, sentence rhythm mean ± SD, narration-dash isolation that protects Portuguese dialogue *travessões*, and machine-tell candidates).
+- **Critics, Rubric & Launch Showcase:** inspect 4-reader blind panels, calibrated 10-dimension rubric scores, the simulated storefront Hook Test winner, and download your validated EPUB, Markdown manuscript, and Commercial/BookTok Launch Kit in one click.
+
 ## Install
 
 **Install beta 7 in your existing agent.** No Book Genesis account or separate API key. Python 3.10+ and your host's local tools are required; your subscription quotas still apply.

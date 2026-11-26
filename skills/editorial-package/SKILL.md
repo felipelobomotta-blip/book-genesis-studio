@@ -146,6 +146,15 @@ For a designer, not a writer: visual language (color, shape, feeling), not plot.
 - **References:** three to five real covers (one for color, one for type, one for composition, one from the same shelf, one anti-reference), each with what to take from it. If you can't look covers up, describe the shelf's look and ask the author to collect the references. Don't describe a cover from memory.
 - **Image-model prompt** (optional): `[style], [primary subject], [setting], [mood], [lighting], [composition], [palette], negative space for the title, book cover art, 2:3 aspect ratio, no text`. Never ask for a living artist's style by name. Add all text in layout software afterward; image models are not reliable for final typography.
 
+## 6b. Modern discovery & word-of-mouth kit
+
+Built strictly from the finished manuscript — never invent a quote or promise viral reach:
+
+- **Verbatim quotable passages:** 5 to 7 short, striking excerpts copied word-for-word from the finished chapters, with chapter citations, suitable for teaser graphics and reader posts.
+- **Short-video / BookTok / Reels hook angles:** 3 to 5 spoiler-free 15–30 second angles anchored to the real tropes, emotional dilemma, and opening stake.
+- **First-10% retail sample check:** identify roughly where the free retail preview ends and report honestly whether those pages deliver the blurb's promise and pull the reader to keep going.
+- **Book-club & community triggers:** 3 to 5 spoiler-marked discussion questions tied to the book's central dilemma.
+
 ## 7. Submission checklist
 
 - [ ] Title and author name identical in every piece

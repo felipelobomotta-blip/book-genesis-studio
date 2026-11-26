@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Genesis Studio · From Shower Idea to Finished Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F5F0;
+    --sidebar: #F2EDE6;
+    --surface: #FFFFFF;
+    --surface-soft: #FBF9F6;
+    --ink: #171614;
+    --ink-2: #4A4640;
+    --muted: #847E76;
+    --accent: #B5472A;
+    --accent-hover: #993920;
+    --accent-soft: rgba(181, 71, 42, 0.08);
+    --brass: #9C6E34;
+    --ok: #157F4D;
+    --ok-bg: #EAF8F0;
+    --warn: #A65E0A;
+    --warn-bg: #FEF5E7;
+    --bad: #B82727;
+    --bad-bg: #FDECEC;
+    --border: rgba(23, 22, 20, 0.09);
+    --border-strong: rgba(23, 22, 20, 0.16);
+    --shadow-sm: 0 1px 2px rgba(23, 22, 20, 0.04);
+    --shadow-md: 0 4px 18px rgba(23, 22, 20, 0.05), 0 1px 3px rgba(23, 22, 20, 0.04);
+    --serif: 'Newsreader', Georgia, serif;
+    --sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 40;
+    height: 58px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 0 24px;
+    background: rgba(248, 245, 240, 0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--serif); font-size: 20px; font-weight: 600;
+    letter-spacing: -0.01em; color: var(--ink); cursor: pointer;
+  }
+  .brand-mark {
+    width: 10px; height: 10px; border-radius: 3px; background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .brand span { color: var(--muted); font-weight: 400; font-size: 14px; font-family: var(--sans); margin-left: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .pill.ok { background: var(--ok-bg); border-color: rgba(21,127,77,0.22); color: var(--ok); }
+  .pill.warn { background: var(--warn-bg); border-color: rgba(166,94,10,0.22); color: var(--warn); }
+  .pill.bad { background: var(--bad-bg); border-color: rgba(184,39,39,0.22); color: var(--bad); }
+  .pill.live { background: var(--ok-bg); border-color: rgba(21,127,77,0.35); color: var(--ok); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .pill.live .dot { animation: pulseDot 1.6s infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.8); }
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 10px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 600;
+    font-family: var(--sans); cursor: pointer; transition: all 0.16s ease;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+    text-decoration: none;
+  }
+  .btn:hover:not(:disabled) { background: var(--surface-soft); border-color: rgba(23,22,20,0.28); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
+  .btn-primary {
+    background: var(--accent); border-color: var(--accent); color: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(181, 71, 42, 0.22);
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-dark { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }
+  .btn-dark:hover:not(:disabled) { background: #2A2825; border-color: #2A2825; }
+  .btn-danger { background: var(--bad-bg); border-color: rgba(184,39,39,0.25); color: var(--bad); }
+  .btn-danger:hover:not(:disabled) { background: #FAD8D8; }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(23,22,20,0.05); border-color: transparent; transform: none; }
+  .btn-sm { padding: 7px 12px; font-size: 12.5px; border-radius: 8px; }
+
+  .layout {
+    display: grid; grid-template-columns: 276px 1fr;
+    min-height: calc(100vh - 58px);
+  }
+  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+
+  aside {
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 20px 14px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .side-head { display: flex; justify-content: space-between; align-items: center; padding: 0 8px; }
+  .side-head h2 {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+  }
+  .book-list { display: flex; flex-direction: column; gap: 6px; }
+  .book-card {
+    position: relative; text-align: left; width: 100%; cursor: pointer;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 11px; padding: 11px 12px 11px 16px;
+    color: var(--ink); transition: all 0.14s ease;
+  }
+  .book-card::before {
+    content: ""; position: absolute; left: 5px; top: 12px; bottom: 12px; width: 3px;
+    border-radius: 99px; background: var(--spine, var(--muted)); opacity: 0.55;
+  }
+  .book-card:hover { background: rgba(255,255,255,0.65); border-color: var(--border); }
+  .book-card.active {
+    background: var(--surface); border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+  .book-card.active::before { opacity: 1; }
+  .book-card .title {
+    font-family: var(--serif); font-size: 17px; font-weight: 600;
+    line-height: 1.25; margin-bottom: 4px; color: var(--ink);
+  }
+  .book-card .meta {
+    font-size: 11.5px; color: var(--muted);
+    display: flex; justify-content: space-between; gap: 6px; align-items: center;
+  }
+
+  main { padding: 34px 40px 60px; max-width: 1140px; width: 100%; margin: 0 auto; }
+  @media (max-width: 720px) { main { padding: 20px 16px 48px; } }
+
+  .wizard-wrap { max-width: 820px; margin: 12px auto 0; }
+  .kicker {
+    display: inline-block; font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .hero-title {
+    font-family: var(--serif); font-size: clamp(34px, 4.4vw, 48px);
+    font-weight: 500; line-height: 1.08; letter-spacing: -0.02em;
+    color: var(--ink); margin-bottom: 12px;
+  }
+  .hero-sub {
+    color: var(--ink-2); font-size: 15.5px; max-width: 660px;
+    margin-bottom: 26px; line-height: 1.6;
+  }
+
+  .composer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+  }
+  textarea, input, select {
+    width: 100%; background: var(--surface-soft); color: var(--ink);
+    border: 1px solid var(--border-strong); border-radius: 11px;
+    padding: 12px 14px; font-family: var(--sans); font-size: 14.5px;
+    outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  textarea:focus, input:focus, select:focus {
+    background: #FFFFFF;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  #idea-input {
+    min-height: 124px; resize: vertical; font-size: 16px; line-height: 1.6;
+    font-family: var(--serif); padding: 16px 18px;
+  }
+  #idea-input::placeholder { color: #A09A91; font-style: italic; }
+
+  .sparks { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 22px; }
+  .spark {
+    background: var(--bg); border: 1px solid var(--border); color: var(--ink-2);
+    border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; transition: all 0.14s;
+  }
+  .spark:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  .section-label {
+    display: block; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 760px) { .preset-grid { grid-template-columns: repeat(2, 1fr); } }
+  .preset-card {
+    text-align: left; cursor: pointer; padding: 13px 14px;
+    border-radius: 12px; border: 1px solid var(--border); background: var(--surface-soft);
+    transition: all 0.15s;
+  }
+  .preset-card:hover { border-color: var(--border-strong); background: #FFFFFF; }
+  .preset-card.selected {
+    border-color: var(--accent); background: #FFFFFF;
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .preset-card .p-name { font-size: 13.5px; font-weight: 700; color: var(--ink); display: block; }
+  .preset-card .p-meta { font-size: 11.5px; color: var(--muted); display: block; margin-top: 2px; }
+  .preset-card .p-tag {
+    display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 600;
+    color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 99px;
+  }
+
+  .meta-row { display: grid; grid-template-columns: 1.2fr 1fr 0.9fr; gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 720px) { .meta-row { grid-template-columns: 1fr; } }
+
+  .adv-drawer {
+    border-top: 1px solid var(--border); padding-top: 14px; margin-top: 6px; margin-bottom: 18px;
+  }
+  .adv-drawer summary {
+    cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--muted);
+    list-style: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .adv-drawer summary:hover { color: var(--ink); }
+  .adv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 680px) { .adv-grid { grid-template-columns: 1fr; } }
+
+  .cta-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    padding-top: 6px;
+  }
+  .cta-main { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  .catalyst-wrap { margin-top: 28px; }
+  .catalyst-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
+  @media (max-width: 960px) { .catalyst-grid { grid-template-columns: 1fr; } }
+  .cat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
+    transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+  }
+  .cat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: rgba(181,71,42,0.35); }
+  .cat-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .cat-card h3 { font-family: var(--serif); font-size: 25px; font-weight: 600; line-height: 1.15; margin: 6px 0 8px; }
+  .cat-pitch {
+    font-family: var(--serif); font-style: italic; font-size: 15.5px; color: var(--ink);
+    border-left: 2.5px solid var(--accent); padding-left: 11px; margin: 8px 0 12px; line-height: 1.5;
+  }
+  .cat-detail { font-size: 12.5px; color: var(--ink-2); margin-top: 7px; line-height: 1.5; }
+  .cat-detail strong { color: var(--ink); }
+
+  .book-hero {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 24px 26px; box-shadow: var(--shadow-sm); margin-bottom: 18px;
+  }
+  .book-hero-top {
+    display: flex; gap: 22px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
+  }
+  .book-identity { display: flex; gap: 18px; align-items: flex-start; flex: 1; min-width: 260px; }
+
+  .mini-cover {
+    width: 74px; min-width: 74px; height: 108px; border-radius: 4px 8px 8px 4px;
+    padding: 10px 8px; color: #FAF7F2; position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: inset 5px 0 0 rgba(0,0,0,0.18), 0 8px 18px rgba(23,22,20,0.16);
+    background: var(--cover-bg, #2B3A4A);
+  }
+  .mini-cover .mc-title {
+    font-family: var(--serif); font-size: 11.5px; font-weight: 600; line-height: 1.15;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+  }
+  .mini-cover .mc-author { font-size: 8.5px; opacity: 0.78; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .large-cover {
+    width: 170px; min-width: 170px; height: 246px; border-radius: 5px 12px 12px 5px;
+    padding: 22px 18px; color: #FAF7F2;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: inset 9px 0 0 rgba(0,0,0,0.2), 0 18px 36px rgba(23,22,20,0.22);
+    background: var(--cover-bg, #2B3A4A);
+  }
+  .large-cover .lc-genre { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.75; }
+  .large-cover .lc-title { font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1.15; }
+  .large-cover .lc-author { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 8px; }
+
+  .bk-title { font-family: var(--serif); font-size: 32px; font-weight: 600; line-height: 1.12; margin: 2px 0 6px; }
+  .bk-idea { font-size: 13.5px; color: var(--ink-2); max-width: 640px; line-height: 1.55; }
+  .bk-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .stepper {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
+    margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border);
+  }
+  @media (max-width: 820px) { .stepper { grid-template-columns: repeat(4, 1fr); } }
+  .step-item { display: flex; flex-direction: column; gap: 4px; }
+  .step-bar { height: 4px; border-radius: 99px; background: rgba(23,22,20,0.09); overflow: hidden; }
+  .step-item.done .step-bar { background: var(--ok); }
+  .step-item.now .step-bar { background: var(--accent); }
+  .step-label { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .step-item.done .step-label { color: var(--ink-2); }
+  .step-item.now .step-label { color: var(--accent); }
+
+  .kpi-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px;
+  }
+  @media (max-width: 720px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 13px;
+    padding: 15px 18px; box-shadow: var(--shadow-sm);
+  }
+  .kpi .v { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1.1; }
+  .kpi .k { font-size: 11.5px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+
+  .tabs {
+    display: inline-flex; gap: 4px; flex-wrap: wrap;
+    background: var(--sidebar); padding: 4px; border-radius: 12px;
+    border: 1px solid var(--border); margin-bottom: 18px;
+  }
+  .tab {
+    background: transparent; border: none; color: var(--ink-2);
+    padding: 8px 15px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.14s; font-family: var(--sans);
+  }
+  .tab:hover:not(.active) { color: var(--ink); }
+  .tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px 26px; box-shadow: var(--shadow-sm); margin-bottom: 18px;
+  }
+  .panel h3 { font-family: var(--serif); font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+  .panel-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; }
+
+  .activity-hero {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    padding: 18px 20px; border-radius: 13px; background: var(--surface-soft); border: 1px solid var(--border);
+  }
+  .timeline-list { list-style: none; margin-top: 16px; border-left: 2px solid var(--border); padding-left: 16px; }
+  .timeline-list li { position: relative; padding: 6px 0; font-size: 13px; color: var(--ink-2); }
+  .timeline-list li::before {
+    content: ""; position: absolute; left: -21px; top: 12px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--accent); border: 2px solid var(--surface);
+  }
+
+  .console-box {
+    background: #171614; color: #E5E0D8; border-radius: 10px; padding: 14px;
+    font-family: var(--mono); font-size: 11.5px; max-height: 240px; overflow: auto;
+    white-space: pre-wrap; line-height: 1.55; margin-top: 10px;
+  }
+
+  .reader-toolbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  .reader-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .reader-page {
+    background: #FFFDF9; color: #1B1A17; border: 1px solid var(--border);
+    border-radius: 12px; padding: 52px 64px;
+    font-family: var(--serif); font-size: 20px; line-height: 1.82;
+    max-width: 760px; margin: 8px auto 0; box-shadow: var(--shadow-md);
+    transition: background 0.2s, color 0.2s;
+  }
+  .reader-page.theme-sepia { background: #F4ECD8; color: #2D2418; border-color: rgba(120,90,45,0.18); }
+  .reader-page.theme-night { background: #191A1F; color: #E5E2DC; border-color: rgba(255,255,255,0.08); }
+  @media (max-width: 680px) { .reader-page { padding: 28px 22px; } }
+  .reader-page h1 {
+    font-size: 1.65em; font-weight: 600; text-align: center;
+    margin-bottom: 28px; letter-spacing: -0.01em;
+  }
+  .reader-page h2, .reader-page h3 { font-size: 1.2em; margin: 26px 0 12px; }
+  .reader-page p { margin-bottom: 0.85em; text-indent: 1.45em; }
+  .reader-page p.first-p { text-indent: 0; }
+  .reader-page hr.scene-break { border: none; text-align: center; margin: 28px 0; opacity: 0.5; }
+  .reader-page hr.scene-break::after { content: "·   ·   ·"; letter-spacing: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .bar-track { width: 100%; height: 7px; background: rgba(23,22,20,0.08); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--brass), var(--ok)); border-radius: 99px; }
+
+  .reader-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
+  @media (max-width: 740px) { .reader-grid { grid-template-columns: 1fr; } }
+  .reader-card {
+    background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+  }
+
+  .showcase-hero {
+    display: flex; gap: 26px; align-items: center; flex-wrap: wrap;
+    padding: 22px; border-radius: 16px; background: var(--surface-soft); border: 1px solid var(--border);
+    margin-bottom: 22px;
+  }
+  .hook-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0 22px; }
+  @media (max-width: 920px) { .hook-grid { grid-template-columns: 1fr; } }
+  .hook-card {
+    background: var(--surface-soft); border: 1px solid var(--border); border-radius: 13px; padding: 16px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  }
+  .hook-card.winner { background: #FFFFFF; border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok-bg); }
+
+  .doc-view {
+    background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 22px; white-space: pre-wrap; font-size: 13.5px; color: var(--ink-2);
+    max-height: 520px; overflow: auto; line-height: 1.7;
+  }
+  .msg { padding: 12px 15px; border-radius: 10px; font-size: 13px; margin-top: 14px; }
+  .msg.err { background: var(--bad-bg); border: 1px solid rgba(184,39,39,0.22); color: var(--bad); }
+  .msg.warn { background: var(--warn-bg); border: 1px solid rgba(166,94,10,0.22); color: var(--warn); }
+  .msg.ok { background: var(--ok-bg); border: 1px solid rgba(21,127,77,0.22); color: var(--ok); }
+  .row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand" id="brand-home">
+    <div class="brand-mark"></div>
+    Book Genesis <span>Studio</span>
+  </div>
+  <div class="header-right">
+    <span id="host-badge" class="pill"><span class="dot"></span> Detecting agents…</span>
+    <button class="btn btn-dark btn-sm" id="btn-new-top">+ New Book</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="side-head">
+      <h2>Your Bookshelf</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-refresh-list" title="Refresh bookshelf">↻</button>
+    </div>
+    <div id="book-list" class="book-list"></div>
+  </aside>
+
+  <main>
+    <!-- VIEW 1: EDITORIAL CREATION STUDIO -->
+    <section id="view-create" class="wizard-wrap">
+      <span class="kicker">From Shower Idea to Finished Book</span>
+      <h1 class="hero-title">What story can’t you get out of your head?</h1>
+      <p class="hero-sub">
+        Drop your raw one-line spark—no craft jargon, no terminal required. Book Genesis develops your concept, writes chapter by chapter, tests with 4 isolated blind readers, audits, revises, scores, and exports your EPUB + Launch Kit.
+      </p>
+
+      <div class="composer-card">
+        <label class="section-label" for="idea-input">Your shower idea</label>
+        <textarea id="idea-input" placeholder="e.g. A forensic pathologist recognizes on the autopsy table the exact ring she buried with her brother fifteen years ago—except the body isn't his..."></textarea>
+
+        <div class="sparks">
+          <button type="button" class="spark" data-idea="A forensic pathologist recognizes on the autopsy table the exact ring she buried with her brother fifteen years ago—except the body isn't his.">Psychological Thriller</button>
+          <button type="button" class="spark" data-idea="A retired piano tuner discovers a hidden voice message taped inside the last piano played by a famous singer who vanished twenty years ago.">Literary Mystery</button>
+          <button type="button" class="spark" data-idea="In a city where memories can be pawned to pay debts, a collector realizes she unknowingly bought her own mother's happiest memory.">Speculative Fiction</button>
+          <button type="button" class="spark" data-idea="After losing his job and apartment in the same month, a former engineer begins leaving anonymous letters for strangers in a neighborhood café, quietly binding four lives on the brink.">Emotional Drama</button>
+        </div>
+
+        <label class="section-label">Choose your book format</label>
+        <div class="preset-grid" id="preset-cards">
+          <button type="button" class="preset-card" data-preset="pilot">
+            <span class="p-name">Quick Pilot</span>
+            <span class="p-meta">6 chapters · ~12k words</span>
+            <span class="p-tag">Fastest</span>
+          </button>
+          <button type="button" class="preset-card" data-preset="novella">
+            <span class="p-name">Commercial Novella</span>
+            <span class="p-meta">12 chapters · ~35k words</span>
+          </button>
+          <button type="button" class="preset-card selected" data-preset="commercial">
+            <span class="p-name">Standard Novel</span>
+            <span class="p-meta">24 chapters · ~75k words</span>
+            <span class="p-tag">Recommended</span>
+          </button>
+          <button type="button" class="preset-card" data-preset="epic">
+            <span class="p-name">Full-Length Epic</span>
+            <span class="p-meta">32 chapters · ~105k words</span>
+          </button>
+        </div>
+        <select id="preset-select" class="hidden">
+          <option value="commercial" selected>commercial</option>
+          <option value="novella">novella</option>
+          <option value="pilot">pilot</option>
+          <option value="epic">epic</option>
+        </select>
+
+        <div class="meta-row">
+          <div>
+            <label class="section-label" for="title-input">Working title (optional)</label>
+            <input id="title-input" type="text" placeholder="AI suggests one if blank">
+          </div>
+          <div>
+            <label class="section-label" for="author-input">Author / pen name</label>
+            <input id="author-input" type="text" placeholder="Your name or Anonymous">
+          </div>
+          <div>
+            <label class="section-label" for="lang-select">Book language</label>
+            <select id="lang-select">
+              <option value="English">English</option>
+              <option value="Portuguese (Brazil)">Portuguese (Brazil)</option>
+              <option value="Español">Spanish (Español)</option>
+            </select>
+          </div>
+        </div>
+
+        <details class="adv-drawer">
+          <summary>⚙ Advanced engine & editorial bar</summary>
+          <div class="adv-grid">
+            <div>
+              <label class="section-label" for="host-select">Connected AI engine</label>
+              <select id="host-select">
+                <option value="codex">Codex CLI</option>
+                <option value="claude">Claude Code</option>
+              </select>
+              <div id="host-hint" style="font-size:11.5px; color:var(--muted); margin-top:5px;"></div>
+            </div>
+            <div>
+              <label class="section-label" for="rigor-select">Private editorial quality bar</label>
+              <select id="rigor-select">
+                <option value="8.5">High Literary Bar · 8.5/10 floor (Recommended)</option>
+                <option value="8.0">Strong Commercial Bar · 8.0/10 floor</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <div class="cta-bar">
+          <div class="cta-main">
+            <button id="btn-create-run" class="btn btn-primary">Generate Complete Book</button>
+            <button id="btn-catalyze" class="btn">✨ Shape into 3 Angles First</button>
+          </div>
+          <button id="btn-create-only" class="btn btn-ghost btn-sm">Prepare workspace only</button>
+        </div>
+
+        <div id="create-feedback"></div>
+      </div>
+
+      <div id="catalyst-results" class="catalyst-wrap hidden"></div>
+    </section>
+
+    <!-- VIEW 2: BOOK EDITORIAL WORKSPACE -->
+    <section id="view-book" class="hidden">
+      <div class="book-hero">
+        <div class="book-hero-top">
+          <div class="book-identity">
+            <div class="mini-cover" id="bk-mini-cover">
+              <div class="mc-title" id="mc-title">Title</div>
+              <div class="mc-author" id="mc-author">Author</div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:var(--muted); font-weight:500;" id="bk-kicker">English</div>
+              <h1 class="bk-title" id="bk-title">Title</h1>
+              <p class="bk-idea" id="bk-idea"></p>
+            </div>
+          </div>
+          <div class="bk-actions">
+            <span id="bk-run-pill" class="pill"><span class="dot"></span> Ready</span>
+            <button class="btn btn-primary btn-sm" id="btn-run-book">▶ Generate / Resume</button>
+            <button class="btn btn-danger btn-sm hidden" id="btn-stop-book">⏸ Pause</button>
+            <button class="btn btn-sm hidden" id="btn-unlock-book">🔓 Unlock & Resume</button>
+            <button class="btn btn-ghost btn-sm" id="btn-refresh-book" title="Refresh">↻</button>
+          </div>
+        </div>
+
+        <div id="bk-action-feedback"></div>
+        <div class="stepper" id="bk-phases"></div>
+      </div>
+
+      <div class="kpi-strip">
+        <div class="kpi"><div class="v" id="st-chapters">0</div><div class="k">Chapters saved</div></div>
+        <div class="kpi"><div class="v" id="st-words">0</div><div class="k">Actual words</div></div>
+        <div class="kpi"><div class="v" id="st-score">—</div><div class="k">Calibrated score</div></div>
+        <div class="kpi"><div class="v" id="st-gate">—</div><div class="k">Editorial gate</div></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="overview">Progress</button>
+        <button class="tab" data-tab="reader">Read Book</button>
+        <button class="tab" data-tab="bible">Story Bible</button>
+        <button class="tab" data-tab="critics">Critics & X-Ray</button>
+        <button class="tab" data-tab="package">Launch Kit & EPUB</button>
+      </div>
+
+      <!-- TAB 1: HUMAN EDITORIAL PROGRESS -->
+      <div id="tab-overview">
+        <div class="panel">
+          <div class="activity-hero" id="bk-live-banner"></div>
+          <div id="bk-delivery-alert"></div>
+          <h3 style="margin-top:20px; font-size:20px;">Editorial Timeline</h3>
+          <ul class="timeline-list" id="bk-timeline"></ul>
+
+          <details style="margin-top:22px; border-top:1px solid var(--border); padding-top:14px;">
+            <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--muted);">Technical details (live console, local folder & CLI prompt)</summary>
+            <div class="console-box" id="bk-console">No technical output recorded yet.</div>
+            <div class="row-between" style="margin-top:12px;">
+              <span style="font-size:12px; color:var(--muted);">Workspace: <code id="bk-path"></code></span>
+              <button class="btn btn-sm btn-ghost" id="btn-copy-prompt">Copy CLI prompt</button>
+            </div>
+            <div id="bk-prompt" style="display:none;"></div>
+          </details>
+        </div>
+      </div>
+
+      <!-- TAB 2: IMMERSIVE BOOK READER -->
+      <div id="tab-reader" class="hidden">
+        <div class="panel">
+          <div class="reader-toolbar">
+            <div class="reader-controls" style="flex-wrap:nowrap;">
+              <button class="btn btn-sm" id="btn-prev-ch">←</button>
+              <select id="chapter-select" style="width:260px; max-width:48vw; padding:7px 10px; font-size:13px;"></select>
+              <button class="btn btn-sm" id="btn-next-ch">→</button>
+            </div>
+            <div class="reader-controls">
+              <span id="chapter-meta" class="pill"></span>
+              <button class="btn btn-ghost btn-sm" id="btn-font-dec" title="Decrease font">A-</button>
+              <button class="btn btn-ghost btn-sm" id="btn-font-inc" title="Increase font">A+</button>
+              <button class="btn btn-ghost btn-sm reader-theme-btn" data-theme="paper">Paper</button>
+              <button class="btn btn-ghost btn-sm reader-theme-btn" data-theme="sepia">Sepia</button>
+              <button class="btn btn-ghost btn-sm reader-theme-btn" data-theme="night">Night</button>
+            </div>
+          </div>
+          <div id="chapter-content" class="reader-page"><p class="first-p">No chapters saved yet.</p></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: STORY BIBLE & OUTLINE -->
+      <div id="tab-bible" class="hidden">
+        <div class="panel">
+          <div class="row-between" style="margin-bottom:14px;">
+            <select id="artifact-select" style="max-width:440px;"></select>
+            <span id="artifact-meta" class="pill">Phases 0–2</span>
+          </div>
+          <div id="artifact-content" class="doc-view">Your creative brief, market map, characters, voice contract, and outline will appear here as Phases 0–2 complete.</div>
+        </div>
+      </div>
+
+      <!-- TAB 4: CRITICS, SCORE & PROSE X-RAY -->
+      <div id="tab-critics" class="hidden">
+        <div class="panel" id="critics-content"></div>
+        <div class="panel">
+          <h3>Deterministic Prose X-Ray</h3>
+          <p class="panel-sub">100% code-based telemetry (no AI) measuring dialogue share, sentence rhythm, and machine-tell candidates. Language-appropriate dialogue punctuation is protected.</p>
+          <div id="diag-content"></div>
+        </div>
+      </div>
+
+      <!-- TAB 5: BOOKSTORE LAUNCH SHOWCASE & EPUB -->
+      <div id="tab-package" class="hidden">
+        <div class="panel">
+          <div class="showcase-hero">
+            <div class="large-cover" id="bk-large-cover">
+              <div class="lc-genre" id="lc-genre">Fiction</div>
+              <div class="lc-title" id="lc-title">Book Title</div>
+              <div class="lc-author" id="lc-author">Author</div>
+            </div>
+            <div style="flex:1; min-width:240px;">
+              <span class="kicker">Delivery & Launch Showcase</span>
+              <h3 id="sc-title" style="font-size:28px; margin-bottom:6px;">Ready for readers</h3>
+              <p class="panel-sub" id="sc-summary" style="margin-bottom:16px;">Once Phase 7 completes, your validated EPUB, full Markdown manuscript, and Commercial Launch Kit (Amazon KDP metadata, BookTok hooks, verbatim quotes, and Query Letter) unlock here for 1-click download.</p>
+              <div id="delivery-links" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+            </div>
+          </div>
+
+          <div id="hook-winner-box"></div>
+          <div id="package-content"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const PHASE_SHORT = [
+  '0 · Concept',
+  '1 · Voice & Cast',
+  '2 · Outline',
+  '3 · Drafting',
+  '4 · Audit',
+  '5 · A/B Revision',
+  '6 · Final Score',
+  '7 · EPUB & Kit',
+];
+
+const ARTIFACT_LABELS = {
+  '00-brief.md': '00 · Creative Brief & Contract',
+  '01-market-map.md': '01 · Market Map & Target Readers',
+  '02-story-engine.md': '02 · Story Engine & Word-of-Mouth Hook',
+  '03-characters.md': '03 · 7-Layer Character Cards',
+  '04-theme.md': '04 · Thematic Question & Motifs',
+  '05-voice.md': '05 · Voice & Rhythm Contract',
+  '06-emotional-curve.md': '06 · Emotional Curve',
+  '07-outline.md': '07 · Chapter-by-Chapter Outline',
+  '08-opening-strategy.md': '08 · Page-One Opening Strategy',
+  '09-continuity-ledger.md': '09 · Continuity Bible',
+  '10-adversarial-audit.md': '10 · 10-Pass Adversarial Audit',
+  '11-genesis-score.md': '11 · Official Genesis Score Report',
+  '12-editorial-package.md': '12 · Editorial Package, KDP & BookTok Kit',
+  '13-positioning.md': '13 · Positioning & Simulated Hook Test',
+};
+
+const COVER_PALETTES = [
+  'linear-gradient(155deg, #253447 0%, #16202C 100%)',
+  'linear-gradient(155deg, #7A2E22 0%, #4A1912 100%)',
+  'linear-gradient(155deg, #284237 0%, #152820 100%)',
+  'linear-gradient(155deg, #3D314A 0%, #221A2B 100%)',
+  'linear-gradient(155deg, #5C4428 0%, #332414 100%)',
+];
+const SPINE_COLORS = ['#B5472A', '#2B5B84', '#2D6A4F', '#6B4C7A', '#9C6E34'];
+
+let hostsState = {};
+let currentSlug = null;
+let currentDetail = null;
+let loadedChapterKey = null;
+let pollTimer = null;
+let readerFontSize = 20;
+
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function hashIndex(text, mod) {
+  let h = 0;
+  for (let i = 0; i < String(text || '').length; i++) h = ((h << 5) - h + text.charCodeAt(i)) | 0;
+  return Math.abs(h) % mod;
+}
+
+function humanizeLogLine(line) {
+  let s = String(line || '').replace(/^-\s*\d{4}-\d{2}-\d{2}T[\d:.+Z-]+\s*/, '').trim();
+  if (!s) return '';
+  if (s.includes('Phase 0: Intake | completed')) return 'Phase 0 completed · Concept, market map, and high-concept hook locked.';
+  if (s.includes('Phase 1: Foundation | completed')) return 'Phase 1 completed · Characters, theme, voice contract, and emotional curve ready.';
+  if (s.includes('Phase 2: Architecture | completed')) return 'Phase 2 completed · Chapter outline verified with zero causal contradictions.';
+  if (s.includes('Phase 3: Drafting | completed')) return 'Phase 3 completed · All chapters drafted within the word-count contract.';
+  if (s.includes('Phase 4: Adversarial Audit')) return 'Phase 4 completed · Independent 10-pass editorial audit finished.';
+  if (s.includes('Phase 5: Revision Loop')) return 'Phase 5 completed · Targeted revisions and blind A/B comparisons finished.';
+  if (s.includes('Phase 6: Final Score')) return 'Phase 6 completed · Calibrated 3-reading literary score frozen.';
+  if (s.includes('Phase 7: Editorial Package')) return 'Phase 7 completed · Commercial Launch Kit, Hook Test, and EPUB exported.';
+  const ch = s.match(/Chapter (\d+)\/(\d+) saved \| (\d+) words \| manuscript (\d+) words/);
+  if (ch) return `Chapter ${ch[1]} of ${ch[2]} saved (${Number(ch[3]).toLocaleString('en-US')} words · total ${Number(ch[4]).toLocaleString('en-US')}).`;
+  const rd = s.match(/Readers \| ([^|]+) \| (\d)\/4 would keep reading/);
+  if (rd) return `Blind reader panel (${rd[1].trim()}): ${rd[2]}/4 readers would turn the page.`;
+  const rv = s.match(/Review \| ([^|]+) \| verdict (\w+) \| (\d+) findings/);
+  if (rv) return `Independent review (${rv[1].trim()}): ${rv[2] === 'pass' ? 'passed' : 'revisions requested'} (${rv[3]} findings).`;
+  if (s.includes('Opening checkpoint revision')) return 'Chapter 1 opening revision evaluated in blind A/B comparison.';
+  if (s.includes('Finished |')) return 'Book complete! Validated EPUB and manuscript saved in delivery/.';
+  return s;
+}
+
+function renderBookHtml(markdown) {
+  const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+  const out = [];
+  let para = [];
+  let firstPara = true;
+  const inlineFmt = s => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>')
+    .replace(/(?<![\w])_([^_\n]+?)_(?![\w])/g, '<em>$1</em>');
+  const flush = () => {
+    if (!para.length) return;
+    const txt = para.join(' ').trim();
+    if (txt) {
+      out.push(`<p class="${firstPara ? 'first-p' : ''}">${inlineFmt(txt)}</p>`);
+      firstPara = false;
+    }
+    para = [];
+  };
+  for (const raw of lines) {
+    const t = raw.trim();
+    if (!t) { flush(); continue; }
+    if (t === '* * *' || t === '***' || t === '---' || t === '— — —') {
+      flush(); out.push('<hr class="scene-break">'); firstPara = true; continue;
+    }
+    const h1 = t.match(/^#\s+(.+)$/);
+    if (h1) { flush(); out.push(`<h1>${inlineFmt(h1[1])}</h1>`); firstPara = true; continue; }
+    const h2 = t.match(/^#{2,4}\s+(.+)$/);
+    if (h2) { flush(); out.push(`<h2>${inlineFmt(h2[1])}</h2>`); firstPara = true; continue; }
+    if (t.startsWith('<!--') && t.endsWith('-->')) continue;
+    para.push(t);
+  }
+  flush();
+  return out.join('\n') || '<p class="first-p">Empty chapter.</p>';
+}
+
+async function api(url, opts) {
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function updateHostHint() {
+  const sel = document.getElementById('host-select').value;
+  const info = hostsState[sel] || {};
+  const el = document.getElementById('host-hint');
+  if (info.autonomous_ready) {
+    el.innerHTML = `<span style="color:var(--ok);">✓ ${esc(info.note || 'Ready for 1-click generation')}</span>`;
+  } else {
+    el.innerHTML = `<span style="color:var(--warn);">⚠ ${esc(info.note || 'Agent not ready for unattended mode')}</span>`;
+  }
+}
+
+async function loadHealth() {
+  try {
+    const h = await api('/api/health');
+    hostsState = h.hosts || {};
+    const ready = Object.entries(hostsState).filter(([,v]) => v.autonomous_ready).map(([k]) => k);
+    const installed = Object.entries(hostsState).filter(([,v]) => v.installed).map(([k]) => k);
+    const badge = document.getElementById('host-badge');
+    if (ready.length) {
+      badge.innerHTML = `<span class="dot"></span> 1-click ready: ${esc(ready.join(' · '))}`;
+      badge.className = 'pill ok';
+      document.getElementById('host-select').value = ready[0];
+    } else if (installed.length) {
+      badge.innerHTML = `<span class="dot"></span> CLI: ${esc(installed.join(' · '))}`;
+      badge.className = 'pill warn';
+      document.getElementById('host-select').value = installed[0];
+    } else {
+      badge.innerHTML = `<span class="dot"></span> No CLI detected`;
+      badge.className = 'pill warn';
+    }
+    updateHostHint();
+  } catch (err) {
+    document.getElementById('host-badge').textContent = 'Offline';
+  }
+}
+
+async function loadBooks() {
+  const data = await api('/api/books');
+  const box = document.getElementById('book-list');
+  if (!data.books.length) {
+    box.innerHTML = '<div style="font-size:13px; color:var(--muted); padding:10px 8px;">Your shelf is empty. Drop your first idea on the right.</div>';
+    return;
+  }
+  box.innerHTML = data.books.map(b => {
+    const spine = SPINE_COLORS[hashIndex(b.slug, SPINE_COLORS.length)];
+    let statusTag = `Phase ${Math.min(b.phase || 0, 7)}`;
+    if (b.running) statusTag = '<span style="color:var(--ok);font-weight:600;">● Writing</span>';
+    else if (b.has_epub) statusTag = '<span style="color:var(--ok);font-weight:600;">✓ Ready</span>';
+    else if (b.runner_state === 'paused' || b.runner_state === 'blocked') statusTag = '<span style="color:var(--warn);">Paused</span>';
+    const score = b.rubric_weighted != null ? ` · ${(b.rubric_weighted * 10).toFixed(0)}/100` : '';
+    return `
+      <button class="book-card ${b.slug === currentSlug ? 'active' : ''}" style="--spine:${spine}" data-slug="${esc(b.slug)}">
+        <div class="title">${esc(b.title)}</div>
+        <div class="meta">
+          <span>${b.chapters_saved}${b.chapters_planned ? '/' + b.chapters_planned : ''} ch${esc(score)}</span>
+          <span>${statusTag}</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+  box.querySelectorAll('.book-card').forEach(btn => {
+    btn.addEventListener('click', () => openBook(btn.dataset.slug));
+  });
+}
+
+function showView(name) {
+  document.getElementById('view-create').classList.toggle('hidden', name !== 'create');
+  document.getElementById('view-book').classList.toggle('hidden', name !== 'book');
+  if (name !== 'book' && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+function schedulePolling(isRunning) {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  if (isRunning && currentSlug) {
+    pollTimer = setInterval(() => {
+      if (currentSlug) openBook(currentSlug, { silent: true });
+    }, 3500);
+  }
+}
+
+async function openBook(slug, opts = {}) {
+  const switchingBook = currentSlug !== slug;
+  currentSlug = slug;
+  if (switchingBook) {
+    loadedChapterKey = null;
+    document.getElementById('bk-action-feedback').innerHTML = '';
+  }
+  const d = await api('/api/books/' + encodeURIComponent(slug));
+  currentDetail = d;
+  showView('book');
+  loadBooks();
+
+  const meta = d.metadata || {};
+  const cfg = d.config || {};
+  const run = d.runner || {};
+  const title = d.title || meta.title || slug;
+  const author = cfg.author_name || 'Anonymous';
+  const coverBg = COVER_PALETTES[hashIndex(slug, COVER_PALETTES.length)];
+
+  document.getElementById('bk-mini-cover').style.setProperty('--cover-bg', coverBg);
+  document.getElementById('bk-large-cover').style.setProperty('--cover-bg', coverBg);
+  document.getElementById('mc-title').textContent = title;
+  document.getElementById('mc-author').textContent = author;
+  document.getElementById('lc-title').textContent = title;
+  document.getElementById('lc-author').textContent = author;
+  document.getElementById('lc-genre').textContent = meta.genre || 'Fiction';
+  document.getElementById('sc-title').textContent = title;
+
+  document.getElementById('bk-kicker').textContent = `${cfg.language || 'English'} · By ${author}`;
+  document.getElementById('bk-title').textContent = title;
+  document.getElementById('bk-idea').textContent = cfg.idea || '';
+  document.getElementById('bk-prompt').textContent = d.agent_prompt || '';
+  document.getElementById('bk-path').textContent = d.path || '';
+
+  const pill = document.getElementById('bk-run-pill');
+  const btnRun = document.getElementById('btn-run-book');
+  const btnStop = document.getElementById('btn-stop-book');
+  const btnUnlock = document.getElementById('btn-unlock-book');
+  const isComplete = d.deliverables && d.deliverables.some(f => f.ext === '.epub');
+
+  if (run.running) {
+    pill.innerHTML = `<span class="dot"></span> Writing live`;
+    pill.className = 'pill live';
+    btnRun.classList.add('hidden');
+    btnStop.classList.toggle('hidden', !run.studio_owned);
+    btnUnlock.classList.add('hidden');
+  } else if (run.stale_lock) {
+    pill.innerHTML = `<span class="dot"></span> Session interrupted`;
+    pill.className = 'pill warn';
+    btnRun.classList.add('hidden');
+    btnStop.classList.add('hidden');
+    btnUnlock.classList.remove('hidden');
+  } else if (isComplete) {
+    pill.innerHTML = `<span class="dot"></span> Book Complete`;
+    pill.className = 'pill ok';
+    btnRun.classList.add('hidden');
+    btnStop.classList.add('hidden');
+    btnUnlock.classList.add('hidden');
+  } else if (run.state === 'paused' || run.state === 'blocked') {
+    pill.innerHTML = `<span class="dot"></span> Paused (progress saved)`;
+    pill.className = 'pill warn';
+    btnRun.textContent = '▶ Resume where left off';
+    btnRun.classList.remove('hidden');
+    btnStop.classList.add('hidden');
+    btnUnlock.classList.add('hidden');
+  } else {
+    pill.innerHTML = `<span class="dot"></span> Ready`;
+    pill.className = 'pill';
+    btnRun.textContent = d.chapters.length ? '▶ Resume Book' : '▶ Start Generation';
+    btnRun.classList.remove('hidden');
+    btnStop.classList.add('hidden');
+    btnUnlock.classList.add('hidden');
+  }
+
+  schedulePolling(Boolean(run.running));
+
+  const rawPhase = (d.status && d.status.activity && typeof d.status.activity.phase === 'number') ? d.status.activity.phase : (isComplete ? 8 : 0);
+  document.getElementById('bk-phases').innerHTML = PHASE_SHORT.map((label, idx) => {
+    const cls = idx < rawPhase ? 'done' : (idx === rawPhase && !isComplete ? 'now' : '');
+    return `<div class="step-item ${cls}"><div class="step-bar"></div><div class="step-label">${esc(label)}</div></div>`;
+  }).join('');
+
+  const totalWords = d.chapters.reduce((acc, c) => acc + c.words, 0);
+  const planned = (cfg.autonomous_contract && cfg.autonomous_contract.chapters) ? '/' + cfg.autonomous_contract.chapters : '';
+  document.getElementById('st-chapters').textContent = `${d.chapters.length}${planned}`;
+  document.getElementById('st-words').textContent = totalWords.toLocaleString('en-US');
+  const fm = d.final_measurement;
+  document.getElementById('st-score').textContent = (fm && fm.rubric && fm.rubric.weighted != null)
+    ? `${(fm.rubric.weighted * 10).toFixed(1)}/100`
+    : '—';
+  document.getElementById('st-gate').textContent = fm
+    ? (fm.passed ? 'Passed' : 'With notes')
+    : (d.opening_panel ? `Ch. 1: ${d.opening_panel.yes}/4` : 'In progress');
+
+  renderLiveOverview(d, isComplete);
+  renderBible(d, switchingBook);
+  renderReaderList(d, switchingBook);
+  renderCritics(d);
+  renderDiagnostics(d.prose_diagnostics);
+  renderPackage(d, isComplete);
+}
+
+function renderLiveOverview(d, isComplete) {
+  const run = d.runner || {};
+  const act = (d.status && d.status.activity && d.status.activity.requests) || [];
+  const banner = document.getElementById('bk-live-banner');
+
+  if (run.running) {
+    const activeLabel = act.length ? act[0].label : 'Running next editorial step…';
+    const secs = act.length && act[0].seconds_since_reserved != null ? ` · ${act[0].seconds_since_reserved}s` : '';
+    banner.innerHTML = `
+      <div>
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ok);">Autonomous production running</div>
+        <div style="font-family:var(--serif); font-size:21px; font-weight:600; margin-top:3px;">${esc(activeLabel)}${esc(secs)}</div>
+        <div style="font-size:13px; color:var(--ink-2); margin-top:3px;">This page refreshes automatically. You can read finished chapters in <strong>Read Book</strong> while upcoming chapters are being written.</div>
+      </div>
+      <span class="pill live"><span class="dot"></span> Live</span>
+    `;
+  } else if (isComplete) {
+    banner.innerHTML = `
+      <div>
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ok);">Book finished</div>
+        <div style="font-family:var(--serif); font-size:21px; font-weight:600; margin-top:3px;">Manuscript revised, scored, and exported to EPUB.</div>
+        <div style="font-size:13px; color:var(--ink-2); margin-top:3px;">Inspect the 10-dimension rubric under <strong>Critics & X-Ray</strong> and download your deliverables under <strong>Launch Kit & EPUB</strong>.</div>
+      </div>
+      <span class="pill ok">✓ Complete</span>
+    `;
+  } else {
+    banner.innerHTML = `
+      <div>
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted);">Ready to continue</div>
+        <div style="font-family:var(--serif); font-size:21px; font-weight:600; margin-top:3px;">All progress is safely checkpointed on disk.</div>
+        <div style="font-size:13px; color:var(--ink-2); margin-top:3px;">Click the button above to resume from the exact last verified step without losing any chapter or critic report.</div>
+      </div>
+    `;
+  }
+
+  const alertBox = document.getElementById('bk-delivery-alert');
+  if (!run.running && (run.delivery_status || run.journal_error)) {
+    alertBox.innerHTML = `<div class="msg warn"><strong>Saved notice:</strong> ${esc(run.journal_error || run.delivery_status)}</div>`;
+  } else {
+    alertBox.innerHTML = '';
+  }
+
+  const reportLines = (run.run_report_tail || []).map(humanizeLogLine).filter(Boolean).reverse();
+  const tl = document.getElementById('bk-timeline');
+  tl.innerHTML = reportLines.length
+    ? reportLines.slice(0, 14).map(item => `<li>${esc(item)}</li>`).join('')
+    : '<li style="color:var(--muted);">No editorial milestones recorded yet.</li>';
+
+  const consoleEl = document.getElementById('bk-console');
+  const rawLogs = (run.log_tail && run.log_tail.length) ? run.log_tail : (run.run_report_tail || []);
+  consoleEl.textContent = rawLogs.length ? rawLogs.join('\n') : 'No technical output recorded yet.';
+}
+
+function renderBible(d, switchingBook) {
+  const arts = d.artifacts || {};
+  const keys = Object.keys(arts);
+  const sel = document.getElementById('artifact-select');
+  const box = document.getElementById('artifact-content');
+  if (!keys.length) {
+    sel.innerHTML = '<option value="">Waiting for Phase 0…</option>';
+    box.textContent = 'Once Phase 0 completes, your Creative Brief, Market Map, and Story Engine will appear here.';
+    return;
+  }
+  const previous = switchingBook ? null : sel.value;
+  sel.innerHTML = keys.map(k => `<option value="${esc(k)}">${esc(ARTIFACT_LABELS[k] || k)}</option>`).join('');
+  const activeKey = (previous && arts[previous]) ? previous : keys[0];
+  sel.value = activeKey;
+  box.textContent = arts[activeKey] || '';
+  document.getElementById('artifact-meta').textContent = `${keys.length} documents`;
+}
+
+function renderReaderList(d, switchingBook) {
+  const sel = document.getElementById('chapter-select');
+  if (!d.chapters.length) {
+    sel.innerHTML = '<option value="">No chapters yet</option>';
+    document.getElementById('chapter-meta').textContent = '0 words';
+    document.getElementById('chapter-content').innerHTML = '<p class="first-p">Once Chapter 1 is drafted, it will appear here in clean book typography.</p>';
+    loadedChapterKey = null;
+    return;
+  }
+  const prevSelection = (!switchingBook && sel.value) ? sel.value : d.chapters[0].file;
+  sel.innerHTML = d.chapters.map((c, idx) => `<option value="${esc(c.file)}">Ch. ${idx + 1} · ${esc(c.title)} (${c.words.toLocaleString('en-US')} words)</option>`).join('');
+  const chosen = d.chapters.some(c => c.file === prevSelection) ? prevSelection : d.chapters[0].file;
+  sel.value = chosen;
+  const chosenObj = d.chapters.find(c => c.file === chosen);
+  const key = `${d.slug}:${chosen}:${chosenObj ? chosenObj.words : 0}`;
+  if (loadedChapterKey !== key) loadChapter(chosen);
+}
+
+async function loadChapter(file) {
+  if (!currentSlug || !file) return;
+  const data = await api(`/api/books/${encodeURIComponent(currentSlug)}/chapters/${encodeURIComponent(file)}`);
+  const words = (data.content.match(/\S+/g) || []).length;
+  const mins = Math.max(1, Math.round(words / 220));
+  document.getElementById('chapter-meta').textContent = `${words.toLocaleString('en-US')} words · ~${mins} min`;
+  document.getElementById('chapter-content').innerHTML = renderBookHtml(data.content);
+  const chObj = (currentDetail?.chapters || []).find(c => c.file === file);
+  loadedChapterKey = `${currentSlug}:${file}:${chObj ? chObj.words : words}`;
+}
+
+function renderDiagnostics(diag) {
+  const el = document.getElementById('diag-content');
+  if (!diag || !diag.chapters || !diag.chapters.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:13.5px;">Draft at least one chapter to view deterministic prose telemetry.</p>';
+    return;
+  }
+  if (!diag.supported) {
+    el.innerHTML = `<div class="msg warn">${esc(diag.interpretation)}</div>`;
+    return;
+  }
+  const rows = diag.chapters.map(c => `
+    <tr>
+      <td><strong>${esc(c.chapter)}</strong></td>
+      <td>${Math.round((c.dialogue_ratio || 0) * 100)}%</td>
+      <td>${c.narration_dash_rate_per_1k}/1k</td>
+      <td>${c.sentence_rhythm.mean} ± ${c.sentence_rhythm.sd} ${c.sentence_rhythm.metronome_flag ? '<span style="color:var(--warn);">(uniform rhythm)</span>' : ''}</td>
+      <td>${(c.candidates_above_default_ceiling || []).length ? `<span style="color:var(--warn);">${esc(c.candidates_above_default_ceiling.join(', '))}</span>` : '<span style="color:var(--ok);font-weight:600;">✓ Clean</span>'}</td>
+    </tr>
+  `).join('');
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Language profile: <strong>${esc(diag.profile)}</strong></div>
+    <table>
+      <thead><tr><th>Chapter</th><th>Dialogue</th><th>Narration dashes</th><th>Sentence (mean ± SD)</th><th>Revision signals</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderCritics(d) {
+  const el = document.getElementById('critics-content');
+  const parts = [];
+  if (d.final_measurement && d.final_measurement.rubric) {
+    const r = d.final_measurement.rubric;
+    const rows = (r.dimensions || []).map(dim => {
+      const cal100 = dim.calibrated != null ? Math.round(dim.calibrated * 10) : 0;
+      return `
+        <tr>
+          <td><strong>${esc(dim.name)}</strong></td>
+          <td>${dim.raw_median ?? '—'}/10</td>
+          <td><strong>${dim.calibrated != null ? (dim.calibrated * 10).toFixed(1) + '/100' : '—'}</strong></td>
+          <td style="width:190px;"><div class="bar-track"><div class="bar-fill" style="width:${cal100}%;"></div></div></td>
+          <td>${dim.disagreement ? '<span style="color:var(--warn);">Split</span>' : '<span style="color:var(--ok);">Consensus</span>'}</td>
+        </tr>
+      `;
+    }).join('');
+    parts.push(`
+      <h3>Genesis Literary Rubric (3 independent blind readings)</h3>
+      <p class="panel-sub">
+        Calibrated weighted score: <strong>${r.weighted != null ? (r.weighted * 10).toFixed(1) + '/100' : '—'}</strong> ·
+        Calibrated floor: <strong>${r.floor ?? '—'}/10</strong> · Calibration offset <code>${r.calibration}</code> (simulated evaluation, not human criticism).
+      </p>
+      <table><thead><tr><th>Dimension</th><th>Raw Median</th><th>Calibrated</th><th>Level</th><th>Agreement</th></tr></thead><tbody>${rows}</tbody></table>
+    `);
+  }
+
+  const panels = (d.panels && d.panels.length) ? d.panels : (d.opening_panel ? [d.opening_panel] : []);
+  if (panels.length) {
+    parts.push(`<h3 style="margin-top:${parts.length ? '26px' : '0'};">4-Reader Blind Panels (${panels.length})</h3>`);
+    for (const p of panels) {
+      const cards = (p.reports || []).map(rep => `
+        <div class="reader-card">
+          <div class="row-between">
+            <strong style="font-size:13.5px;">${esc(rep.reader)}</strong>
+            <span class="pill ${rep.turn_page === 'yes' ? 'ok' : 'warn'}">${rep.turn_page === 'yes' ? 'Would turn page' : 'Stopped'}</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;">Felt: <em>${esc(rep.felt?.emotion || '')}</em> — ${esc(rep.felt?.reason || '')}</div>
+          ${rep.strongest_passage ? `<div style="font-size:12px;color:var(--ok);margin-top:5px;">Standout: ${esc(rep.strongest_passage.reason)}</div>` : ''}
+          ${rep.stopped_at ? `<div style="font-size:12px;color:var(--warn);margin-top:5px;">Friction point: ${esc(rep.why_stopped?.reason || '')}</div>` : ''}
+        </div>
+      `).join('');
+      parts.push(`
+        <div style="margin-top:16px;">
+          <div class="row-between">
+            <strong style="font-size:13px; color:var(--accent);">${esc(p.scope)} · ${(p.chapters || []).join(', ')}</strong>
+            <span class="pill ${p.passed ? 'ok' : 'warn'}">${p.yes}/4 would continue</span>
+          </div>
+          <div class="reader-grid">${cards}</div>
+        </div>
+      `);
+    }
+  }
+
+  el.innerHTML = parts.length
+    ? parts.join('')
+    : '<h3>Critics & Literary Score</h3><p class="panel-sub" style="margin-bottom:0;">Once Chapter 1 is written, the 4 blind readers appear here; after Phase 6, the calibrated 10-dimension rubric scorecard unlocks.</p>';
+}
+
+function renderPackage(d, isComplete) {
+  const links = document.getElementById('delivery-links');
+  const dlButtons = (d.deliverables || []).map(f =>
+    `<a class="btn btn-primary btn-sm" href="/api/books/${encodeURIComponent(d.slug)}/delivery/${encodeURIComponent(f.name)}">⬇ Download ${esc(f.name)} (${Math.max(1, Math.round(f.size/1024))} KB)</a>`
+  );
+  if (d.has_commercial_kit) {
+    dlButtons.push(`<a class="btn btn-sm" href="/api/books/${encodeURIComponent(d.slug)}/commercial-kit">⬇ Commercial & BookTok Kit (.md)</a>`);
+  }
+  links.innerHTML = dlButtons.length
+    ? dlButtons.join('')
+    : '<span class="pill">Awaiting Phase 7 export</span>';
+
+  const hookBox = document.getElementById('hook-winner-box');
+  if (d.hook_test && Array.isArray(d.hook_test.options)) {
+    const winnerId = (d.hook_test.ranking || [])[0];
+    const readers = d.hook_test.readers || [];
+    const cards = d.hook_test.options.map(opt => {
+      let clicks = 0, buys = 0, keeps = 0;
+      for (const r of readers) {
+        const m = (r.options || []).find(o => o.id === opt.id);
+        if (m) { if (m.click) clicks++; if (m.buy) buys++; if (m.keep_reading) keeps++; }
+      }
+      const isWin = opt.id === winnerId;
+      return `
+        <div class="hook-card ${isWin ? 'winner' : ''}">
+          <div>
+            <div class="row-between">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);">Angle ${opt.id}</span>
+              ${isWin ? '<span class="pill ok">★ Simulated Winner</span>' : ''}
+            </div>
+            <h4 style="font-family:var(--serif);font-size:21px;margin:8px 0 6px;">${esc(opt.title)}</h4>
+            <p style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">${esc(opt.logline)}</p>
+            <p style="font-size:12.5px;color:var(--ink-2);line-height:1.55;">${esc(opt.blurb)}</p>
+          </div>
+          <div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Click: <strong>${clicks}/4</strong> · Buy: <strong>${buys}/4</strong> · Keep reading: <strong>${keeps}/4</strong></div>
+            <button type="button" class="btn btn-sm copy-blurb-btn" data-text="${esc(opt.title + '\n\n' + opt.logline + '\n\n' + opt.blurb)}">Copy blurb</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    hookBox.innerHTML = `<h3>Simulated Storefront Hook Test</h3><p class="panel-sub">3 distinct title & blurb angles tested against the 4 simulated readers (comparative signal, not a sales forecast).</p><div class="hook-grid">${cards}</div>`;
+    hookBox.querySelectorAll('.copy-blurb-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(btn.dataset.text);
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => btn.textContent = 'Copy blurb', 1500);
+      });
+    });
+  } else {
+    hookBox.innerHTML = '';
+  }
+
+  const box = document.getElementById('package-content');
+  const pkg = d.artifacts && d.artifacts['12-editorial-package.md'];
+  const pos = d.artifacts && d.artifacts['13-positioning.md'];
+  if (!pkg && !pos) {
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = (pkg ? `<h3 style="margin-top:16px;">Editorial Package, KDP & BookTok Kit</h3><div class="doc-view" style="margin-top:8px;">${esc(pkg)}</div>` : '')
+    + (pos ? `<h3 style="margin-top:20px;">Full Positioning Report</h3><div class="doc-view" style="margin-top:8px;">${esc(pos)}</div>` : '');
+}
+
+async function submitBook({ autoStart, overrideIdea, overrideTitle }) {
+  const fb = document.getElementById('create-feedback');
+  fb.innerHTML = '';
+  const btnRun = document.getElementById('btn-create-run');
+  const btnOnly = document.getElementById('btn-create-only');
+  btnRun.disabled = true; btnOnly.disabled = true;
+  const origText = btnRun.textContent;
+  btnRun.textContent = autoStart ? 'Creating & launching book…' : 'Preparing…';
+  try {
+    const created = await api('/api/books', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idea: overrideIdea ?? document.getElementById('idea-input').value,
+        title: overrideTitle ?? document.getElementById('title-input').value,
+        author: document.getElementById('author-input').value || 'Anonymous',
+        language: document.getElementById('lang-select').value,
+        preset: document.getElementById('preset-select').value,
+        host: document.getElementById('host-select').value,
+        quality_target: parseFloat(document.getElementById('rigor-select').value || '8.5'),
+        autonomous: true,
+        auto_start: Boolean(autoStart),
+      }),
+    });
+    await loadBooks();
+    await openBook(created.slug);
+    if (created.start_error) {
+      document.getElementById('bk-action-feedback').innerHTML = `<div class="msg warn">Workspace prepared, but auto-start reported: ${esc(created.start_error)}</div>`;
+    }
+  } catch (err) {
+    fb.innerHTML = `<div class="msg err">${esc(err.message)}</div>`;
+  } finally {
+    btnRun.disabled = false; btnOnly.disabled = false; btnRun.textContent = origText;
+  }
+}
+
+document.querySelectorAll('.preset-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    document.getElementById('preset-select').value = card.dataset.preset;
+  });
+});
+
+document.getElementById('btn-catalyze').addEventListener('click', async () => {
+  const fb = document.getElementById('create-feedback');
+  const box = document.getElementById('catalyst-results');
+  const btn = document.getElementById('btn-catalyze');
+  fb.innerHTML = '';
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '✨ Shaping 3 high-concept angles (~25s)…';
+  try {
+    const res = await api('/api/catalyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idea: document.getElementById('idea-input').value,
+        language: document.getElementById('lang-select').value,
+        host: document.getElementById('host-select').value,
+      }),
+    });
+    box.classList.remove('hidden');
+    box.innerHTML = `
+      <span class="kicker">Shower-Idea Catalyst · Pick your favorite direction</span>
+      <h2 style="font-family:var(--serif);font-size:28px;font-weight:500;">3 Commercial Directions for Your Idea</h2>
+      <div class="catalyst-grid">
+        ${res.directions.map(dir => `
+          <div class="cat-card">
+            <div>
+              <span class="cat-num">Angle 0${dir.id} · ${esc(dir.genre)}</span>
+              <h3>${esc(dir.title)}</h3>
+              <div class="cat-pitch">“${esc(dir.pitch_15s)}”</div>
+              <div class="cat-detail"><strong>Protagonist:</strong> ${esc(dir.protagonist_and_wound)}</div>
+              <div class="cat-detail"><strong>Tropes & Twist:</strong> ${esc(dir.tropes_and_twist)}</div>
+              <div class="cat-detail"><strong>First-10% Hook:</strong> ${esc(dir.opening_10pct_hook)}</div>
+              <div class="cat-detail"><strong>Word-of-Mouth Peak:</strong> ${esc(dir.shareability_peak)}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:7px; margin-top:8px;">
+              <button type="button" class="btn btn-primary btn-sm cat-pick-run" data-id="${dir.id}">Pick & Generate Book</button>
+              <button type="button" class="btn btn-ghost btn-sm cat-pick-edit" data-id="${dir.id}">Edit in idea box above</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    box.querySelectorAll('.cat-pick-edit').forEach(b => {
+      b.addEventListener('click', () => {
+        const chosen = res.directions.find(x => String(x.id) === b.dataset.id);
+        if (!chosen) return;
+        document.getElementById('title-input').value = chosen.title;
+        document.getElementById('idea-input').value = chosen.enriched_brief;
+        document.getElementById('idea-input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    box.querySelectorAll('.cat-pick-run').forEach(b => {
+      b.addEventListener('click', () => {
+        const chosen = res.directions.find(x => String(x.id) === b.dataset.id);
+        if (!chosen) return;
+        document.getElementById('title-input').value = chosen.title;
+        document.getElementById('idea-input').value = chosen.enriched_brief;
+        submitBook({ autoStart: true, overrideIdea: chosen.enriched_brief, overrideTitle: chosen.title });
+      });
+    });
+  } catch (err) {
+    fb.innerHTML = `<div class="msg err">${esc(err.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+});
+
+document.getElementById('host-select').addEventListener('change', updateHostHint);
+document.querySelectorAll('.spark').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('idea-input').value = btn.dataset.idea;
+    document.getElementById('idea-input').focus();
+  });
+});
+
+function goNew() { currentSlug = null; showView('create'); loadBooks(); }
+document.getElementById('btn-new-top').addEventListener('click', goNew);
+document.getElementById('brand-home').addEventListener('click', goNew);
+document.getElementById('btn-refresh-list').addEventListener('click', loadBooks);
+document.getElementById('btn-refresh-book').addEventListener('click', () => currentSlug && openBook(currentSlug));
+
+document.getElementById('btn-run-book').addEventListener('click', async () => {
+  if (!currentSlug) return;
+  document.getElementById('bk-action-feedback').innerHTML = '';
+  const btn = document.getElementById('btn-run-book');
+  btn.disabled = true;
+  try {
+    await api(`/api/books/${encodeURIComponent(currentSlug)}/run`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    await openBook(currentSlug);
+  } catch (err) {
+    document.getElementById('bk-action-feedback').innerHTML = `<div class="msg err">${esc(err.message)}</div>`;
+  } finally { btn.disabled = false; }
+});
+
+document.getElementById('btn-unlock-book').addEventListener('click', async () => {
+  if (!currentSlug) return;
+  document.getElementById('bk-action-feedback').innerHTML = '';
+  try {
+    await api(`/api/books/${encodeURIComponent(currentSlug)}/run`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ recover_stale_lock: true }),
+    });
+    await openBook(currentSlug);
+  } catch (err) {
+    document.getElementById('bk-action-feedback').innerHTML = `<div class="msg err">${esc(err.message)}</div>`;
+  }
+});
+
+document.getElementById('btn-stop-book').addEventListener('click', async () => {
+  if (!currentSlug) return;
+  const btn = document.getElementById('btn-stop-book');
+  btn.disabled = true;
+  try {
+    await api(`/api/books/${encodeURIComponent(currentSlug)}/stop`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    await openBook(currentSlug);
+  } catch (err) {
+    document.getElementById('bk-action-feedback').innerHTML = `<div class="msg err">${esc(err.message)}</div>`;
+  } finally { btn.disabled = false; }
+});
+
+document.getElementById('artifact-select').addEventListener('change', e => {
+  document.getElementById('artifact-content').textContent = (currentDetail?.artifacts || {})[e.target.value] || '';
+});
+
+document.getElementById('chapter-select').addEventListener('change', e => loadChapter(e.target.value));
+document.getElementById('btn-prev-ch').addEventListener('click', () => {
+  const sel = document.getElementById('chapter-select');
+  if (sel.selectedIndex > 0) { sel.selectedIndex -= 1; loadChapter(sel.value); }
+});
+document.getElementById('btn-next-ch').addEventListener('click', () => {
+  const sel = document.getElementById('chapter-select');
+  if (sel.selectedIndex >= 0 && sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex += 1; loadChapter(sel.value); }
+});
+
+document.getElementById('btn-font-dec').addEventListener('click', () => {
+  readerFontSize = Math.max(16, readerFontSize - 2);
+  document.getElementById('chapter-content').style.fontSize = readerFontSize + 'px';
+});
+document.getElementById('btn-font-inc').addEventListener('click', () => {
+  readerFontSize = Math.min(28, readerFontSize + 2);
+  document.getElementById('chapter-content').style.fontSize = readerFontSize + 'px';
+});
+document.querySelectorAll('.reader-theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = document.getElementById('chapter-content');
+    page.classList.remove('theme-sepia', 'theme-night');
+    if (btn.dataset.theme === 'sepia') page.classList.add('theme-sepia');
+    if (btn.dataset.theme === 'night') page.classList.add('theme-night');
+  });
+});
+
+document.getElementById('btn-copy-prompt').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('bk-prompt').textContent);
+  const btn = document.getElementById('btn-copy-prompt');
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => btn.textContent = 'Copy CLI prompt', 1500);
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    ['overview','reader','bible','critics','package'].forEach(name => {
+      document.getElementById('tab-' + name).classList.toggle('hidden', name !== target);
+    });
+  });
+});
+
+document.getElementById('btn-create-run').addEventListener('click', () => submitBook({ autoStart: true }));
+document.getElementById('btn-create-only').addEventListener('click', () => submitBook({ autoStart: false }));
+
+loadHealth();
+loadBooks();
+</script>
+</body>
+</html>
