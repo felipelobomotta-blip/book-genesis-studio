@@ -76,6 +76,13 @@ def _payload(repo: Path) -> dict[str, bytes]:
         if f'skills/{name}/SKILL.md' not in result:
             raise ValueError(f'Missing skill: {name}')
     versions = {_json(repo / p)['version'] for p in ('plugin.json', '.codex-plugin/plugin.json', '.claude-plugin/plugin.json', 'package.json')}
+    listed = _json(repo / '.claude-plugin/marketplace.json')['plugins'][0].get('version')
+    if not isinstance(listed, str):
+        raise ValueError('Plugin manifest versions disagree')
+    versions.add(listed)
+    version_file = repo / 'VERSION'
+    if version_file.is_file():
+        versions.add(version_file.read_text(encoding='utf-8').strip())
     if len(versions) != 1:
         raise ValueError('Plugin manifest versions disagree')
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?', next(iter(versions))):

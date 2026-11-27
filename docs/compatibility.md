@@ -2,6 +2,8 @@
 
 What has actually been exercised, per host. A supported install target means the files land where the host looks for them; it is not a claim that a full book was written there.
 
+The 5.1.0-beta.8 candidate does not add a new full-book host run. Its detailed matrix, with tested and merely documented rows kept apart, is in [the readiness assessment](releases/5.1.0-beta.8-readiness.md). The 6.0.0 rows below remain future release criteria. They are not relabeled as beta 8 work.
+
 The table below preserves the September 22 record for 6.0.0-beta.1. For the current 5.1 recovery checkout, see the [native launcher acceptance](native-cli.md) and [October 10 quality checks](quality-recovery-20261010.md): a supervised short Codex book reached verified delivery with failed literary gates; unattended, full-length and complete Claude-book acceptance remain unverified. Installer support is not full-book acceptance.
 
 ## Full-book runs on 6.0

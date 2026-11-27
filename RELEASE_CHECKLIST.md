@@ -1,8 +1,12 @@
 # Release checklist
 
 Copy into an issue when preparing a release and tick as you go. The current
-checkout is the unreleased 5.1 recovery build. Record the exact commit tested;
-do not transfer acceptance from an earlier snapshot to a later code revision.
+candidate is 5.1.0-beta.8, documented in
+`docs/releases/5.1.0-beta.8-readiness.md`. Tagging, the GitHub release, package
+publication and directory submission stay unchecked until a person approves
+them. Record the exact commit tested; do not transfer acceptance from an
+earlier snapshot to a later code revision. The 6.0.0 criteria elsewhere in
+the docs remain future release criteria.
 
 ## Checks
 

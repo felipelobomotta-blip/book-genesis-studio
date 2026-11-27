@@ -1,6 +1,6 @@
 # Directory submission packet — beta 7
 
-Prepared 2026-10-26. GitHub release distribution and public directory approval are separate. This document prepares submission; it does not claim a portal upload, approval or listing.
+Prepared 2026-10-26 for 5.1.0-beta.7. This page is a historical preparation record. It was not submitted, and it is not a 5.1.0-beta.8 directory submission. Current directory status is in [the beta 8 readiness assessment](releases/5.1.0-beta.8-readiness.md). GitHub release distribution and public directory approval are separate. This document prepares submission; it does not claim a portal upload, approval or listing.
 
 ## Listing copy
 
